@@ -1,0 +1,529 @@
+/* Container */
+.container {
+  max-width: 100%;
+  margin: 2rem ;
+  padding: 0 20px;
+  font-family: 'Open Sans', sans-serif;
+  min-height: calc(100vh - 200px);
+}
+
+/* Header */
+.header {
+  margin-bottom: 1.5rem;
+}
+
+.header h1 {
+  color: #000;
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.header p {
+  color: #7f8c8d;
+  font-size: 15px;
+  margin: 0;
+}
+
+/* Step Indicator */
+.stepper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 3rem;
+  position: relative;
+  padding: 0 40px;
+}
+
+/* Base connecting line behind all steps */
+.stepper::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 60px;
+  right: 60px;
+  height: 3px;
+  background: #e8e8e8;
+  z-index: 0;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* Progress line - appears after completed steps */
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  width: 0;
+  height: 3px;
+  background: var(--green-color, #27ae60);
+  z-index: 0;
+}
+
+.step.completed:not(:last-child)::after {
+  width: calc(100% + 100px);
+  left: 50%;
+}
+
+.step.inProgress:not(:last-child)::after {
+  width: 50%;
+  left: 50%;
+}
+
+.stepContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  position: relative;
+  z-index: 2;
+}
+
+.stepDot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #e8e8e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.stepDot.completed {
+  background: var(--green-color, #27ae60);
+  border-color: var(--green-color, #27ae60);
+}
+
+.stepDot.inProgress {
+  background: #2c5aa0;
+  border-color: #2c5aa0;
+  box-shadow: 0 0 0 4px rgba(44, 90, 160, 0.2);
+}
+
+.stepDot.pending {
+  background: white;
+  border-color: #d0d0d0;
+}
+
+.stepIcon {
+  font-size: 18px;
+  color: #999;
+}
+
+.stepDot.completed .stepIcon,
+.stepDot.inProgress .stepIcon {
+  color: white;
+}
+
+.stepLabel {
+  text-align: center;
+}
+
+.stepLabel strong {
+  display: block;
+  font-size: 10px;
+  color: #b0bec5;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.stepLabel h4 {
+  font-size: 13px;
+  color: #263238;
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Form Content */
+.formCard {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  margin-bottom: 24px;
+}
+
+.formCard h2 {
+  color: #1a252f;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Form Elements */
+.field {
+  margin-bottom: 20px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 6px;
+  color: #2c3e50;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.field small {
+  display: block;
+  margin-top: 4px;
+  color: #95a5a6;
+  font-size: 12px;
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: #769FCD;
+  box-shadow: 0 0 0 3px rgba(118, 159, 205, 0.1);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+/* File Upload */
+.uploadArea {
+  border: 2px dashed #bdc3c7;
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.uploadArea:hover {
+  border-color: #769FCD;
+  background: #f0f5ff;
+}
+
+.uploadIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.uploadText {
+  color: #2c3e50;
+  margin: 8px 0;
+}
+
+.uploadOr {
+  color: #95a5a6;
+  font-weight: 600;
+  margin: 12px 0;
+}
+
+.browseBtn {
+  display: inline-block;
+  background: #769FCD;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s;
+  margin: 12px 0;
+}
+
+.browseBtn:hover {
+  background: #5a7fa8;
+}
+
+.uploadHint {
+  font-size: 13px;
+  color: #95a5a6;
+  margin-top: 16px;
+  line-height: 1.6;
+}
+
+.filePreview {
+  margin-top: 20px;
+  padding: 16px;
+  background: #d5f4e6;
+  border-radius: 6px;
+  border-left: 4px solid var(--green-color, #27ae60);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fileName {
+  color: var(--green-color, #27ae60);
+  font-weight: 600;
+}
+
+.removeFile {
+  background: none;
+  border: none;
+  color: #c0392b;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.2s;
+}
+
+.removeFile:hover {
+  transform: scale(1.2);
+}
+
+/* Review */
+.reviewBox {
+  background: #f8f9fa;
+  border: 1px solid #ecf0f1;
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.reviewSection {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.reviewSection:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.reviewSection h3 {
+  color: #769FCD;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.reviewSection p {
+  color: #2c3e50;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.abstractPreview {
+  max-height: 150px;
+  overflow-y: auto;
+  background: white;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.reviewNote {
+  background: #fff3cd;
+  border-left: 4px solid #ff9800;
+  padding: 16px;
+  border-radius: 6px;
+  margin-top: 20px;
+}
+
+.reviewNote strong {
+  color: #e67e22;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.reviewNote ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #2c3e50;
+}
+
+.reviewNote li {
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.btn {
+  padding: 12px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+  flex: 1;
+  max-width: 200px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  background: #769FCD;
+  color: white;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: #5a7fa8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(118, 159, 205, 0.3);
+}
+
+.btnSecondary {
+  background: #95a5a6;
+  color: white;
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: #7f8c8d;
+  transform: translateY(-2px);
+}
+
+.btnSuccess {
+  background: var(--green-color, #27ae60);
+  color: white;
+  max-width: 100%;
+}
+
+.btnSuccess:hover:not(:disabled) {
+  background: #229954;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+/* Loading */
+.loadingOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  font-size: 18px;
+  color: white;
+  font-weight: 600;
+}
+
+/* Hidden */
+.hidden {
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    margin: 1.5rem auto;
+    padding: 0 16px;
+  }
+
+  .header h1 {
+    font-size: 22px;
+  }
+
+  .formCard {
+    padding: 20px;
+  }
+
+  .stepper {
+    margin-bottom: 2rem;
+    padding: 0 20px;
+  }
+
+  .stepper::before {
+    left: 40px;
+    right: 40px;
+  }
+
+  .step:not(:last-child)::after {
+    display: none;
+  }
+
+  .stepDot {
+    width: 36px;
+    height: 36px;
+  }
+
+  .stepIcon {
+    font-size: 16px;
+  }
+
+  .stepLabel strong {
+    font-size: 9px;
+  }
+
+  .stepLabel h4 {
+    font-size: 11px;
+  }
+
+  .uploadArea {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stepper {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+    padding: 0;
+  }
+
+  .stepper::before {
+    display: none;
+  }
+
+  .step {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .stepContent {
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .stepLabel {
+    text-align: left;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    max-width: 100%;
+  }
+}

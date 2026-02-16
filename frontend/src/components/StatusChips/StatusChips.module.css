@@ -1,0 +1,162 @@
+/* StatusChips Module Styles */
+
+.container {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.label {
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+/* Status Colors */
+.submitted {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+}
+
+.submitted:hover {
+  background: #ffe9a3;
+  border-color: #ffb300;
+}
+
+.pending {
+  background: #e7f3ff;
+  color: #004085;
+  border: 1px solid #0056b3;
+}
+
+.pending:hover {
+  background: #cce5ff;
+  border-color: #003d82;
+}
+
+.underReview {
+  background: #cfe2ff;
+  color: #084298;
+  border: 1px solid #084298;
+}
+
+.underReview:hover {
+  background: #b6d4fe;
+  border-color: #0c3075;
+}
+
+.reviewed {
+  background: #d1e7dd;
+  color: #0a3622;
+  border: 1px solid #0f5132;
+}
+
+.reviewed:hover {
+  background: #badbcc;
+  border-color: #0c3027;
+}
+
+.accepted {
+  background: #d1e7dd;
+  color: #0a3622;
+  border: 1px solid #0f5132;
+}
+
+.accepted:hover {
+  background: #badbcc;
+  border-color: #0c3027;
+}
+
+.rejected {
+  background: #f8d7da;
+  color: #842029;
+  border: 1px solid #f5c2c7;
+}
+
+.rejected:hover {
+  background: #f5c2c7;
+  border-color: #d32f2f;
+}
+
+.revision {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+}
+
+.revision:hover {
+  background: #ffe9a3;
+  border-color: #ffb300;
+}
+
+.publication {
+  background: #e2d5f4;
+  color: #4a148c;
+  border: 1px solid #7b1fa2;
+}
+
+.publication:hover {
+  background: #d2bfea;
+  border-color: #5e35b1;
+}
+
+.published {
+  background: #c8e6c9;
+  color: #1b5e20;
+  border: 1px solid #2e7d32;
+}
+
+.published:hover {
+  background: #b3d9b1;
+  border-color: #1b5e20;
+}
+
+.resubmitted {
+  background: #ede7f6;
+  color: #311b92;
+  border: 1px solid #512da8;
+}
+
+.resubmitted:hover {
+  background: #ddd6f3;
+  border-color: #3f51b5;
+}
+
+.unknown {
+  background: #e9ecef;
+  color: #495057;
+  border: 1px solid #dee2e6;
+}
+
+.unknown:hover {
+  background: #dee2e6;
+  border-color: #adb5bd;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .chip {
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+
+  .icon {
+    font-size: 13px;
+  }
+
+  .label {
+    font-size: 11px;
+  }
+}

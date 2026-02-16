@@ -1,0 +1,626 @@
+/* EditorDashboard Styles - Modern Design (based on AdminDashboard) */
+.editorDashboard {
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: 'Inter', sans-serif;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .editorDashboard {
+    /* responsive adjustments */
+  }
+}
+
+/* Dashboard Header */
+.dashboardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+@media (min-width: 768px) {
+  .dashboardHeader {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.headerContent h1 {
+  font-size: 30px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.headerContent p {
+  color: #64748b;
+  margin: 4px 0 0 0;
+  font-size: 14px;
+}
+
+/* Loading & Error States */
+.dashboardLoading,
+.dashboardError {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  min-height: 400px;
+  font-size: 16px;
+  color: #64748b;
+}
+
+.loadingIcon {
+  font-size: 32px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.dashboardError {
+  color: #ef4444;
+}
+
+/* Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 1200px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.statCard {
+  background: white;
+  padding: 32px;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
+  min-width: 0;
+}
+
+.statTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.statIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statIcon span {
+  font-size: 20px;
+}
+
+.statIconBlue {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.statIconEmerald {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.statIconAmber {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.statIconPurple {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.statTrend {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.statTrendUp {
+  color: #22c55e;
+  background: #dcfce7;
+}
+
+.statTrendDown {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+.statTrendStable {
+  color: #64748b;
+  background: #f1f5f9;
+}
+
+.statLabel {
+  font-size: 14px;
+  font-weight: 400;
+  color: #94a3b8;
+  margin: 0 0 8px 0;
+}
+
+.statNumber {
+  font-size: 48px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1;
+}
+
+/* Dashboard Grid */
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+}
+
+@media (min-width: 1100px) {
+  .dashboardGrid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+/* Dashboard Card */
+.dashboardCard {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: rgba(248, 250, 252, 0.5);
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cardHeader h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+/* Filter Buttons */
+.filterButtons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filterBtn {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #475569;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filterBtn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.filterBtnActive {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+/* Papers Table */
+.tableWrapper {
+  padding: 0;
+  overflow-x: auto;
+}
+
+.papersTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.papersTable thead {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.papersTable th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.papersTable td {
+  padding: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+
+.papersTable tbody tr:hover {
+  background: #f8fafc;
+}
+
+.titleCell {
+  font-weight: 500;
+  color: #0f172a;
+}
+
+/* Status Badge */
+.statusBadge {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+
+.statusBadgeBlue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.statusBadgeAmber {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.statusBadgeEmerald {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.statusBadgeRose {
+  background: #ffe4e6;
+  color: #be123c;
+}
+
+.statusBadgeSlate {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.noData {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  color: #94a3b8;
+}
+
+.noData span {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.noData p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Dashboard Sidebar */
+.dashboardSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Actions Card */
+.actionsCard {
+  padding: 24px;
+}
+
+.actionsCard h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+.actionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.actionItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.actionDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.actionDotWarning {
+  background: #f59e0b;
+}
+
+.actionDotError {
+  background: #ef4444;
+}
+
+.actionDotSuccess {
+  background: #10b981;
+}
+
+/* Quick Links Card */
+.quickLinksCard {
+  padding: 24px;
+}
+
+.quickLinksCard h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+.quickLinksGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.quickLink {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  color: inherit;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+.quickLink:hover {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb;
+}
+
+.quickLink span:first-child {
+  font-size: 24px;
+}
+
+.quickLinkBlue {
+  color: #2563eb;
+}
+
+.quickLinkEmerald {
+  color: #10b981;
+}
+
+.quickLinkAmber {
+  color: #f59e0b;
+}
+
+.quickLinkPurple {
+  color: #8b5cf6;
+}
+
+.quickLink span:last-child {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboardSidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .dashboardSidebar > * {
+    flex: 1;
+    min-width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboardHeader {
+    margin-bottom: 24px;
+  }
+
+  .headerContent h1 {
+    font-size: 24px;
+  }
+
+  .headerContent p {
+    font-size: 13px;
+  }
+
+  .statsGrid {
+    gap: 16px;
+  }
+
+  .statCard {
+    padding: 20px;
+  }
+
+  .statTop {
+    margin-bottom: 16px;
+  }
+
+  .statNumber {
+    font-size: 32px;
+  }
+
+  .statLabel {
+    font-size: 13px;
+  }
+
+  .dashboardGrid {
+    gap: 20px;
+  }
+
+  .cardHeader {
+    padding: 14px 16px;
+  }
+
+  .papersTable th,
+  .papersTable td {
+    padding: 12px;
+  }
+
+  .actionItem {
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .actionsCard,
+  .quickLinksCard {
+    padding: 16px;
+  }
+
+  .quickLinksGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .quickLink {
+    padding: 12px;
+  }
+
+  .quickLink span:first-child {
+    font-size: 20px;
+  }
+
+  .quickLink span:last-child {
+    font-size: 11px;
+  }
+
+  .noData {
+    padding: 32px 16px;
+  }
+
+  .noData span {
+    font-size: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+  .statsGrid {
+    gap: 12px;
+  }
+
+  .statCard {
+    padding: 16px;
+  }
+
+  .statTop {
+    margin-bottom: 12px;
+  }
+
+  .statIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .statIcon span {
+    font-size: 18px;
+  }
+
+  .statTrend {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .statNumber {
+    font-size: 28px;
+  }
+
+  .statLabel {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  .dashboardSidebar {
+    flex-direction: column;
+  }
+
+  .dashboardSidebar > * {
+    min-width: 100%;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filterButtons {
+    width: 100%;
+  }
+
+  .papersTable th,
+  .papersTable td {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  .quickLinksGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

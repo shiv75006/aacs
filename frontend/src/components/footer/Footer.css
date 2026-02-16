@@ -1,0 +1,139 @@
+/* Footer - Semantic CSS using Global Variables */
+
+.footer-wrapper {
+  background-color: #9ca3af;
+  padding: 4rem;
+}
+
+.footer-container {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3rem;
+  border-bottom: 1px solid #2d2d4a;
+  padding-bottom: 3rem;
+  margin-bottom: 3rem;
+}
+
+@media (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.footer-branding {
+  grid-column: span 2;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .footer-branding {
+    grid-column: span 1;
+  }
+}
+
+.footer-logo {
+  height: 2.5rem;
+  width: 250px;
+  margin-bottom: 0.5rem;
+}
+
+.footer-description {
+  max-width: 24rem;
+  margin-left: 19px;
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.footer-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-section-title {
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  font-size: 14px;
+}
+
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color: #2d2d4a;
+}
+
+.footer-links li {
+  list-style: none;
+  color: #2d2d4a;
+  font-size: 12px
+}
+
+.footer-links li a{
+  text-decoration: none;
+  list-style: none;
+  color: #2d2d4a;
+}
+
+.footer-link {
+  font-size: 12px;
+  color: black;
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+
+.footer-link:hover {
+  color: #2d2d4a;
+}
+
+.footer-contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #d1d5db;
+}
+
+.footer-contact-item .material-icons {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.footer-bottom {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .footer-bottom {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+}
+
+.footer-bottom-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.footer-bottom-link {
+  text-decoration: none;
+  color: #9ca3af;
+  transition: color 200ms ease;
+}
+
+.footer-bottom-link:hover {
+  color: white;
+}

@@ -1,0 +1,74 @@
+/* ============================================
+   GLOBAL STYLES - Root CSS File
+   ============================================ */
+
+/* Global Font Family */
+* {
+  font-family: 'Open Sans', sans-serif;
+}
+
+body,
+html {
+  font-family: 'Open Sans', sans-serif;
+}
+
+/* Root Variables */
+:root {
+  --primary-color: #769FCD;
+  --primary-dark: #5B8BC5;
+  --secondary-color: #2845D6;
+  --tertiary-color: #F68048;
+  --accent-color: #769FCD;
+  --green-color: #0D4715;
+  --text-light: #f1f1f1;
+  --text-dark: #333333;
+  --bg-light: #fff;
+  --bg-dark: #242424;
+  --border-color: #ddd;
+  --grey-color: #B3C8CF;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --border-radius: 5px;
+  
+  /* Layout */
+  --max-width: 1200px;
+  --container-padding: 20px;
+  --spacing-xs: 5px;
+  --spacing-sm: 10px;
+  --spacing-md: 20px;
+  --spacing-lg: 30px;
+  --spacing-xl: 50px;
+  
+  /* Font */
+  --font-family: 'Open Sans', sans-serif;
+  --font-family-heading: 'Open Sans', sans-serif;
+  --font-size-base: 16px;
+  --font-size-sm: 14px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 32px;
+}
+
+/* ============================================
+   RESET & BASE STYLES
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-family);
+  min-height: 100vh;
+}
+
+
+.full-width {
+  width: 100%;
+}
+
