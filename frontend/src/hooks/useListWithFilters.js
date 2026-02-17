@@ -1,5 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useToast } from './useToast';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 /**
  * Custom hook for managing list data with filtering, pagination, and error handling
@@ -23,7 +22,6 @@ export const useListWithFilters = (
     currentPage: 1,
   });
   const [filters, setFilters] = useState(initialFilters);
-  const toast = useToast();
 
   /**
    * Fetch data with current filters and pagination
@@ -47,7 +45,8 @@ export const useListWithFilters = (
             response.assignments ||
             [];
 
-          setData(Array.isArray(dataArray) ? dataArray : []);
+          const finalData = Array.isArray(dataArray) ? dataArray : [];
+          setData(finalData);
 
           // Update pagination
           if (response.total !== undefined) {
@@ -62,30 +61,21 @@ export const useListWithFilters = (
       } catch (err) {
         const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch data';
         setError(errorMessage);
-        if (toast && toast.error) {
-          toast.error(errorMessage);
-        }
         setData([]);
       } finally {
         setLoading(false);
       }
     },
-    [fetchFn, pagination.limit, filters, toast]
+    [fetchFn]
   );
 
   /**
-   * Handle filter change and reset to page 1
+   * Handle filter change - this will trigger the filter useEffect
    */
   const handleFilterChange = useCallback((filterKey, filterValue) => {
     setFilters((prev) => ({
       ...prev,
       [filterKey]: filterValue,
-    }));
-    // Reset to first page when filters change
-    setPagination((prev) => ({
-      ...prev,
-      currentPage: 1,
-      skip: 0,
     }));
   }, []);
 
@@ -97,11 +87,6 @@ export const useListWithFilters = (
       ...prev,
       ...newFilters,
     }));
-    setPagination((prev) => ({
-      ...prev,
-      currentPage: 1,
-      skip: 0,
-    }));
   }, []);
 
   /**
@@ -109,11 +94,6 @@ export const useListWithFilters = (
    */
   const clearFilters = useCallback(() => {
     setFilters(initialFilters);
-    setPagination((prev) => ({
-      ...prev,
-      currentPage: 1,
-      skip: 0,
-    }));
   }, [initialFilters]);
 
   /**
@@ -147,6 +127,9 @@ export const useListWithFilters = (
     }
   }, [pagination.currentPage, goToPage]);
 
+  // Track previous filters to detect changes
+  const previousFiltersRef = useRef(JSON.stringify(filters));
+
   /**
    * Refresh data with current filters
    */
@@ -154,10 +137,25 @@ export const useListWithFilters = (
     fetchData(pagination.skip, filters);
   }, [fetchData, pagination.skip, filters]);
 
-  // Fetch data when filters or pagination changes
+  // Fetch data when pagination.skip changes
   useEffect(() => {
-    fetchData(pagination.skip);
-  }, [filters, pagination.skip]);
+    fetchData(pagination.skip, filters);
+  }, [pagination.skip]);
+
+  // Handle filter changes - fetch immediately with new filters and reset pagination
+  useEffect(() => {
+    const currentFiltersStr = JSON.stringify(filters);
+    if (previousFiltersRef.current !== currentFiltersStr) {
+      previousFiltersRef.current = currentFiltersStr;
+      // Reset pagination and fetch data with new filters from the beginning
+      setPagination((prev) => ({
+        ...prev,
+        currentPage: 1,
+        skip: 0,
+      }));
+      fetchData(0, filters);
+    }
+  }, [filters, fetchData]);
 
   const totalPages = Math.ceil(pagination.total / pagination.limit);
 

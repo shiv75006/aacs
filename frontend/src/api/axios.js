@@ -3,7 +3,7 @@ import axios from 'axios';
 // Create axios instance with base configuration
 const apiClient = axios.create({
   baseURL: 'http://localhost:8000', // FastAPI backend URL
-  timeout: 60000, // 60 seconds timeout for file uploads
+  timeout: 300000, // 5 minutes timeout for file uploads
   headers: {
     'Content-Type': 'application/json',
   },
@@ -27,6 +27,7 @@ apiClient.interceptors.request.use(
       delete config.headers['Content-Type'];
     }
     
+    console.log(`[Axios] ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
   (error) => {
@@ -37,9 +38,11 @@ apiClient.interceptors.request.use(
 // Response interceptor for error handling
 apiClient.interceptors.response.use(
   (response) => {
+    console.log(`[Axios Response] ${response.status} ${response.config.url}`, response.data);
     return response;
   },
   (error) => {
+    console.error(`[Axios Error] ${error.response?.status || 'Network'} ${error.config?.url}`, error.response?.data || error.message);
     if (error.response?.status === 401) {
       // Handle unauthorized access
       localStorage.removeItem('authToken');

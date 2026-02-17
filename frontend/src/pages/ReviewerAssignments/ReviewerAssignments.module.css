@@ -22,6 +22,65 @@
   margin: 0;
 }
 
+/* Search Bar */
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  transition: all 0.2s ease;
+}
+
+.searchBar:focus-within {
+  background-color: #f1f5f9;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.searchBar span {
+  font-size: 20px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-family: inherit;
+  color: #0f172a;
+  outline: none;
+  padding: 0;
+}
+
+.searchInput::placeholder {
+  color: #cbd5e1;
+}
+
+.clearSearchBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.clearSearchBtn:hover {
+  color: #64748b;
+  background-color: #e2e8f0;
+}
+
 /* Loading State */
 .loading {
   display: flex;
@@ -102,6 +161,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   transition: all 0.2s ease;
+  min-height: 100px;
 }
 
 .assignmentCard:hover {
@@ -115,6 +175,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  justify-content: center;
 }
 
 .titleSection {
@@ -227,6 +288,7 @@
 .viewBtn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 8px 16px;
   background: #3b82f6;
@@ -239,6 +301,8 @@
   transition: all 0.2s ease;
   white-space: nowrap;
   flex-shrink: 0;
+  align-self: center;
+  height: fit-content;
 }
 
 .startBtn:hover,
@@ -306,9 +370,14 @@
 @media (max-width: 768px) {
   .assignmentCard {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 12px;
     padding: 12px 16px;
+    min-height: auto;
+  }
+
+  .cardContent {
+    width: 100%;
   }
 
   .metaSection {
@@ -334,28 +403,225 @@
   .viewBtn {
     width: 100%;
     justify-content: center;
+    align-self: stretch;
+  }
+}
+
+/* Pending Invitations Section */
+.invitationsSection {
+  display: none;
+  margin-bottom: 48px;
+}
+
+.sectionHeader {
+  display: none;
+}
+
+.sectionHeader h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+.invitationCount {
+  display: none;
+}
+
+.invitationsList {
+  display: none;
+}
+
+.invitationCard {
+  display: none;
+}
+
+.invitationCard:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  border-color: #fbbf24;
+}
+
+.cardContent {
+  display: none;
+}
+
+.invitationIcon {
+  display: none;
+}
+
+.invitationInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.invitationTitle {
+  display: none;
+}
+
+.invitationMeta {
+  display: none;
+}
+
+.invitationMessage {
+  display: none;
+}
+
+.invitationActions {
+  display: none;
+}
+
+.acceptBtn,
+.declineBtn {
+  display: none;
+}
+
+.acceptBtn:hover:not(:disabled) {
+  background-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+}
+
+.acceptBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.declineBtn:hover:not(:disabled) {
+  background-color: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+}
+
+.declineBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.acceptBtn span,
+.declineBtn span {
+  font-size: 16px;
+}
+
+.emptyInvitations {
+  display: none;
+}
+
+.emptyInvitations span {
+  font-size: 36px;
+  color: #cbd5e1;
+}
+
+.emptyInvitations p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.assignmentsHeader {
+  margin-top: 40px;
+  padding-bottom: 12px;
+}
+
+.assignmentsHeader h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .searchBar {
+    margin-bottom: 20px;
+  }
+
+  .searchInput {
+    font-size: 13px;
+  }
+
+  .searchBar span {
+    font-size: 18px;
+  }
+
+  .invitationCard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .invitationActions {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 12px;
+  }
+
+  .acceptBtn,
+  .declineBtn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .cardContent {
+    width: 100%;
   }
 }
 
 @media (max-width: 480px) {
-  .paperTitle {
-    font-size: 13px;
+  .searchBar {
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    gap: 10px;
   }
 
-  .metaItem {
-    font-size: 11px;
+  .searchInput {
+    font-size: 12px;
   }
 
-  .statusBadge,
-  .urgencyBadge {
-    font-size: 11px;
-    padding: 3px 8px;
+  .searchInput::placeholder {
+    font-size: 12px;
   }
 
-  .startBtn,
-  .continueBtn,
-  .viewBtn {
-    padding: 6px 12px;
-    font-size: 11px;
+  .searchBar span {
+    font-size: 16px;
+  }
+
+  .clearSearchBtn {
+    padding: 2px;
+  }
+
+  .clearSearchBtn span {
+    font-size: 16px;
+  }
+
+  .invitationCard {
+    padding: 12px;
+  }
+
+  .cardContent {
+    gap: 12px;
+  }
+
+  .invitationIcon {
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .invitationTitle {
+    font-size: 14px;
+  }
+
+  .invitationMeta {
+    gap: 8px;
+  }
+
+  .acceptBtn,
+  .declineBtn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .acceptBtn span,
+  .declineBtn span {
+    font-size: 14px;
   }
 }
+

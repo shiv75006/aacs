@@ -68,6 +68,20 @@ const PaperCard = ({ paper, actions = 'minimal', onManage, onView, role }) => {
                 {paper.journal_name}
               </span>
             )}
+            {/* Review Status Chip for Admin/Editor */}
+            {(actions === 'admin' || actions === 'editor') && paper.review_status && (
+              <span className={`${styles.reviewStatusChip} ${styles[`review_${paper.review_status}`]}`}>
+                <span className="material-symbols-rounded">
+                  {paper.review_status === 'reviewed' ? 'check_circle' : 
+                   paper.review_status === 'partial' ? 'pending' :
+                   paper.review_status === 'pending' ? 'hourglass_empty' : 'person_add'}
+                </span>
+                {paper.review_status === 'not_assigned' ? 'Not Assigned' :
+                 paper.review_status === 'pending' ? 'Review Pending' :
+                 paper.review_status === 'partial' ? `Reviewed ${paper.completed_reviews}/${paper.total_reviewers}` :
+                 `Reviewed ${paper.completed_reviews}/${paper.total_reviewers}`}
+              </span>
+            )}
           </div>
 
           <div className={styles.metaRight}>

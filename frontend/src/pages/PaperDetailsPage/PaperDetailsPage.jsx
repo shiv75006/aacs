@@ -69,25 +69,13 @@ const PaperDetailsPage = () => {
       // Fetch based on user role
       let response;
       if (isEditor()) {
-        response = await acsApi.admin.listAllPapers(0, 100);
-        const found = response.papers?.find(p => p.id === parseInt(id));
-        if (!found) {
-          setError('Paper not found or you do not have access to it');
-          return;
-        }
-        response = found;
+        response = await acsApi.editor.getPaperDetail(id);
       } else if (isAuthor()) {
         response = await acsApi.author.getSubmissionDetail(id);
       } else if (isReviewer()) {
         response = await acsApi.reviewer.getAssignmentDetail(id);
       } else if (isAdmin()) {
-        response = await acsApi.admin.listAllPapers(0, 100);
-        const found = response.papers?.find(p => p.id === parseInt(id));
-        if (!found) {
-          setError('Paper not found or you do not have access to it');
-          return;
-        }
-        response = found;
+        response = await acsApi.admin.getPaperDetail(id);
       }
 
       // Normalize the paper data
@@ -148,18 +136,91 @@ const PaperDetailsPage = () => {
     setShowReviewerDropdown(false);
   };
 
-  const handleDownloadPaper = () => {
-    if (paper?.filePath) {
-      const fileUrl = paper.filePath.startsWith('http')
-        ? paper.filePath
-        : `/public/${paper.filePath}`;
+  const handleViewPaper = () => {
+    if (paper?.id) {
+      // Get token for authentication (stored as 'authToken' in localStorage)
+      const token = localStorage.getItem('authToken');
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      
+      // Use different endpoint based on role
+      let viewUrl;
+      if (isAdmin()) {
+        viewUrl = `${baseUrl}/api/v1/admin/papers/${paper.id}/view`;
+      } else if (isEditor()) {
+        viewUrl = `${baseUrl}/api/v1/editor/papers/${paper.id}/view`;
+      } else {
+        viewUrl = `${baseUrl}/api/v1/author/submissions/${paper.id}/view`;
+      }
+      
+      // Open with token in URL for authentication
+      window.open(`${viewUrl}?token=${token}`, '_blank');
+      info('Opening file in new tab...', 2000);
+    }
+  };
+
+  const handleViewReviewReport = (reviewId, e) => {
+    e.stopPropagation(); // Prevent expanding/collapsing the review card
+    if (paper?.id) {
+      const token = localStorage.getItem('authToken');
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const viewUrl = `${baseUrl}/api/v1/author/submissions/${paper.id}/reviews/${reviewId}/view-report`;
+      window.open(`${viewUrl}?token=${token}`, '_blank');
+      info('Opening review report in new tab...', 2000);
+    }
+  };
+
+  const handleDownloadReviewReport = async (reviewId, e) => {
+    e.stopPropagation(); // Prevent expanding/collapsing the review card
+    try {
+      info('Downloading review report...', 2000);
+      const response = await acsApi.author.downloadReviewReport(paper.id, reviewId);
+      
+      // Create blob from response data
+      const contentType = response.headers['content-type'] || 'application/octet-stream';
+      const blob = new Blob([response.data], { type: contentType });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Get filename from content-disposition header or determine from content-type
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `review_report_${reviewId}`;
+      
+      // Try to get filename from content-disposition header
+      if (contentDisposition) {
+        // Try filename*=UTF-8'' format first
+        const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;\s]+)/i);
+        if (utf8Match) {
+          filename = decodeURIComponent(utf8Match[1]);
+        } else {
+          // Try filename="..." or filename=... format
+          const filenameMatch = contentDisposition.match(/filename="?([^"\n;]+)"?/i);
+          if (filenameMatch) {
+            filename = filenameMatch[1].trim();
+          }
+        }
+      } else {
+        // Fallback: determine extension from content-type
+        const extMap = {
+          'application/pdf': '.pdf',
+          'application/msword': '.doc',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx'
+        };
+        const ext = extMap[contentType] || '';
+        filename = `review_report_${reviewId}${ext}`;
+      }
+      
       const link = document.createElement('a');
-      link.href = fileUrl;
-      link.download = paper.fileName || 'paper';
+      link.href = url;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      success('Download started', 2000);
+      window.URL.revokeObjectURL(url);
+      
+      success('Review report downloaded', 2000);
+    } catch (err) {
+      console.error('Error downloading review report:', err);
+      const errorMsg = err.response?.data?.detail || 'Failed to download review report';
+      showError(errorMsg, 3000);
     }
   };
 
@@ -214,7 +275,7 @@ const PaperDetailsPage = () => {
             </div>
             <div className={styles.metaItem}>
               <label>Journal</label>
-              <span>{paper.journal.name}</span>
+              <span>{paper.journal?.name || 'Unknown'}</span>
             </div>
             <div className={styles.metaItem}>
               <label>Submitted Date</label>
@@ -234,8 +295,8 @@ const PaperDetailsPage = () => {
           <h2 className={styles.sectionTitle}>Author Information</h2>
           <div className={styles.authorInfo}>
             <div>
-              <p className={styles.authorName}>{paper.author.name || 'Unknown Author'}</p>
-              {paper.author.email && <p className={styles.authorEmail}>{paper.author.email}</p>}
+              <p className={styles.authorName}>{paper.author?.name || 'Unknown Author'}</p>
+              {paper.author?.email && <p className={styles.authorEmail}>{paper.author.email}</p>}
             </div>
             {paper.coAuthors && paper.coAuthors.length > 0 && (
               <div className={styles.coAuthors}>
@@ -373,6 +434,18 @@ const PaperDetailsPage = () => {
                           Submitted: {new Date(review.submittedDate).toLocaleDateString()}
                         </p>
                       )}
+
+                      {/* View Review Report Button */}
+                      {review.reviewReportFile && (
+                        <button
+                          className={styles.downloadReportBtn}
+                          onClick={(e) => handleViewReviewReport(review.id, e)}
+                          title="View Review Report"
+                        >
+                          <span className="material-symbols-rounded">visibility</span>
+                          View Review Report
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -392,9 +465,9 @@ const PaperDetailsPage = () => {
                 <span className="material-symbols-rounded">person_add</span>
                 Assign Reviewer
               </button>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleDownloadPaper}>
-                <span className="material-symbols-rounded">download</span>
-                Download Paper
+              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleViewPaper}>
+                <span className="material-symbols-rounded">visibility</span>
+                View Paper
               </button>
             </>
           )}
@@ -408,17 +481,17 @@ const PaperDetailsPage = () => {
                 <span className="material-symbols-rounded">person_add</span>
                 Assign Reviewer
               </button>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleDownloadPaper}>
-                <span className="material-symbols-rounded">download</span>
-                Download Paper
+              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleViewPaper}>
+                <span className="material-symbols-rounded">visibility</span>
+                View Paper
               </button>
             </>
           )}
 
           {isAuthor() && (
-            <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleDownloadPaper}>
-              <span className="material-symbols-rounded">download</span>
-              Download My Paper
+            <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleViewPaper}>
+              <span className="material-symbols-rounded">visibility</span>
+              View My Paper
             </button>
           )}
         </div>

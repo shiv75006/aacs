@@ -244,7 +244,7 @@ const ReviewSubmissionForm = () => {
         <div className="paper-info">
           <h2>{paper?.paper_name || 'Paper Review'}</h2>
           <p className="paper-meta">
-            {paper?.author && `By ${paper.author}`}
+            {paper?.author && `By ${typeof paper.author === 'object' ? paper.author?.name : paper.author}`}
             {paper?.paper_id && ` • Paper ID: ${paper.paper_id}`}
           </p>
           {assignment?.due_date && (

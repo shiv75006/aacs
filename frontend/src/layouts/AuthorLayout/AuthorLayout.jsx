@@ -17,27 +17,14 @@ const AuthorLayout = () => {
         <nav className="author-nav">
           <div className="nav-section">
             <h4>My Work</h4>
-            <Link to="/author/dashboard" className="nav-link">
-              📊 Dashboard
-            </Link>
-            <Link to="/author/submit" className="nav-link">
-              ✏️ Submit Paper
-            </Link>
             <Link to="/author/submissions" className="nav-link">
-              📄 My Submissions
+               My Submissions
             </Link>
           </div>
         </nav>
       </aside>
 
       <main className="author-main">
-        <div className="author-header">
-          <h1>Author Portal</h1>
-          <div className="author-header-right">
-            <span>Welcome, {user?.fname}!</span>
-          </div>
-        </div>
-
         <div className="author-content">
           <Outlet />
         </div>

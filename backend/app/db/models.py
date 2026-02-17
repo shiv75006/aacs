@@ -1,5 +1,6 @@
 """SQLAlchemy ORM Models mapped to MySQL database"""
-from sqlalchemy import Column, Integer, String, Text, DateTime, Date, func, Float
+from sqlalchemy import Column, Integer, String, Text, DateTime, Date, func, Float, Boolean, ForeignKey
+from sqlalchemy.orm import relationship
 from datetime import datetime, date
 from app.db.database import Base
 
@@ -22,6 +23,11 @@ class User(Base):
     contact = Column(String(20), nullable=True)
     address = Column(Text, nullable=True)
     added_on = Column(DateTime, default=datetime.utcnow, nullable=True)
+    # New author profile fields
+    salutation = Column(String(20), nullable=True)  # Prof. Dr., Prof., Dr., Mr., Ms.
+    designation = Column(String(100), nullable=True)  # Designation/Occupation
+    department = Column(String(200), nullable=True)
+    organisation = Column(String(255), nullable=True)
     
     def to_dict(self):
         """Convert model to dictionary"""
@@ -37,7 +43,11 @@ class User(Base):
             "specialization": self.specialization,
             "contact": self.contact,
             "address": self.address,
-            "added_on": self.added_on.isoformat() if self.added_on else None
+            "added_on": self.added_on.isoformat() if self.added_on else None,
+            "salutation": self.salutation,
+            "designation": self.designation,
+            "department": self.department,
+            "organisation": self.organisation
         }
 
 class Journal(Base):
@@ -144,6 +154,19 @@ class Paper(Base):
     author = Column(String(100), nullable=False, default="")
     coauth = Column(String(200), nullable=False, default="")
     rev = Column(String(200), nullable=False, default="")
+    # Version tracking fields
+    version_number = Column(Integer, nullable=False, default=1)
+    revision_count = Column(Integer, nullable=False, default=0)
+    revision_deadline = Column(DateTime, nullable=True)
+    revision_notes = Column(Text, nullable=True)
+    revision_requested_date = Column(DateTime, nullable=True)
+    # New paper metadata fields
+    research_area = Column(String(200), nullable=True)
+    message_to_editor = Column(Text, nullable=True)
+    terms_accepted = Column(Boolean, nullable=False, default=False)
+    
+    # Relationship to co-authors
+    co_authors = relationship("PaperCoAuthor", back_populates="paper", cascade="all, delete-orphan")
     
     def to_dict(self):
         """Convert model to dictionary"""
@@ -159,7 +182,10 @@ class Paper(Base):
             "added_by": self.added_by,
             "status": self.status,
             "author": self.author,
-            "coauth": self.coauth
+            "coauth": self.coauth,
+            "research_area": self.research_area,
+            "message_to_editor": self.message_to_editor,
+            "terms_accepted": self.terms_accepted
         }
 
 
@@ -199,6 +225,36 @@ class PaperPublished(Base):
         }
 
 
+class PaperVersion(Base):
+    """Paper version history model for tracking all submissions and revisions"""
+    __tablename__ = "paper_version"
+    __table_args__ = {"mysql_engine": "InnoDB"}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    paper_id = Column(Integer, nullable=False, index=True)
+    version_number = Column(Integer, nullable=False)
+    file = Column(String(200), nullable=False)
+    file_size = Column(Integer, nullable=True)
+    uploaded_on = Column(DateTime, nullable=False, default=datetime.utcnow)
+    revision_reason = Column(Text, nullable=True)
+    change_summary = Column(Text, nullable=True)
+    uploaded_by = Column(String(100), nullable=False)
+    
+    def to_dict(self):
+        """Convert model to dictionary"""
+        return {
+            "id": self.id,
+            "paper_id": self.paper_id,
+            "version_number": self.version_number,
+            "file": self.file,
+            "file_size": self.file_size,
+            "uploaded_on": self.uploaded_on.isoformat() if self.uploaded_on else None,
+            "revision_reason": self.revision_reason,
+            "change_summary": self.change_summary,
+            "uploaded_by": self.uploaded_by
+        }
+
+
 class PaperComment(Base):
     """Paper comments/feedback model"""
     __tablename__ = "paper_comment"
@@ -220,6 +276,12 @@ class OnlineReview(Base):
     paper_id = Column(Integer, nullable=True)
     reviewer_id = Column(String(100), nullable=True)
     assigned_on = Column(Date, nullable=True)
+    submitted_on = Column(DateTime, nullable=True)
+    date_submitted = Column(DateTime, nullable=True)
+    review_status = Column(String(50), default="pending", nullable=False)  # pending, in_progress, submitted, completed
+    review_submission_id = Column(Integer, nullable=True)
+    invitation_id = Column(Integer, nullable=True)
+    due_date = Column(DateTime, nullable=True)
     
     def to_dict(self):
         """Convert model to dictionary"""
@@ -227,7 +289,9 @@ class OnlineReview(Base):
             "id": self.id,
             "paper_id": self.paper_id,
             "reviewer_id": self.reviewer_id,
-            "assigned_on": self.assigned_on.isoformat() if self.assigned_on else None
+            "assigned_on": self.assigned_on.isoformat() if self.assigned_on else None,
+            "submitted_on": self.submitted_on.isoformat() if self.submitted_on else None,
+            "review_status": self.review_status
         }
 
 
@@ -285,4 +349,113 @@ class ReviewerInvitation(Base):
             "accepted_on": self.accepted_on.isoformat() if self.accepted_on else None,
             "declined_on": self.declined_on.isoformat() if self.declined_on else None,
             "token_expiry": self.token_expiry.isoformat() if self.token_expiry else None,
+        }
+
+
+class ReviewSubmission(Base):
+    """Review submission model for storing reviewer feedback with version control"""
+    __tablename__ = "review_submission"
+    __table_args__ = {"mysql_engine": "InnoDB"}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    
+    # Link to paper and reviewer
+    paper_id = Column(Integer, nullable=False, index=True)
+    reviewer_id = Column(String(100), nullable=False, index=True)
+    
+    # Link to online_review assignment
+    assignment_id = Column(Integer, nullable=True, index=True)
+    
+    # Review ratings (1-5 scale)
+    technical_quality = Column(Integer, nullable=True)  # 1-5
+    clarity = Column(Integer, nullable=True)  # 1-5
+    originality = Column(Integer, nullable=True)  # 1-5
+    significance = Column(Integer, nullable=True)  # 1-5
+    overall_rating = Column(Integer, nullable=True)  # 1-5
+    
+    # Review comments
+    author_comments = Column(Text, nullable=True)  # Public comments for authors
+    confidential_comments = Column(Text, nullable=True)  # Private comments for editors
+    
+    # Recommendation
+    recommendation = Column(String(50), nullable=True)  # accept, minor_revisions, major_revisions, reject
+    
+    # File upload tracking for review reports (multiple versions)
+    review_report_file = Column(String(500), nullable=True)  # Path to uploaded review report
+    file_version = Column(Integer, default=1)  # Version number for multiple uploads
+    
+    # Status and timestamps
+    status = Column(String(50), default="draft")  # draft, submitted
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    submitted_at = Column(DateTime, nullable=True)
+    
+    def to_dict(self):
+        """Convert model to dictionary"""
+        return {
+            "id": self.id,
+            "paper_id": self.paper_id,
+            "reviewer_id": self.reviewer_id,
+            "assignment_id": self.assignment_id,
+            "technical_quality": self.technical_quality,
+            "clarity": self.clarity,
+            "originality": self.originality,
+            "significance": self.significance,
+            "overall_rating": self.overall_rating,
+            "author_comments": self.author_comments,
+            "confidential_comments": self.confidential_comments,
+            "recommendation": self.recommendation,
+            "review_report_file": self.review_report_file,
+            "file_version": self.file_version,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "submitted_at": self.submitted_at.isoformat() if self.submitted_at else None,
+        }
+
+
+class PaperCoAuthor(Base):
+    """Paper co-author model for storing structured co-author information"""
+    __tablename__ = "paper_co_author"
+    __table_args__ = {"mysql_engine": "InnoDB"}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    paper_id = Column(Integer, ForeignKey("paper.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # Author details
+    salutation = Column(String(20), nullable=True)  # Prof. Dr., Prof., Dr., Mr., Ms.
+    first_name = Column(String(100), nullable=False)
+    middle_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=False)
+    email = Column(String(255), nullable=True)
+    designation = Column(String(100), nullable=True)  # Designation/Occupation
+    department = Column(String(200), nullable=True)
+    organisation = Column(String(255), nullable=True)
+    
+    # Order and flags
+    author_order = Column(Integer, nullable=False, default=1)
+    is_corresponding = Column(Boolean, nullable=False, default=False)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relationship back to paper
+    paper = relationship("Paper", back_populates="co_authors")
+    
+    def to_dict(self):
+        """Convert model to dictionary"""
+        return {
+            "id": self.id,
+            "paper_id": self.paper_id,
+            "salutation": self.salutation,
+            "first_name": self.first_name,
+            "middle_name": self.middle_name,
+            "last_name": self.last_name,
+            "email": self.email,
+            "designation": self.designation,
+            "department": self.department,
+            "organisation": self.organisation,
+            "author_order": self.author_order,
+            "is_corresponding": self.is_corresponding,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }

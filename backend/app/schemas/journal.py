@@ -1,6 +1,6 @@
 """Pydantic schemas for journal-related requests and responses"""
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List
 from datetime import date, datetime
 
 
@@ -133,3 +133,118 @@ class JournalListResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+# ============================================
+# Co-Author Schemas
+# ============================================
+
+class CoAuthorCreate(BaseModel):
+    """Schema for creating a co-author entry"""
+    salutation: Optional[str] = Field(None, max_length=20, description="Salutation (Prof. Dr., Prof., Dr., Mr., Ms.)")
+    first_name: str = Field(..., min_length=1, max_length=100, description="First name")
+    middle_name: Optional[str] = Field(None, max_length=100, description="Middle name (optional)")
+    last_name: str = Field(..., min_length=1, max_length=100, description="Last name")
+    email: Optional[EmailStr] = Field(None, description="Email address (optional)")
+    designation: Optional[str] = Field(None, max_length=100, description="Designation/Occupation")
+    department: Optional[str] = Field(None, max_length=200, description="Department")
+    organisation: Optional[str] = Field(None, max_length=255, description="Organisation/Institution")
+    author_order: int = Field(default=1, ge=1, description="Order of authorship")
+    is_corresponding: bool = Field(default=False, description="Is corresponding author")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "salutation": "Dr.",
+                "first_name": "John",
+                "middle_name": "William",
+                "last_name": "Smith",
+                "email": "john.smith@university.edu",
+                "designation": "Associate Professor",
+                "department": "Computer Science",
+                "organisation": "University of Technology",
+                "author_order": 2,
+                "is_corresponding": False
+            }
+        }
+
+
+class CoAuthorResponse(BaseModel):
+    """Schema for co-author response"""
+    id: int = Field(..., description="Co-author ID")
+    paper_id: int = Field(..., description="Paper ID")
+    salutation: Optional[str] = Field(None, description="Salutation")
+    first_name: str = Field(..., description="First name")
+    middle_name: Optional[str] = Field(None, description="Middle name")
+    last_name: str = Field(..., description="Last name")
+    email: Optional[str] = Field(None, description="Email address")
+    designation: Optional[str] = Field(None, description="Designation/Occupation")
+    department: Optional[str] = Field(None, description="Department")
+    organisation: Optional[str] = Field(None, description="Organisation/Institution")
+    author_order: int = Field(..., description="Order of authorship")
+    is_corresponding: bool = Field(..., description="Is corresponding author")
+    
+    class Config:
+        from_attributes = True
+
+
+class AuthorProfileCreate(BaseModel):
+    """Schema for creating/updating author profile (primary author details)"""
+    salutation: Optional[str] = Field(None, max_length=20, description="Salutation (Prof. Dr., Prof., Dr., Mr., Ms.)")
+    first_name: str = Field(..., min_length=1, max_length=100, description="First name")
+    middle_name: Optional[str] = Field(None, max_length=100, description="Middle name (optional)")
+    last_name: str = Field(..., min_length=1, max_length=100, description="Last name")
+    designation: Optional[str] = Field(None, max_length=100, description="Designation/Occupation")
+    department: Optional[str] = Field(None, max_length=200, description="Department")
+    organisation: Optional[str] = Field(None, max_length=255, description="Organisation/Institution")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "salutation": "Prof. Dr.",
+                "first_name": "Jane",
+                "middle_name": None,
+                "last_name": "Doe",
+                "designation": "Professor",
+                "department": "Physics",
+                "organisation": "MIT"
+            }
+        }
+
+
+class PaperSubmitExtended(BaseModel):
+    """Extended paper submission schema with metadata and co-authors"""
+    title: str = Field(..., min_length=10, max_length=500, description="Paper title")
+    abstract: str = Field(..., min_length=100, max_length=2000, description="Paper abstract")
+    keywords: str = Field(..., min_length=1, max_length=1000, description="Keywords (comma-separated)")
+    journal_id: int = Field(..., description="Target journal ID")
+    research_area: Optional[str] = Field(None, max_length=200, description="Research area/field")
+    message_to_editor: Optional[str] = Field(None, description="Message to the editor (optional)")
+    # Primary author details
+    author_details: AuthorProfileCreate = Field(..., description="Primary author details")
+    # Co-authors list
+    co_authors: List[CoAuthorCreate] = Field(default=[], description="List of co-authors")
+    # Terms and conditions
+    terms_accepted: bool = Field(..., description="Terms and conditions accepted")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "title": "A Novel Approach to Machine Learning",
+                "abstract": "This paper presents a novel approach...",
+                "keywords": "machine learning, deep learning, neural networks",
+                "journal_id": 1,
+                "research_area": "Artificial Intelligence",
+                "message_to_editor": "Please consider this for the special issue.",
+                "author_details": {
+                    "salutation": "Dr.",
+                    "first_name": "Alice",
+                    "last_name": "Johnson",
+                    "designation": "Research Scientist",
+                    "department": "AI Research",
+                    "organisation": "Tech Corp"
+                },
+                "co_authors": [],
+                "terms_accepted": True
+            }
+        }

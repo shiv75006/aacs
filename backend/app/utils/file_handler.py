@@ -6,8 +6,9 @@ from fastapi import UploadFile
 from datetime import datetime
 import mimetypes
 
-# Base directory for storing uploaded papers
-UPLOAD_BASE_DIR = Path(__file__).parent.parent.parent.parent / "uploads" / "papers"
+# Base directory for storing uploaded papers (inside backend folder)
+# Path: backend/uploads/papers
+UPLOAD_BASE_DIR = Path(__file__).parent.parent.parent / "uploads" / "papers"
 ALLOWED_EXTENSIONS = {'.pdf', '.doc', '.docx'}
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 

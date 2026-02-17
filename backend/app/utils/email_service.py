@@ -65,8 +65,8 @@ class EmailService:
             
             logger.debug(f"Attempting to send email to {to_emails} via {SMTP_SERVER}:{SMTP_PORT}")
             
-            # Send email
-            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            # Send email with timeout
+            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10) as server:
                 logger.debug("SMTP connection established")
                 server.starttls()
                 logger.debug("STARTTLS successful")

@@ -20,9 +20,10 @@ export const apiService = {
   post: async (endpoint, data, config = {}) => {
     try {
       const response = await apiClient.post(endpoint, data, config);
+      console.log(`POST ${endpoint}:`, response.data);
       return response.data;
     } catch (error) {
-      console.error('POST request failed:', error);
+      console.error(`POST ${endpoint} failed:`, error);
       throw error;
     }
   },
@@ -120,17 +121,86 @@ export const acsApi = {
     listSubmissions: (skip = 0, limit = 20, statusFilter = '') =>
       apiService.get(`/api/v1/author/submissions?skip=${skip}&limit=${limit}${statusFilter ? `&status_filter=${statusFilter}` : ''}`),
     getSubmissionDetail: (paperId) => apiService.get(`/api/v1/author/submissions/${paperId}`),
-    submitPaper: ({ title, abstract, keywords, journal_id, file }) => {
+    submitPaper: ({ title, abstract, keywords, journal_id, file, research_area, message_to_editor, terms_accepted, author_details, co_authors }) => {
+      console.log('submitPaper called with:', { 
+        title, 
+        abstract: abstract?.substring(0, 50) + '...', 
+        keywords, 
+        journal_id, 
+        fileName: file?.name,
+        fileSize: file?.size,
+        fileType: file?.type,
+        isFileObject: file instanceof File,
+        research_area,
+        terms_accepted,
+        author_details,
+        co_authors_count: co_authors?.length || 0
+      });
+      
+      if (!file || !(file instanceof File)) {
+        console.error('ERROR: file is not a valid File object!', file);
+        return Promise.reject(new Error('Invalid file - must be a File object'));
+      }
+      
       const formData = new FormData();
       formData.append('title', title);
       formData.append('abstract', abstract);
       formData.append('keywords', keywords);
-      formData.append('journal_id', journal_id);
-      formData.append('file', file);
-      // Let axios interceptor handle Content-Type for FormData
-      return apiService.post('/api/v1/author/submit-paper', formData);
+      formData.append('journal_id', String(journal_id));
+      formData.append('file', file, file.name);
+      formData.append('research_area', research_area || '');
+      formData.append('message_to_editor', message_to_editor || '');
+      formData.append('terms_accepted', terms_accepted ? 'true' : 'false');
+      formData.append('author_details', JSON.stringify(author_details || {}));
+      formData.append('co_authors', JSON.stringify(co_authors || []));
+      
+      // Debug FormData contents
+      console.log('FormData entries:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`  ${key}:`, value instanceof File ? `File(${value.name}, ${value.size} bytes)` : value);
+      }
+      
+      console.log('Posting to /api/v1/author/submit-paper');
+      
+      return apiClient.post('/api/v1/author/submit-paper', formData, {
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log(`Upload progress: ${percentCompleted}% (${progressEvent.loaded}/${progressEvent.total} bytes)`);
+        }
+      }).then(response => {
+        console.log('Response received:', response.data);
+        return response.data;
+      });
     },
     getPaperComments: (paperId) => apiService.get(`/api/v1/author/submissions/${paperId}/comments`),
+    getSubmissionReviews: (paperId) => apiService.get(`/api/v1/author/submissions/${paperId}/reviews`),
+    getEditorDecision: (paperId) => apiService.get(`/api/v1/author/submissions/${paperId}/decision`),
+    getRevisionHistory: (paperId) => apiService.get(`/api/v1/author/submissions/${paperId}/revisions`),
+    resubmitPaper: (paperId, file, revisionReason, changeSummary) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('revision_reason', revisionReason);
+      if (changeSummary) formData.append('change_summary', changeSummary);
+      return apiService.post(`/api/v1/author/submissions/${paperId}/resubmit`, formData);
+    },
+    downloadPaper: (paperId) =>
+      apiClient.get(`/api/v1/author/submissions/${paperId}/download`, {
+        responseType: 'blob'
+      }),
+    downloadReviewReport: (paperId, reviewId) =>
+      apiClient.get(`/api/v1/author/submissions/${paperId}/reviews/${reviewId}/download-report`, {
+        responseType: 'blob'
+      }),
+    // Get URLs for viewing files in browser
+    getViewPaperUrl: (paperId) => `/api/v1/author/submissions/${paperId}/view`,
+    getViewReviewReportUrl: (paperId, reviewId) => `/api/v1/author/submissions/${paperId}/reviews/${reviewId}/view-report`,
+    getAuthorProfile: () => apiService.get('/api/v1/author/profile'),
+    updateAuthorProfile: (profileData) => apiService.post('/api/v1/author/profile', profileData),
+    requestReviewers: (paperId, suggestedReviewers, justification) =>
+      apiService.post(`/api/v1/author/submissions/${paperId}/request-reviewers`, {
+        suggested_reviewers: suggestedReviewers,
+        justification: justification
+      }),
   },
 
   // Editor endpoints
@@ -138,6 +208,7 @@ export const acsApi = {
     getDashboardStats: () => apiService.get('/api/v1/editor/dashboard/stats'),
     getPaperQueue: (skip = 0, limit = 20, statusFilter = '') =>
       apiService.get(`/api/v1/editor/paper-queue?skip=${skip}&limit=${limit}${statusFilter ? `&status_filter=${statusFilter}` : ''}`),
+    getPaperDetail: (paperId) => apiService.get(`/api/v1/editor/papers/${paperId}`),
     assignReviewer: (paperId, reviewerId) =>
       apiService.post(`/api/v1/editor/papers/${paperId}/assign-reviewer`, { reviewer_id: reviewerId }),
     updatePaperStatus: (paperId, status, comments = '') =>
@@ -177,19 +248,30 @@ export const acsApi = {
     listAssignments: (skip = 0, limit = 20, statusFilter = '', sortBy = 'due_soon') =>
       apiService.get(`/api/v1/reviewer/assignments?skip=${skip}&limit=${limit}${statusFilter ? `&status_filter=${statusFilter}` : ''}&sort_by=${sortBy}`),
     getAssignmentDetail: (reviewId) => apiService.get(`/api/v1/reviewer/assignments/${reviewId}`),
+    getReviewDetail: (reviewId) => apiService.get(`/api/v1/reviewer/assignments/${reviewId}/detail`),
+    saveReviewDraft: (reviewId, reviewData) =>
+      apiService.post(`/api/v1/reviewer/assignments/${reviewId}/save-draft`, reviewData),
     submitReview: (reviewId, reviewData) =>
-      apiService.post(`/api/v1/reviewer/assignments/${reviewId}/submit-review`, {
-        technical_quality: reviewData.technicalQuality,
-        clarity: reviewData.clarity,
-        originality: reviewData.originality,
-        significance: reviewData.significance,
-        overall_rating: reviewData.overallRating,
-        author_comments: reviewData.authorComments,
-        confidential_comments: reviewData.confidentialComments,
-        recommendation: reviewData.recommendation
+      apiService.post(`/api/v1/reviewer/assignments/${reviewId}/submit`, reviewData),
+    uploadReviewReport: (reviewId, file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return apiClient.post(`/api/v1/reviewer/assignments/${reviewId}/upload-report`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    },
+    downloadReviewReport: (reviewId) =>
+      apiClient.get(`/api/v1/reviewer/assignments/${reviewId}/download-report`, {
+        responseType: 'blob'
       }),
     getReviewHistory: () => apiService.get('/api/v1/reviewer/history'),
     getReviewerProfile: () => apiService.get('/api/v1/reviewer/profile'),
+    getPendingInvitations: (skip = 0, limit = 20) =>
+      apiService.get(`/api/v1/reviewer/invitations?skip=${skip}&limit=${limit}`),
+    acceptInvitation: (invitationId) =>
+      apiService.post(`/api/v1/reviewer/invitations/${invitationId}/accept`, {}),
+    declineInvitation: (invitationId, reason = '') =>
+      apiService.post(`/api/v1/reviewer/invitations/${invitationId}/decline?${reason ? `reason=${encodeURIComponent(reason)}` : ''}`, {}),
   },
 };
 

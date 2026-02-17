@@ -11,6 +11,47 @@ export const paperNormalizer = {
   normalizePaper: (rawData) => {
     if (!rawData) return null;
 
+    // Handle journal - can be string, object, or nested
+    let journalId = rawData.journal_id;
+    let journalName = rawData.journal_name || 'Unknown Journal';
+    if (rawData.journal) {
+      if (typeof rawData.journal === 'object') {
+        journalId = journalId || rawData.journal.id;
+        journalName = rawData.journal.name || journalName;
+      } else {
+        journalName = rawData.journal;
+      }
+    }
+
+    // Handle author - can be string, object, or nested
+    let authorId = rawData.author_id || rawData.added_by;
+    let authorName = rawData.author_name || '';
+    let authorEmail = rawData.author_email || '';
+    let authorAffiliation = '';
+    if (rawData.author) {
+      if (typeof rawData.author === 'object') {
+        authorId = authorId || rawData.author.id;
+        authorName = rawData.author.name || authorName;
+        authorEmail = rawData.author.email || authorEmail;
+        authorAffiliation = rawData.author.affiliation || '';
+      } else {
+        authorName = rawData.author;
+      }
+    }
+
+    // Handle co-authors - can be array of strings or array of objects
+    let coAuthors = [];
+    if (Array.isArray(rawData.co_authors)) {
+      coAuthors = rawData.co_authors.map(ca => {
+        if (typeof ca === 'object') {
+          return `${ca.first_name || ''} ${ca.middle_name || ''} ${ca.last_name || ''}`.trim() || ca.email || 'Unknown';
+        }
+        return ca;
+      });
+    } else if (typeof rawData.co_authors === 'string') {
+      coAuthors = rawData.co_authors.split(',').filter(a => a.trim());
+    }
+
     return {
       id: rawData.id || rawData.paper_id,
       title: rawData.title || rawData.name || 'Untitled',
@@ -20,17 +61,16 @@ export const paperNormalizer = {
         : (rawData.keywords || '').split(',').filter(k => k.trim()),
       paperCode: rawData.code || rawData.paper_code || '',
       journal: {
-        id: rawData.journal_id || rawData.journal?.id,
-        name: rawData.journal_name || rawData.journal || 'Unknown Journal'
+        id: journalId,
+        name: journalName
       },
       author: {
-        id: rawData.author_id || rawData.added_by,
-        name: rawData.author_name || rawData.author || '',
-        email: rawData.author_email || ''
+        id: authorId,
+        name: authorName,
+        email: authorEmail,
+        affiliation: authorAffiliation
       },
-      coAuthors: Array.isArray(rawData.co_authors)
-        ? rawData.co_authors
-        : (rawData.co_authors || '').split(',').filter(a => a.trim()),
+      coAuthors: coAuthors,
       status: rawData.status || 'unknown',
       submittedDate: rawData.submitted_date || rawData.added_on || new Date().toISOString(),
       filePath: rawData.file_path || rawData.file || '',
@@ -43,6 +83,12 @@ export const paperNormalizer = {
       // Review-related fields (from OnlineReview model)
       reviews: rawData.reviews ? rawData.reviews.map(r => paperNormalizer.normalizeReview(r)) : [],
       
+      // Assigned reviewers with full details
+      assignedReviewers: rawData.assigned_reviewers || [],
+      reviewStatus: rawData.review_status || 'not_assigned',
+      totalReviewers: rawData.total_reviewers || 0,
+      completedReviews: rawData.completed_reviews || 0,
+      
       // Decision-related fields
       decision: rawData.decision ? paperNormalizer.normalizeDecision(rawData.decision) : null,
       
@@ -50,6 +96,14 @@ export const paperNormalizer = {
       mailStatus: rawData.mail_status || rawData.mailstatus,
       createdAt: rawData.created_at,
       updatedAt: rawData.updated_at,
+      
+      // Version info
+      versionNumber: rawData.version_number,
+      revisionCount: rawData.revision_count,
+      revisionDeadline: rawData.revision_deadline,
+      revisionNotes: rawData.revision_notes,
+      researchArea: rawData.research_area,
+      messageToEditor: rawData.message_to_editor,
       
       // Original data for fallback
       _raw: rawData
@@ -90,7 +144,8 @@ export const paperNormalizer = {
       authorComments: rawData.author_comments || rawData.comments || '',
       confidentialComments: rawData.confidential_comments || '',
       reviewComment: rawData.review_comment || '',
-      submittedDate: rawData.submitted_date || rawData.date_submitted,
+      reviewReportFile: rawData.review_report_file || null,
+      submittedDate: rawData.submitted_date || rawData.date_submitted || rawData.date,
       assignedDate: rawData.assigned_date || rawData.date_assigned,
       dueDate: rawData.due_date,
       priority: rawData.priority,

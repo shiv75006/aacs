@@ -89,6 +89,8 @@ const InvitationPage = () => {
       console.error('Failed to accept invitation:', err);
       if (err.response?.status === 410) {
         setError('This invitation has expired.');
+      } else if (err.response?.status === 409) {
+        setError(err.response.data?.detail || 'You are already assigned as a reviewer for this paper. Duplicate assignments are not allowed.');
       } else if (err.response?.status === 400) {
         setError(err.response.data?.detail || 'Unable to accept invitation. It may have already been accepted or declined.');
       } else {

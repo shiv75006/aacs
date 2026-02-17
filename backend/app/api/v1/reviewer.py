@@ -1,11 +1,13 @@
 """Reviewer API endpoints"""
-from fastapi import APIRouter, Depends, status, HTTPException, Query
+from fastapi import APIRouter, Depends, status, HTTPException, Query, File, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
-from datetime import datetime
+from datetime import datetime, date, timedelta
+import os
 from app.db.database import get_db
-from app.db.models import Paper, OnlineReview, User
-from app.core.security import get_current_user
+from app.db.models import Paper, Journal, OnlineReview, User, ReviewerInvitation, ReviewSubmission
+from app.core.security import get_current_user, get_current_user_from_token_or_query
 from app.utils.auth_helpers import check_role, role_matches
 router = APIRouter(prefix="/api/v1/reviewer", tags=["Reviewer"])
 
@@ -32,10 +34,17 @@ async def get_reviewer_stats(
             OnlineReview.reviewer_id == reviewer_id
         ).scalar() or 0
         
-        # For now, pending and completed are estimated based on total
-        # In a real scenario, you'd have a status field tracking this
-        pending_reviews = max(0, total_assignments - 1)  # Approximate
-        completed_reviews = 1 if total_assignments > 0 else 0  # Approximate
+        # Count pending reviews (using review_status field)
+        pending_reviews = db.query(func.count(OnlineReview.id)).filter(
+            OnlineReview.reviewer_id == reviewer_id,
+            OnlineReview.review_status == "pending"
+        ).scalar() or 0
+        
+        # Count completed reviews (using review_status field)
+        completed_reviews = db.query(func.count(OnlineReview.id)).filter(
+            OnlineReview.reviewer_id == reviewer_id,
+            OnlineReview.review_status == "completed"
+        ).scalar() or 0
         
         return {
             "total_assignments": total_assignments,
@@ -49,6 +58,245 @@ async def get_reviewer_stats(
         import logging
         logging.error(f"Error fetching reviewer stats: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching stats: {str(e)}")
+
+
+@router.get("/invitations")
+async def get_pending_invitations(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get pending reviewer invitations for the current user.
+    
+    Args:
+        skip: Number of records to skip
+        limit: Number of records to return
+        
+    Returns:
+        List of pending invitations
+    """
+    try:
+        if not check_role(current_user.get("role"), "reviewer"):
+            raise HTTPException(status_code=403, detail="Reviewer access required")
+        
+        user_id = current_user.get("id")
+        user_email = current_user.get("email")
+        
+        # Get invitations for this reviewer (by ID if accepted before, or by email if pending)
+        query = db.query(ReviewerInvitation).filter(
+            (ReviewerInvitation.reviewer_id == user_id) | (ReviewerInvitation.reviewer_email == user_email)
+        ).filter(
+            ReviewerInvitation.status == "pending"
+        ).order_by(desc(ReviewerInvitation.invited_on))
+        
+        total = query.count()
+        invitations = query.offset(skip).limit(limit).all()
+        
+        invitations_list = []
+        for invitation in invitations:
+            paper = db.query(Paper).filter(Paper.id == invitation.paper_id).first()
+            # added_by stores user ID, not email
+            author = db.query(User).filter(User.id == int(paper.added_by)).first() if paper and paper.added_by and paper.added_by.isdigit() else None
+            
+            # Get journal name from journal table
+            journal = None
+            if paper and paper.journal:
+                journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
+            
+            invitations_list.append({
+                "id": invitation.id,
+                "invitation_token": invitation.invitation_token,
+                "paper_id": invitation.paper_id,
+                "paper_title": paper.title if paper else "Unknown",
+                "author": f"{author.fname} {author.lname or ''}".strip() if author else "Unknown",
+                "journal": journal.fld_journal_name if journal else "Unknown",
+                "invited_on": invitation.invited_on.isoformat() if invitation.invited_on else None,
+                "token_expiry": invitation.token_expiry.isoformat() if invitation.token_expiry else None,
+                "invitation_message": invitation.invitation_message,
+                "status": invitation.status
+            })
+        
+        return {
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+            "invitations": invitations_list
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import logging
+        logging.error(f"Error fetching pending invitations: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching invitations: {str(e)}")
+
+
+@router.post("/invitations/{invitation_id}/accept")
+async def accept_invitation(
+    invitation_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Accept a reviewer invitation.
+    
+    Args:
+        invitation_id: ID of the invitation to accept
+        
+    Returns:
+        Updated invitation object and created assignment
+    """
+    try:
+        if not check_role(current_user.get("role"), "reviewer"):
+            raise HTTPException(status_code=403, detail="Reviewer access required")
+        
+        user_id = current_user.get("id")
+        user_email = current_user.get("email")
+        
+        invitation = db.query(ReviewerInvitation).filter(
+            ReviewerInvitation.id == invitation_id
+        ).first()
+        
+        if not invitation:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+        
+        # Verify that the invitation is for this user
+        if invitation.reviewer_email != user_email and invitation.reviewer_id != user_id:
+            raise HTTPException(status_code=403, detail="This invitation is not for you")
+        
+        # Check if invitation is still pending
+        if invitation.status != "pending":
+            raise HTTPException(status_code=400, detail=f"Invitation has already been {invitation.status}")
+        
+        # Check if token hasn't expired
+        if invitation.token_expiry < datetime.utcnow():
+            invitation.status = "expired"
+            db.commit()
+            raise HTTPException(status_code=400, detail="Invitation token has expired")
+        
+        # Check if reviewer is already assigned to this paper
+        existing_review = db.query(OnlineReview).filter(
+            OnlineReview.paper_id == invitation.paper_id,
+            OnlineReview.reviewer_id == str(user_id)
+        ).first()
+        
+        if existing_review:
+            raise HTTPException(
+                status_code=409,
+                detail=f"You are already assigned as a reviewer for this paper. Duplicate assignments are not allowed."
+            )
+        
+        # Update invitation
+        invitation.status = "accepted"
+        invitation.accepted_on = datetime.utcnow()
+        invitation.reviewer_id = user_id  # Store the reviewer ID
+        
+        # Create OnlineReview record so the assignment shows up in "My Assignments"
+        online_review = None
+        try:
+            online_review = OnlineReview(
+                paper_id=invitation.paper_id,
+                reviewer_id=str(user_id),
+                assigned_on=date.today()
+            )
+            db.add(online_review)
+            db.flush()  # Flush to make sure it's added
+        except Exception as e:
+            import logging
+            logging.error(f"Error creating OnlineReview: {str(e)}")
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Error creating assignment: {str(e)}")
+        
+        # Commit all changes
+        db.commit()
+        db.refresh(invitation)
+        if online_review:
+            db.refresh(online_review)
+        
+        paper = db.query(Paper).filter(Paper.id == invitation.paper_id).first()
+        
+        return {
+            "id": invitation.id,
+            "paper_id": invitation.paper_id,
+            "paper_title": paper.title if paper else "Unknown",
+            "status": invitation.status,
+            "accepted_on": invitation.accepted_on.isoformat() if invitation.accepted_on else None,
+            "message": "Invitation accepted successfully! Assignment has been added to your assignments."
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        import logging
+        logging.error(f"Error accepting invitation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error accepting invitation: {str(e)}")
+
+
+@router.post("/invitations/{invitation_id}/decline")
+async def decline_invitation(
+    invitation_id: int,
+    reason: str = Query(None),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Decline a reviewer invitation.
+    
+    Args:
+        invitation_id: ID of the invitation to decline
+        reason: Optional reason for declining
+        
+    Returns:
+        Updated invitation object
+    """
+    try:
+        if not check_role(current_user.get("role"), "reviewer"):
+            raise HTTPException(status_code=403, detail="Reviewer access required")
+        
+        user_id = current_user.get("id")
+        user_email = current_user.get("email")
+        
+        invitation = db.query(ReviewerInvitation).filter(
+            ReviewerInvitation.id == invitation_id
+        ).first()
+        
+        if not invitation:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+        
+        # Verify that the invitation is for this user
+        if invitation.reviewer_email != user_email and invitation.reviewer_id != user_id:
+            raise HTTPException(status_code=403, detail="This invitation is not for you")
+        
+        # Check if invitation is still pending
+        if invitation.status != "pending":
+            raise HTTPException(status_code=400, detail=f"Invitation has already been {invitation.status}")
+        
+        # Update invitation
+        invitation.status = "declined"
+        invitation.declined_on = datetime.utcnow()
+        invitation.decline_reason = reason or ""
+        
+        db.commit()
+        db.refresh(invitation)
+        
+        paper = db.query(Paper).filter(Paper.id == invitation.paper_id).first()
+        
+        return {
+            "id": invitation.id,
+            "paper_id": invitation.paper_id,
+            "paper_title": paper.title if paper else "Unknown",
+            "status": invitation.status,
+            "declined_on": invitation.declined_on.isoformat() if invitation.declined_on else None,
+            "decline_reason": invitation.decline_reason,
+            "message": "Invitation declined successfully"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import logging
+        logging.error(f"Error declining invitation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error declining invitation: {str(e)}")
 
 
 @router.get("/assignments")
@@ -94,14 +342,30 @@ async def list_assignments(
         for review in reviews:
             paper = db.query(Paper).filter(Paper.id == review.paper_id).first()
             
+            # Get author info - added_by stores user ID, not email
+            author = None
+            if paper and paper.added_by and paper.added_by.isdigit():
+                author = db.query(User).filter(User.id == int(paper.added_by)).first()
+            
+            # Get journal name from journal table
+            journal = None
+            if paper and paper.journal:
+                journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
+            
+            # Calculate due date (14 days from assignment by default)
+            due_date = None
+            if review.assigned_on:
+                due_date = (review.assigned_on + timedelta(days=14)).isoformat()
+            
             assignments_list.append({
                 "id": review.id,
                 "paper_id": review.paper_id,
                 "paper_title": paper.title if paper else "Unknown",
-                "author": paper.added_by if paper else "Unknown",
-                "journal": paper.journal if paper else "Unknown",
+                "author": f"{author.fname} {author.lname or ''}".strip() if author else "Unknown",
+                "journal": journal.fld_journal_name if journal else "Unknown",
                 "assigned_date": review.assigned_on.isoformat() if review.assigned_on else None,
-                "status": "pending"
+                "due_date": due_date,
+                "status": review.review_status or "pending"
             })
         
         return {
@@ -147,7 +411,11 @@ async def get_assignment_detail(
         if not paper:
             raise HTTPException(status_code=404, detail="Paper not found")
         
-        author = db.query(User).filter(User.email == paper.added_by).first()
+        # added_by stores user ID, not email
+        author = db.query(User).filter(User.id == int(paper.added_by)).first() if paper.added_by and paper.added_by.isdigit() else None
+        
+        # Get journal name from journal table
+        journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first() if paper.journal else None
         
         return {
             "review_id": review.id,
@@ -157,17 +425,17 @@ async def get_assignment_detail(
                 "abstract": paper.abstract,
                 "keywords": paper.keyword,
                 "author": {
-                    "name": f"{author.fname} {author.lname or ''}" if author else "Unknown",
-                    "email": author.email if author else "Unknown",
-                    "affiliation": author.affiliation if author else "Unknown"
+                    "name": f"{author.fname} {author.lname or ''}".strip() if author else "Unknown",
+                    "email": author.email if author else None,
+                    "affiliation": author.affiliation if author else None
                 },
-                "journal": paper.journal,
+                "journal": journal.fld_journal_name if journal else "Unknown",
                 "submitted_date": paper.added_on.isoformat() if paper.added_on else None,
                 "file_url": f"/static/{paper.file}" if paper.file else None
             },
             "assignment": {
                 "assigned_date": review.assigned_on.isoformat() if review.assigned_on else None,
-                "status": "pending"
+                "status": review.review_status or "pending"
             }
         }
     except HTTPException:
@@ -176,6 +444,530 @@ async def get_assignment_detail(
         import logging
         logging.error(f"Error fetching assignment detail: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching assignment: {str(e)}")
+
+
+@router.get("/assignments/{review_id}/detail")
+async def get_review_detail(
+    review_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get paper and review submission details for the review form.
+    
+    Args:
+        review_id: Review assignment ID
+        
+    Returns:
+        Paper details, assignment info, and existing review submission if any
+    """
+    try:
+        if not check_role(current_user.get("role"), "reviewer"):
+            raise HTTPException(status_code=403, detail="Reviewer access required")
+        
+        reviewer_id = str(current_user.get("id"))
+        
+        # Get the assignment
+        assignment = db.query(OnlineReview).filter(
+            OnlineReview.id == review_id,
+            OnlineReview.reviewer_id == reviewer_id
+        ).first()
+        
+        if not assignment:
+            raise HTTPException(status_code=404, detail="Assignment not found")
+        
+        # Get the paper
+        paper = db.query(Paper).filter(Paper.id == assignment.paper_id).first()
+        if not paper:
+            raise HTTPException(status_code=404, detail="Paper not found")
+        
+        # Get author info - added_by stores user ID, not email
+        author = db.query(User).filter(User.id == int(paper.added_by)).first() if paper.added_by and paper.added_by.isdigit() else None
+        
+        # Get journal name from journal table
+        journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first() if paper.journal else None
+        journal_name = journal.fld_journal_name if journal else "Unknown Journal"
+        
+        # Get existing review submission if any
+        review_submission = db.query(ReviewSubmission).filter(
+            ReviewSubmission.assignment_id == review_id,
+            ReviewSubmission.reviewer_id == reviewer_id
+        ).order_by(desc(ReviewSubmission.updated_at)).first()
+        
+        return {
+            "paper": {
+                "id": paper.id,
+                "title": paper.title,
+                "abstract": paper.abstract,
+                "keywords": paper.keyword,
+                "author": {
+                    "name": f"{author.fname} {author.lname or ''}".strip() if author else "Unknown",
+                    "email": author.email if author else None,
+                    "affiliation": author.affiliation if author else None
+                },
+                "journal": journal_name,
+                "submitted_date": paper.added_on.isoformat() if paper.added_on else None,
+                "file": paper.file
+            },
+            "assignment": {
+                "id": assignment.id,
+                "due_date": (assignment.assigned_on + timedelta(days=14)).isoformat() if assignment.assigned_on else None,
+                "status": assignment.review_status or "pending"
+            },
+            "review_submission": review_submission.to_dict() if review_submission else None
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import logging
+        logging.error(f"Error fetching review detail: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching review detail: {str(e)}")
+
+
+@router.get("/assignments/{review_id}/view-paper")
+async def view_paper_file(
+    review_id: int,
+    current_user: dict = Depends(get_current_user_from_token_or_query),
+    db: Session = Depends(get_db)
+):
+    """
+    View the paper file for a review assignment in browser.
+    
+    Args:
+        review_id: Review assignment ID
+        
+    Returns:
+        Paper file for inline viewing
+    """
+    from app.utils.file_handler import get_file_full_path
+    
+    if not check_role(current_user.get("role"), "reviewer"):
+        raise HTTPException(status_code=403, detail="Reviewer access required")
+    
+    reviewer_id = str(current_user.get("id"))
+    
+    # Verify reviewer is assigned to this paper
+    assignment = db.query(OnlineReview).filter(
+        OnlineReview.id == review_id,
+        OnlineReview.reviewer_id == reviewer_id
+    ).first()
+    
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    
+    # Get the paper
+    paper = db.query(Paper).filter(Paper.id == assignment.paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    if not paper.file:
+        raise HTTPException(status_code=404, detail="Paper file not found")
+    
+    # Get full file path from relative path stored in DB
+    filepath = get_file_full_path(paper.file)
+    
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Paper file not found on server")
+    
+    filename = filepath.name
+    
+    # Determine correct media type based on file extension
+    ext = filepath.suffix.lower()
+    media_types = {
+        '.pdf': 'application/pdf',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    }
+    media_type = media_types.get(ext, 'application/octet-stream')
+    
+    return FileResponse(
+        path=str(filepath),
+        filename=filename,
+        media_type=media_type,
+        headers={"Content-Disposition": f"inline; filename=\"{filename}\""}
+    )
+
+
+@router.post("/assignments/{review_id}/save-draft")
+async def save_review_draft(
+    review_id: int,
+    draft_data: dict,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Save a review as draft (auto-save). Updates status to in_progress on first save.
+    
+    Args:
+        review_id: Review assignment ID
+        draft_data: Draft data with ratings and comments
+        
+    Returns:
+        Saved review submission
+    """
+    try:
+        if not check_role(current_user.get("role"), "reviewer"):
+            raise HTTPException(status_code=403, detail="Reviewer access required")
+        
+        reviewer_id = str(current_user.get("id"))
+        
+        # Get the assignment
+        assignment = db.query(OnlineReview).filter(
+            OnlineReview.id == review_id,
+            OnlineReview.reviewer_id == reviewer_id
+        ).first()
+        
+        if not assignment:
+            raise HTTPException(status_code=404, detail="Assignment not found")
+        
+        # Check if review submission exists
+        review_submission = db.query(ReviewSubmission).filter(
+            ReviewSubmission.assignment_id == review_id,
+            ReviewSubmission.reviewer_id == reviewer_id
+        ).first()
+        
+        if not review_submission:
+            # Create new review submission
+            review_submission = ReviewSubmission(
+                paper_id=assignment.paper_id,
+                reviewer_id=reviewer_id,
+                assignment_id=review_id,
+                status="draft"
+            )
+        
+        # Update fields from draft_data
+        if 'technical_quality' in draft_data:
+            review_submission.technical_quality = draft_data.get('technical_quality')
+        if 'clarity' in draft_data:
+            review_submission.clarity = draft_data.get('clarity')
+        if 'originality' in draft_data:
+            review_submission.originality = draft_data.get('originality')
+        if 'significance' in draft_data:
+            review_submission.significance = draft_data.get('significance')
+        if 'overall_rating' in draft_data:
+            review_submission.overall_rating = draft_data.get('overall_rating')
+        if 'author_comments' in draft_data:
+            review_submission.author_comments = draft_data.get('author_comments')
+        if 'confidential_comments' in draft_data:
+            review_submission.confidential_comments = draft_data.get('confidential_comments')
+        if 'recommendation' in draft_data:
+            review_submission.recommendation = draft_data.get('recommendation')
+        
+        # Auto-update assignment status to in_progress on first save
+        if assignment.review_status != 'in_progress':
+            assignment.review_status = 'in_progress'
+        
+        db.add(review_submission)
+        db.add(assignment)
+        db.commit()
+        db.refresh(review_submission)
+        db.refresh(assignment)
+        
+        return {
+            "message": "Draft saved successfully",
+            "review_submission": review_submission.to_dict(),
+            "assignment_status": assignment.review_status
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        import logging
+        logging.error(f"Error saving draft: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error saving draft: {str(e)}")
+
+
+@router.post("/assignments/{review_id}/submit")
+async def submit_review_complete(
+    review_id: int,
+    review_data: dict,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Submit a completed review with full validation.
+    
+    Args:
+        review_id: Review assignment ID
+        review_data: Complete review data
+        
+    Returns:
+        Submitted review submission
+    """
+    try:
+        if not check_role(current_user.get("role"), "reviewer"):
+            raise HTTPException(status_code=403, detail="Reviewer access required")
+        
+        reviewer_id = str(current_user.get("id"))
+        
+        # Validate required fields
+        required_fields = ['technical_quality', 'clarity', 'originality', 'significance', 'overall_rating', 'recommendation']
+        for field in required_fields:
+            if field not in review_data or review_data[field] is None:
+                raise HTTPException(status_code=400, detail=f"{field} is required")
+        
+        # Validate ratings are 1-5
+        for field in ['technical_quality', 'clarity', 'originality', 'significance', 'overall_rating']:
+            value = review_data.get(field)
+            if not isinstance(value, int) or value < 1 or value > 5:
+                raise HTTPException(status_code=400, detail=f"{field} must be between 1 and 5")
+        
+        # Validate comments (at least 50 chars total)
+        author_comments = review_data.get('author_comments', '')
+        confidential_comments = review_data.get('confidential_comments', '')
+        total_comments = author_comments + confidential_comments
+        if len(total_comments.strip()) < 50:
+            raise HTTPException(status_code=400, detail="Comments must be at least 50 characters total")
+        
+        # Get the assignment
+        assignment = db.query(OnlineReview).filter(
+            OnlineReview.id == review_id,
+            OnlineReview.reviewer_id == reviewer_id
+        ).first()
+        
+        if not assignment:
+            raise HTTPException(status_code=404, detail="Assignment not found")
+        
+        # Get or create review submission
+        review_submission = db.query(ReviewSubmission).filter(
+            ReviewSubmission.assignment_id == review_id,
+            ReviewSubmission.reviewer_id == reviewer_id
+        ).first()
+        
+        if not review_submission:
+            review_submission = ReviewSubmission(
+                paper_id=assignment.paper_id,
+                reviewer_id=reviewer_id,
+                assignment_id=review_id
+            )
+        
+        # Update all fields
+        review_submission.technical_quality = review_data.get('technical_quality')
+        review_submission.clarity = review_data.get('clarity')
+        review_submission.originality = review_data.get('originality')
+        review_submission.significance = review_data.get('significance')
+        review_submission.overall_rating = review_data.get('overall_rating')
+        review_submission.author_comments = review_data.get('author_comments')
+        review_submission.confidential_comments = review_data.get('confidential_comments')
+        review_submission.recommendation = review_data.get('recommendation')
+        review_submission.status = "submitted"
+        review_submission.submitted_at = datetime.utcnow()
+        
+        # Update assignment status
+        assignment.review_status = 'completed'
+        assignment.date_submitted = datetime.utcnow()
+        
+        db.add(review_submission)
+        db.add(assignment)
+        
+        # Update paper status to 'reviewed' when a review is submitted
+        paper = db.query(Paper).filter(Paper.id == assignment.paper_id).first()
+        if paper and paper.status in ['submitted', 'under_review']:
+            paper.status = 'reviewed'
+            db.add(paper)
+        
+        db.commit()
+        db.refresh(review_submission)
+        db.refresh(assignment)
+        
+        return {
+            "message": "Review submitted successfully",
+            "review_submission": review_submission.to_dict(),
+            "assignment": {
+                "id": assignment.id,
+                "status": assignment.review_status,
+                "submitted_on": assignment.date_submitted.isoformat() if assignment.date_submitted else None
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        import logging
+        logging.error(f"Error submitting review: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error submitting review: {str(e)}")
+
+
+@router.post("/assignments/{review_id}/upload-report")
+async def upload_review_report(
+    review_id: int,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Upload a review report file with version control.
+    
+    Args:
+        review_id: Review assignment ID
+        file: Report file to upload
+        
+    Returns:
+        File upload info with path and version
+    """
+    try:
+        if not check_role(current_user.get("role"), "reviewer"):
+            raise HTTPException(status_code=403, detail="Reviewer access required")
+        
+        reviewer_id = str(current_user.get("id"))
+        
+        # Validate file type
+        allowed_types = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+        if file.content_type not in allowed_types:
+            raise HTTPException(status_code=400, detail="Only PDF, DOC, and DOCX files are allowed")
+        
+        # Read file content to validate size (10MB max)
+        content = await file.read()
+        if len(content) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File size must be less than 10MB")
+        
+        # Get the assignment
+        assignment = db.query(OnlineReview).filter(
+            OnlineReview.id == review_id,
+            OnlineReview.reviewer_id == reviewer_id
+        ).first()
+        
+        if not assignment:
+            raise HTTPException(status_code=404, detail="Assignment not found")
+        
+        # Get or create review submission
+        review_submission = db.query(ReviewSubmission).filter(
+            ReviewSubmission.assignment_id == review_id,
+            ReviewSubmission.reviewer_id == reviewer_id
+        ).first()
+        
+        if not review_submission:
+            review_submission = ReviewSubmission(
+                paper_id=assignment.paper_id,
+                reviewer_id=reviewer_id,
+                assignment_id=review_id,
+                status="draft"
+            )
+        
+        # Increment version
+        next_version = (review_submission.file_version or 0) + 1
+        
+        # Create upload directory using proper base path
+        from app.utils.file_handler import UPLOAD_BASE_DIR
+        # UPLOAD_BASE_DIR is backend/uploads/papers, we want backend/uploads/reviews
+        upload_dir = UPLOAD_BASE_DIR.parent / "reviews" / f"reviewer_{reviewer_id}"
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        # Generate filename with version
+        filename = f"{review_id}_v{next_version}_{file.filename}"
+        filepath = upload_dir / filename
+        
+        # Save file
+        with open(filepath, 'wb') as f:
+            f.write(content)
+        
+        # Store relative path in database (relative to backend/)
+        relative_path = f"uploads/reviews/reviewer_{reviewer_id}/{filename}"
+        
+        # Update review submission
+        review_submission.review_report_file = relative_path
+        review_submission.file_version = next_version
+        
+        # Auto-update to in_progress if this is first interaction
+        if assignment.review_status != 'in_progress':
+            assignment.review_status = 'in_progress'
+        
+        db.add(review_submission)
+        db.add(assignment)
+        db.commit()
+        db.refresh(review_submission)
+        db.refresh(assignment)
+        
+        return {
+            "message": "File uploaded successfully",
+            "file_path": filepath,
+            "file_version": next_version,
+            "filename": filename,
+            "assignment_status": assignment.review_status
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        import logging
+        logging.error(f"Error uploading report: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error uploading report: {str(e)}")
+
+
+@router.get("/assignments/{review_id}/download-report")
+async def download_review_report(
+    review_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Download a review report file uploaded by the reviewer.
+    
+    Args:
+        review_id: Review assignment ID
+        
+    Returns:
+        File download
+    """
+    try:
+        from pathlib import Path
+        
+        if not check_role(current_user.get("role"), "reviewer"):
+            raise HTTPException(status_code=403, detail="Reviewer access required")
+        
+        reviewer_id = str(current_user.get("id"))
+        
+        # Get review submission
+        review_submission = db.query(ReviewSubmission).filter(
+            ReviewSubmission.assignment_id == review_id,
+            ReviewSubmission.reviewer_id == reviewer_id
+        ).first()
+        
+        if not review_submission:
+            raise HTTPException(status_code=404, detail="Review submission not found")
+        
+        if not review_submission.review_report_file:
+            raise HTTPException(status_code=404, detail="No report file uploaded")
+        
+        filepath = Path(review_submission.review_report_file)
+        
+        # If path is relative, make it absolute
+        if not filepath.is_absolute():
+            from app.utils.file_handler import UPLOAD_BASE_DIR
+            # Path format: "uploads/reviews/reviewer_X/file.docx"
+            # UPLOAD_BASE_DIR.parent.parent is backend/
+            if review_submission.review_report_file.startswith("uploads/"):
+                filepath = UPLOAD_BASE_DIR.parent.parent / review_submission.review_report_file
+            else:
+                filepath = UPLOAD_BASE_DIR.parent / review_submission.review_report_file
+        
+        # Check if file exists
+        if not filepath.exists():
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        # Extract filename from path for download
+        filename = filepath.name
+        
+        # Determine correct media type based on file extension
+        ext = filepath.suffix.lower()
+        media_types = {
+            '.pdf': 'application/pdf',
+            '.doc': 'application/msword',
+            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        }
+        media_type = media_types.get(ext, 'application/octet-stream')
+        
+        return FileResponse(
+            path=str(filepath),
+            filename=filename,
+            media_type=media_type
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        import logging
+        logging.error(f"Error downloading report: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error downloading report: {str(e)}")
 
 
 @router.post("/assignments/{review_id}/submit-review")
@@ -220,7 +1012,7 @@ async def submit_review(
             "paper_id": review.paper_id,
             "reviewer_id": review.reviewer_id,
             "assigned_on": review.assigned_on.isoformat() if review.assigned_on else None,
-            "status": "submitted"
+            "status": review.review_status or "pending"
         }
     except HTTPException:
         raise
@@ -228,13 +1020,6 @@ async def submit_review(
         import logging
         logging.error(f"Error submitting review: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error submitting review: {str(e)}")
-    
-    return {
-        "message": "Review submitted successfully",
-        "review_id": review.id,
-        "recommendation": review.recommendation,
-        "submitted_date": review.date_submitted.isoformat()
-    }
 
 
 @router.get("/history")
@@ -261,13 +1046,24 @@ async def get_review_history(
         for review in all_reviews:
             paper = db.query(Paper).filter(Paper.id == review.paper_id).first()
             
+            # Get journal name from journal table
+            journal = None
+            if paper and paper.journal:
+                journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
+            
+            # Get author info - added_by stores user ID
+            author = None
+            if paper and paper.added_by and paper.added_by.isdigit():
+                author = db.query(User).filter(User.id == int(paper.added_by)).first()
+            
             history_list.append({
                 "review_id": review.id,
                 "paper_id": review.paper_id,
                 "paper_title": paper.title if paper else "Unknown",
-                "journal": paper.journal if paper else "Unknown",
+                "author": f"{author.fname} {author.lname or ''}".strip() if author else "Unknown",
+                "journal": journal.fld_journal_name if journal else "Unknown",
                 "assigned_date": review.assigned_on.isoformat() if review.assigned_on else None,
-                "status": "pending"
+                "status": review.review_status or "pending"
             })
         
         return {

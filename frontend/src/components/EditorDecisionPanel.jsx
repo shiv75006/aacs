@@ -4,9 +4,9 @@ import acsApi from '../api/apiService.js';
 import './EditorDecisionPanel.css';
 
 const DECISIONS = [
-  { value: 'accept', label: 'Accept', color: 'success', icon: '✓' },
-  { value: 'revision_requested', label: 'Request Revisions', color: 'warning', icon: '⟳' },
-  { value: 'reject', label: 'Reject', color: 'danger', icon: '✗' }
+  { value: 'accepted', label: 'Accept', color: 'success', icon: '✓' },
+  { value: 'correction', label: 'Request Revisions', color: 'warning', icon: '⟳' },
+  { value: 'rejected', label: 'Reject', color: 'danger', icon: '✗' }
 ];
 
 const REVISION_TYPES = [
@@ -81,7 +81,7 @@ export default function EditorDecisionPanel() {
       errors.editorComments = 'Comments must not exceed 2000 characters';
     }
 
-    if (selectedDecision === 'revision_requested' && !revisionType) {
+    if (selectedDecision === 'correction' && !revisionType) {
       errors.revisionType = 'Please specify revision type';
     }
 
@@ -103,7 +103,7 @@ export default function EditorDecisionPanel() {
         editor_comments: editorComments.trim()
       };
 
-      if (selectedDecision === 'revision_requested') {
+      if (selectedDecision === 'correction') {
         decisionPayload.revision_type = revisionType;
       }
 

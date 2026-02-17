@@ -38,6 +38,10 @@ const Header = () => {
             <li><Link className={styles.navLink} to="/admin">Dashboard</Link></li>
           )}
 
+          {isAuthenticated && user?.role === 'author' && (
+            <li><Link className={styles.navLink} to="/author">Dashboard</Link></li>
+          )}
+
           {isAuthenticated && user?.role === 'editor' && (
             <li><Link className={styles.navLink} to="/editor">Dashboard</Link></li>
           )}

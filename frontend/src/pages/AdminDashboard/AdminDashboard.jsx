@@ -94,14 +94,6 @@ export const AdminDashboard = () => {
 
   return (
     <div className={styles.adminDashboard}>
-      {/* Page Header */}
-      <div className={styles.dashboardHeader}>
-        <div className={styles.headerContent}>
-          <h1>Admin Portal</h1>
-          <p>Welcome back, {user?.fname || 'Admin'}! Here's what's happening today.</p>
-        </div>
-      </div>
-
       {/* Stats Grid */}
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
@@ -183,7 +175,7 @@ export const AdminDashboard = () => {
                           ID: {paper.id} • 
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '4px' }}>
                             <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>newspaper</span>
-                            {paper.journal_name || paper.journal || 'No Journal'}
+                            {paper.journal_name || (typeof paper.journal === 'object' ? paper.journal?.name : paper.journal) || 'No Journal'}
                           </span>
                         </span>
                       </div>

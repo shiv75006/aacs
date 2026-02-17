@@ -492,6 +492,369 @@
   }
 }
 
+/* Keywords Chips Below Input */
+.keywordChipsBelow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.keywordChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #769FCD 0%, #5a7fa8 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  animation: chipAppear 0.2s ease-out;
+}
+
+@keyframes chipAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.chipRemove {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.chipRemove:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.keywordChipsReview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.keywordChipReview {
+  background: #e8f4fd;
+  color: #2c5aa0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Field Row */
+.fieldRow {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.fieldRow .field {
+  flex: 1;
+  min-width: 200px;
+}
+
+.fieldSmall {
+  width: 120px;
+  flex-shrink: 0;
+  margin-bottom: 20px;
+}
+
+.fieldSmall label {
+  display: block;
+  margin-bottom: 6px;
+  color: #2c3e50;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Author Section */
+.authorSection {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.authorSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #2c5aa0;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.authorSectionTitle .material-symbols-rounded {
+  font-size: 22px;
+}
+
+/* Co-Authors Section */
+.coAuthorsSection {
+  margin-top: 16px;
+}
+
+.coAuthorsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.addCoAuthorBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #27ae60;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.addCoAuthorBtn:hover {
+  background: #229954;
+  transform: translateY(-1px);
+}
+
+.addCoAuthorBtn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.noCoAuthors {
+  color: #7f8c8d;
+  font-style: italic;
+  text-align: center;
+  padding: 24px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+.coAuthorCard {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.coAuthorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.coAuthorNumber {
+  font-weight: 600;
+  color: #2c5aa0;
+  font-size: 14px;
+}
+
+.removeCoAuthorBtn {
+  background: #fee2e2;
+  border: none;
+  color: #c0392b;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.removeCoAuthorBtn:hover {
+  background: #fecaca;
+}
+
+.removeCoAuthorBtn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+/* Checkbox Field */
+.checkboxField {
+  margin-top: 12px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #769FCD;
+}
+
+/* Review Grid */
+.reviewGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.reviewItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reviewLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #769FCD;
+  text-transform: uppercase;
+}
+
+.reviewValue {
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+/* Co-Author Review */
+.coAuthorReview {
+  background: #f8f9fa;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border-left: 3px solid #769FCD;
+}
+
+.coAuthorReview strong {
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.correspondingBadge {
+  display: inline-block;
+  background: #d1fae5;
+  color: #059669;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  text-transform: uppercase;
+}
+
+.coAuthorDetails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #7f8c8d;
+}
+
+.coAuthorDetails span {
+  display: flex;
+  align-items: center;
+}
+
+/* Terms Section */
+.termsSection {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 2px solid #e9ecef;
+}
+
+.termsLabel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 12px 16px;
+  background: #f0f5ff;
+  border-radius: 8px;
+  border: 2px solid #d0dff5;
+  transition: border-color 0.2s;
+}
+
+.termsLabel:has(input:checked) {
+  border-color: #27ae60;
+  background: #d5f4e6;
+}
+
+.termsLabel input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #27ae60;
+}
+
+.termsLink {
+  color: #2c5aa0;
+  text-decoration: underline;
+}
+
+.termsLink:hover {
+  color: #1a3a6d;
+}
+
+.termsNote {
+  background: #fff3cd;
+  border-left: 4px solid #ff9800;
+  padding: 16px;
+  border-radius: 6px;
+  margin-top: 16px;
+}
+
+.termsNote strong {
+  color: #e67e22;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.termsNote ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #2c3e50;
+}
+
+.termsNote li {
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
 @media (max-width: 480px) {
   .stepper {
     flex-direction: column;
@@ -525,5 +888,28 @@
 
   .btn {
     max-width: 100%;
+  }
+  
+  .fieldRow {
+    flex-direction: column;
+  }
+  
+  .fieldRow .field {
+    min-width: 100%;
+  }
+  
+  .fieldSmall {
+    width: 100%;
+  }
+  
+  .coAuthorsHeader {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .addCoAuthorBtn {
+    width: 100%;
+    justify-content: center;
   }
 }

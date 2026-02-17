@@ -114,14 +114,6 @@ export const EditorDashboard = () => {
 
   return (
     <div className={styles.editorDashboard}>
-      {/* Page Header */}
-      <div className={styles.dashboardHeader}>
-        <div className={styles.headerContent}>
-          <h1>Editor Dashboard</h1>
-          <p>Manage paper reviews and publications for your journals.</p>
-        </div>
-      </div>
-
       {/* Stats Grid */}
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
@@ -228,8 +220,8 @@ export const EditorDashboard = () => {
                   {filteredPapers.map((paper, index) => (
                     <tr key={paper.id || index}>
                       <td className={styles.titleCell}>{paper.title || paper.name || 'Untitled'}</td>
-                      <td>{paper.author_name || paper.author || 'N/A'}</td>
-                      <td>{paper.journal_name || paper.journal || 'N/A'}</td>
+                      <td>{paper.author_name || (typeof paper.author === 'object' ? paper.author?.name : paper.author) || 'N/A'}</td>
+                      <td>{paper.journal_name || (typeof paper.journal === 'object' ? paper.journal?.name : paper.journal) || 'N/A'}</td>
                       <td>{paper.submitted_date ? new Date(paper.submitted_date).toLocaleDateString() : 'N/A'}</td>
                       <td>
                         <span className={`${styles.statusBadge} ${styles[`statusBadge${getStatusColorClass(paper.status)}`]}`}>

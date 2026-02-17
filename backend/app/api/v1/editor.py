@@ -3,8 +3,10 @@ from fastapi import APIRouter, Depends, status, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
 from datetime import datetime, timedelta
+import uuid
+import secrets
 from app.db.database import get_db
-from app.db.models import User, Paper, OnlineReview, Editor
+from app.db.models import User, Paper, OnlineReview, Editor, ReviewerInvitation, Journal, ReviewSubmission
 from app.core.security import get_current_user
 from app.core.rate_limit import limiter
 from app.utils.auth_helpers import check_role, role_matches
@@ -32,7 +34,7 @@ async def get_editor_stats(
     total_papers = db.query(func.count(Paper.id)).scalar() or 0
     
     pending_review = db.query(func.count(Paper.id)).filter(
-        Paper.status == "pending"
+        Paper.status == "submitted"
     ).scalar() or 0
     
     under_review = db.query(func.count(Paper.id)).filter(
@@ -85,13 +87,85 @@ async def get_paper_queue(
     
     papers_list = []
     for paper in papers:
+        # Get journal name from journal table
+        journal = None
+        if paper.journal:
+            journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
+        
+        # Get author info - added_by stores user ID
+        author = None
+        if paper.added_by and paper.added_by.isdigit():
+            author = db.query(User).filter(User.id == int(paper.added_by)).first()
+        
+        # Get review status for the paper
+        # Note: OnlineReview.paper_id is stored as VARCHAR in the database
+        total_assignments = db.query(func.count(OnlineReview.id)).filter(
+            OnlineReview.paper_id == str(paper.id)
+        ).scalar() or 0
+        
+        completed_reviews = db.query(func.count(ReviewSubmission.id)).filter(
+            ReviewSubmission.paper_id == paper.id,
+            ReviewSubmission.status == "submitted"
+        ).scalar() or 0
+        
+        # Determine review status
+        if total_assignments == 0:
+            review_status = "not_assigned"
+        elif completed_reviews == 0:
+            review_status = "pending"
+        elif completed_reviews < total_assignments:
+            review_status = "partial"
+        else:
+            review_status = "reviewed"
+        
+        # Get assigned reviewers with their details
+        assignments = db.query(OnlineReview).filter(
+            OnlineReview.paper_id == str(paper.id)
+        ).all()
+        
+        assigned_reviewers = []
+        for assignment in assignments:
+            reviewer = None
+            if assignment.reviewer_id:
+                reviewer = db.query(User).filter(User.id == assignment.reviewer_id).first()
+            
+            # Get review submission if exists
+            review_submission = db.query(ReviewSubmission).filter(
+                ReviewSubmission.assignment_id == assignment.id
+            ).first()
+            
+            assigned_reviewers.append({
+                "assignment_id": assignment.id,
+                "reviewer_id": assignment.reviewer_id,
+                "reviewer_name": f"{reviewer.fname} {reviewer.lname or ''}".strip() if reviewer else "Unknown",
+                "reviewer_email": reviewer.email if reviewer else None,
+                "assigned_on": assignment.assigned_on.isoformat() if assignment.assigned_on else None,
+                "due_date": assignment.due_date.isoformat() if assignment.due_date else None,
+                "review_status": assignment.review_status,
+                "has_submitted": review_submission.status == "submitted" if review_submission else False,
+                "submitted_at": review_submission.submitted_at.isoformat() if review_submission and review_submission.submitted_at else None
+            })
+        
         papers_list.append({
             "id": paper.id,
+            "paper_code": paper.paper_code,
             "title": paper.title,
-            "author": paper.author,
-            "journal": paper.journal,
+            "abstract": paper.abstract,
+            "keywords": paper.keyword,
+            "author": f"{author.fname} {author.lname or ''}".strip() if author else (paper.author or "Unknown"),
+            "author_email": author.email if author else None,
+            "journal": journal.fld_journal_name if journal else "Unknown",
+            "journal_id": paper.journal,
             "submitted_date": paper.added_on.isoformat() if paper.added_on else None,
-            "status": paper.status
+            "status": paper.status,
+            "file": paper.file,
+            "review_status": review_status,
+            "total_reviewers": total_assignments,
+            "completed_reviews": completed_reviews,
+            "assigned_reviewers": assigned_reviewers,
+            "version_number": paper.version_number,
+            "revision_count": paper.revision_count,
+            "research_area": paper.research_area
         })
     
     return {
@@ -99,6 +173,151 @@ async def get_paper_queue(
         "skip": skip,
         "limit": limit,
         "papers": papers_list
+    }
+
+
+@router.get("/papers/{paper_id}")
+@limiter.limit("100/minute")
+async def get_paper_detail(
+    request: Request,
+    paper_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get detailed information about a single paper.
+    
+    Args:
+        paper_id: Paper ID
+        
+    Returns:
+        Complete paper details with reviews and assigned reviewers
+    """
+    if not check_role(current_user.get("role"), ["editor", "admin"]):
+        raise HTTPException(status_code=403, detail="Editor or Admin access required")
+    
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    # Get journal info
+    journal = None
+    if paper.journal:
+        journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
+    
+    # Get author info
+    author = None
+    if paper.added_by and paper.added_by.isdigit():
+        author = db.query(User).filter(User.id == int(paper.added_by)).first()
+    
+    # Get co-authors
+    from app.db.models import PaperCoAuthor
+    co_authors = db.query(PaperCoAuthor).filter(PaperCoAuthor.paper_id == paper_id).all()
+    co_authors_list = []
+    for ca in co_authors:
+        co_authors_list.append({
+            "id": ca.id,
+            "salutation": ca.salutation,
+            "first_name": ca.first_name,
+            "middle_name": ca.middle_name,
+            "last_name": ca.last_name,
+            "email": ca.email
+        })
+    
+    # Get review assignments
+    assignments = db.query(OnlineReview).filter(
+        OnlineReview.paper_id == str(paper.id)
+    ).all()
+    
+    assigned_reviewers = []
+    for assignment in assignments:
+        reviewer = None
+        if assignment.reviewer_id:
+            reviewer = db.query(User).filter(User.id == assignment.reviewer_id).first()
+        
+        # Get review submission if exists
+        review_submission = db.query(ReviewSubmission).filter(
+            ReviewSubmission.assignment_id == assignment.id
+        ).first()
+        
+        reviewer_info = {
+            "assignment_id": assignment.id,
+            "reviewer_id": assignment.reviewer_id,
+            "reviewer_name": f"{reviewer.fname} {reviewer.lname or ''}".strip() if reviewer else "Unknown",
+            "reviewer_email": reviewer.email if reviewer else None,
+            "specialization": reviewer.specialization if reviewer else None,
+            "affiliation": reviewer.affiliation if reviewer else None,
+            "assigned_on": assignment.assigned_on.isoformat() if assignment.assigned_on else None,
+            "due_date": assignment.due_date.isoformat() if assignment.due_date else None,
+            "review_status": assignment.review_status,
+            "has_submitted": False,
+            "submitted_at": None,
+            "review": None
+        }
+        
+        if review_submission:
+            reviewer_info["has_submitted"] = review_submission.status == "submitted"
+            reviewer_info["submitted_at"] = review_submission.submitted_at.isoformat() if review_submission.submitted_at else None
+            if review_submission.status == "submitted":
+                reviewer_info["review"] = {
+                    "id": review_submission.id,
+                    "technical_quality": review_submission.technical_quality,
+                    "clarity": review_submission.clarity,
+                    "originality": review_submission.originality,
+                    "significance": review_submission.significance,
+                    "overall_rating": review_submission.overall_rating,
+                    "author_comments": review_submission.author_comments,
+                    "confidential_comments": review_submission.confidential_comments,
+                    "recommendation": review_submission.recommendation,
+                    "review_report_file": review_submission.review_report_file
+                }
+        
+        assigned_reviewers.append(reviewer_info)
+    
+    # Calculate review stats
+    total_assignments = len(assigned_reviewers)
+    completed_reviews = sum(1 for r in assigned_reviewers if r["has_submitted"])
+    
+    # Determine review status
+    if total_assignments == 0:
+        review_status = "not_assigned"
+    elif completed_reviews == 0:
+        review_status = "pending"
+    elif completed_reviews < total_assignments:
+        review_status = "partial"
+    else:
+        review_status = "reviewed"
+    
+    return {
+        "id": paper.id,
+        "paper_code": paper.paper_code,
+        "title": paper.title,
+        "abstract": paper.abstract,
+        "keywords": paper.keyword.split(",") if paper.keyword else [],
+        "file": paper.file,
+        "status": paper.status,
+        "submitted_date": paper.added_on.isoformat() if paper.added_on else None,
+        "author": {
+            "id": author.id if author else None,
+            "name": f"{author.fname} {author.lname or ''}".strip() if author else (paper.author or "Unknown"),
+            "email": author.email if author else None,
+            "affiliation": author.affiliation if author else None
+        },
+        "co_authors": co_authors_list,
+        "journal": {
+            "id": journal.fld_id if journal else None,
+            "name": journal.fld_journal_name if journal else "Unknown"
+        },
+        "review_status": review_status,
+        "total_reviewers": total_assignments,
+        "completed_reviews": completed_reviews,
+        "assigned_reviewers": assigned_reviewers,
+        "version_number": paper.version_number,
+        "revision_count": paper.revision_count,
+        "revision_deadline": paper.revision_deadline.isoformat() if paper.revision_deadline else None,
+        "revision_notes": paper.revision_notes,
+        "research_area": paper.research_area,
+        "message_to_editor": paper.message_to_editor
     }
 
 
@@ -170,7 +389,7 @@ async def invite_reviewer(
     
     # Check if already invited (optional - customize as needed)
     existing_review = db.query(OnlineReview).filter(
-        OnlineReview.paper_id == paper_id,
+        OnlineReview.paper_id == str(paper_id),
         OnlineReview.reviewer_id == str(reviewer.id)
     ).first()
     
@@ -195,9 +414,39 @@ async def invite_reviewer(
     
     # Calculate due date
     due_date = (datetime.utcnow() + timedelta(days=due_days)).strftime("%B %d, %Y")
+    token_expiry = datetime.utcnow() + timedelta(days=due_days)
     
-    # Generate invitation link (placeholder - would need token generation in production)
-    invitation_link = f"https://localhost:3000/invitations/pending-{paper_id}"
+    # Generate unique invitation token
+    invitation_token = secrets.token_urlsafe(32)
+    
+    # Create ReviewerInvitation record
+    try:
+        invitation = ReviewerInvitation(
+            paper_id=paper_id,
+            reviewer_id=reviewer.id,
+            reviewer_email=reviewer_email,
+            reviewer_name=reviewer_name,
+            journal_id=paper.journal,
+            invitation_token=invitation_token,
+            token_expiry=token_expiry,
+            status="pending",
+            invited_on=datetime.utcnow(),
+            invitation_message=f"You are invited to review the paper '{paper_title}' for {journal_name}"
+        )
+        db.add(invitation)
+        db.commit()
+        db.refresh(invitation)
+        
+        invitation_id = invitation.id
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create invitation: {str(e)}"
+        )
+    
+    # Generate invitation link
+    invitation_link = f"https://localhost:3000/invitations/{invitation_token}"
     
     # Send invitation email
     email_sent = send_reviewer_invitation(
@@ -212,7 +461,7 @@ async def invite_reviewer(
     
     return {
         "message": "Reviewer invitation sent successfully" if email_sent else "Reviewer invitation prepared (email delivery pending)",
-        "invitation_id": "pending",
+        "invitation_id": invitation_id,
         "paper_id": paper_id,
         "paper_title": paper_title,
         "reviewer_email": reviewer_email,
@@ -352,7 +601,7 @@ async def get_paper_reviews(
         raise HTTPException(status_code=403, detail="Editor access required")
     
     reviews = db.query(OnlineReview).filter(
-        OnlineReview.paper_id == paper_id
+        OnlineReview.paper_id == str(paper_id)
     ).all()
     
     reviews_list = []
@@ -475,22 +724,33 @@ async def get_papers_pending_decision(
     
     # Get papers that are under review or awaiting decision
     papers = db.query(Paper).filter(
-        Paper.status.in_(["under_review", "revision_requested"])
+        Paper.status.in_(["under_review", "correction", "resubmitted"])
     ).offset(skip).limit(limit).all()
     
     papers_with_reviews = []
     for paper in papers:
+        # Get author info - added_by stores user ID
+        author = None
+        if paper.added_by and paper.added_by.isdigit():
+            author = db.query(User).filter(User.id == int(paper.added_by)).first()
+        
+        # Get journal name from journal table
+        journal = None
+        if paper.journal:
+            journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
+        
         papers_with_reviews.append({
             "id": paper.id,
             "title": paper.title,
-            "author": paper.author,
+            "author": f"{author.fname} {author.lname or ''}".strip() if author else (paper.author or "Unknown"),
+            "journal": journal.fld_journal_name if journal else "Unknown",
             "status": paper.status,
             "submitted_date": paper.added_on.isoformat() if paper.added_on else None,
             "added_by": paper.added_by
         })
     
     total = db.query(func.count(Paper.id)).filter(
-        Paper.status.in_(["under_review", "revision_requested"])
+        Paper.status.in_(["under_review", "correction", "resubmitted"])
     ).scalar() or 0
     
     return {

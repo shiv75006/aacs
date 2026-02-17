@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import acsApi from '../../api/apiService.js';
 import styles from './ReviewerDashboard.module.css';
 
 export const ReviewerDashboard = () => {
   const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     total_assignments: 0,
     pending_reviews: 0,
@@ -98,14 +99,6 @@ export const ReviewerDashboard = () => {
 
   return (
     <div className={styles.reviewerDashboard}>
-      {/* Page Header */}
-      <div className={styles.dashboardHeader}>
-        <div className={styles.headerContent}>
-          <h1>Reviewer Portal</h1>
-          <p>Welcome back, {user?.fname || 'Reviewer'}! Here's your review summary today.</p>
-        </div>
-      </div>
-
       {/* Stats Grid */}
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
@@ -151,87 +144,53 @@ export const ReviewerDashboard = () => {
           </div>
         </div>
 
-        <div className={styles.statCard}>
-          <div className={styles.statTop}>
-            <div className={`${styles.statIcon} ${styles.statIconPurple}`}>
-              <span className="material-symbols-rounded">schedule</span>
-            </div>
-            <span className={`${styles.statTrend} ${styles.statTrendStable}`}>→</span>
-          </div>
-          <div className={styles.statBottom}>
-            <p className={styles.statLabel}>Avg Review Time</p>
-            <h3 className={styles.statNumber}>{stats.avg_review_time || 0} days</h3>
-          </div>
-        </div>
+
       </div>
 
       {/* Recent Assignments */}
-      <div className={styles.dashboardGrid}>
-        <div className={styles.dashboardCard}>
-          <div className={styles.cardHeader}>
-            <h3>Recent Assignments</h3>
-            <Link to="/reviewer/assignments" className={styles.viewAllLink}>
-              View All
-            </Link>
-          </div>
-
-          <div className={styles.assignmentsList}>
-            {recentAssignments.length === 0 ? (
-              <div className={styles.emptyState}>
-                <span className="material-symbols-rounded">inbox</span>
-                <p>No assignments yet</p>
-              </div>
-            ) : (
-              recentAssignments.map((assignment) => (
-                <div key={assignment.id} className={styles.assignmentItem}>
-                  <div className={styles.assignmentContent}>
-                    <div className={`${styles.assignmentIcon} ${styles[`assignmentIcon${getStatusColorClass(assignment.status)}Bg`]}`}>
-                      <span className="material-symbols-rounded" style={{color: `var(--color-${getStatusColorClass(assignment.status).toLowerCase()})`}}>
-                        {getStatusIcon(assignment.status)}
-                      </span>
-                    </div>
-                    <div className={styles.assignmentInfo}>
-                      <h4 className={styles.assignmentTitle}>{assignment.title}</h4>
-                      <p className={styles.assignmentJournal}>{assignment.journal}</p>
-                      <p className={styles.assignmentAuthor}>Author: {assignment.author}</p>
-                    </div>
-                  </div>
-                  <div className={styles.assignmentStatus}>
-                    <span className={`${styles.statusBadge} ${styles[`status${getStatusColorClass(assignment.status)}`]}`}>
-                      {assignment.status}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+      <div className={styles.dashboardCard}>
+        <div className={styles.cardHeader}>
+          <h3>Recent Assignments</h3>
+          <Link to="/reviewer/assignments" className={styles.viewAllLink}>
+            View All
+          </Link>
         </div>
 
-        {/* Quick Stats Sidebar */}
-        <div className={styles.quickStatsSidebar}>
-          <div className={styles.dashboardCard}>
-            <div className={styles.cardHeader}>
-              <h3>Quick Actions</h3>
+        <div className={styles.assignmentsList}>
+          {recentAssignments.length === 0 ? (
+            <div className={styles.emptyState}>
+              <span className="material-symbols-rounded">inbox</span>
+              <p>No assignments yet</p>
             </div>
-            <div className={styles.quickActionsList}>
-              <Link to="/reviewer/assignments" className={styles.quickActionItem}>
-                <span className="material-symbols-rounded">assignment</span>
-                <span>My Assignments</span>
-              </Link>
-              <Link to="/reviewer/history" className={styles.quickActionItem}>
-                <span className="material-symbols-rounded">history</span>
-                <span>Review History</span>
-              </Link>
-              <Link to="/reviewer/profile" className={styles.quickActionItem}>
-                <span className="material-symbols-rounded">person</span>
-                <span>My Profile</span>
-              </Link>
-              <Link to="/reviewer/guidelines" className={styles.quickActionItem}>
-                <span className="material-symbols-rounded">info</span>
-                <span>Guidelines</span>
-              </Link>
-            </div>
-          </div>
+          ) : (
+            recentAssignments.map((assignment) => (
+              <div key={assignment.id} className={styles.assignmentItem}>
+                <div className={styles.assignmentContent}>
+                  <div className={styles.assignmentInfo}>
+                    <h4 className={styles.assignmentTitle}>{assignment.paper_title}</h4>
+                    <p className={styles.assignmentDate}>
+                      <span className="material-symbols-rounded">calendar_today</span>
+                      Due: {new Date(assignment.due_date).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className={styles.assignmentActions}>
+                  <span className={`${styles.statusBadge} ${styles[`status${getStatusColorClass(assignment.status)}`]}`}>
+                    {assignment.status}
+                  </span>
+                  <button
+                    className={styles.startReviewBtn}
+                    onClick={() => {
+                      navigate(`/reviewer/assignments/${assignment.id}/review`);
+                    }}
+                    title="Start Review"
+                  >
+                    <span className="material-symbols-rounded">chevron_right</span>
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

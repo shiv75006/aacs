@@ -164,6 +164,42 @@
   background: #db2777;
 }
 
+/* Review Status Chip */
+.reviewStatusChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.reviewStatusChip span.material-symbols-rounded {
+  font-size: 14px;
+}
+
+.review_not_assigned {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.review_pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.review_partial {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.review_reviewed {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 1024px) {
   .paperCard {

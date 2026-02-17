@@ -29,6 +29,7 @@ import AdminSettings from './pages/AdminSettings/AdminSettings.jsx';
 // Author layouts and pages
 import AuthorLayout from './layouts/AuthorLayout/AuthorLayout.jsx';
 import AuthorDashboard from './pages/AuthorDashboard/AuthorDashboard.jsx';
+import AuthorSubmissions from './pages/AuthorSubmissions/AuthorSubmissions.jsx';
 // Editor layouts and pages
 import EditorLayout from './layouts/EditorLayout/EditorLayout.jsx';
 import EditorDashboard from './pages/EditorDashboard/EditorDashboard.jsx';
@@ -39,10 +40,11 @@ import EditorReviewerList from './pages/EditorReviewerList/EditorReviewerList.js
 import ReviewerLayout from './layouts/ReviewerLayout/ReviewerLayout.jsx';
 import ReviewerDashboard from './pages/ReviewerDashboard/ReviewerDashboard.jsx';
 import ReviewerAssignments from './pages/ReviewerAssignments/ReviewerAssignments.jsx';
+import ReviewerInvitations from './pages/ReviewerInvitations/ReviewerInvitations.jsx';
 import ReviewerProfile from './pages/ReviewerProfile/ReviewerProfile.jsx';
 import ReviewerHistory from './pages/ReviewerHistory/ReviewerHistory.jsx';
 import ReviewerGuidelines from './pages/ReviewerGuidelines/ReviewerGuidelines.jsx';
-import ReviewSubmissionPage from './pages/ReviewSubmissionPage/ReviewSubmissionPage.jsx';
+import ReviewPage from './pages/ReviewPage/ReviewPage.jsx';
 // Editor Decision Panel
 import EditorDecisionPanel from './components/EditorDecisionPanel.jsx';
 // Paper Details Page
@@ -109,6 +111,7 @@ function AppContent() {
           <Route path="/author/*" element={<ProtectedAuthorRoute />}>
             <Route element={<AuthorLayout />}>
               <Route path="" element={<AuthorDashboard />} />
+              <Route path="submissions" element={<AuthorSubmissions />} />
               <Route path="submissions/:id" element={<PaperDetailsPage />} />
             </Route>
           </Route>
@@ -133,7 +136,8 @@ function AppContent() {
               <Route path="" element={<ReviewerDashboard />} />
               <Route path="assignments" element={<ReviewerAssignments />} />
               <Route path="assignments/:id" element={<PaperDetailsPage />} />
-              <Route path="assignments/:id/review" element={<ReviewSubmissionPage />} />
+              <Route path="assignments/:id/review" element={<ReviewPage />} />
+              <Route path="invitations" element={<ReviewerInvitations />} />
               <Route path="history" element={<ReviewerHistory />} />
               <Route path="profile" element={<ReviewerProfile />} />
               <Route path="guidelines" element={<ReviewerGuidelines />} />
