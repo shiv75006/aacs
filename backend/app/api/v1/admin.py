@@ -106,7 +106,7 @@ async def update_user_role(
     db: Session = Depends(get_db)
 ):
     """
-    Update user role.
+    Update user role (single role - legacy endpoint).
     
     Args:
         user_id: User ID to update
@@ -131,6 +131,130 @@ async def update_user_role(
     db.refresh(user)
     
     return user.to_dict()
+
+
+@router.get("/users/{user_id}/roles")
+async def get_user_roles(
+    user_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get all roles assigned to a user.
+    
+    Args:
+        user_id: User ID
+        
+    Returns:
+        List of user roles with details
+    """
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get roles from UserRole table
+    user_roles = db.query(UserRole).filter(
+        UserRole.user_id == user_id,
+        UserRole.status == "approved"
+    ).all()
+    
+    return {
+        "user_id": user_id,
+        "primary_role": user.role,
+        "roles": [ur.to_dict() for ur in user_roles]
+    }
+
+
+@router.put("/users/{user_id}/roles")
+async def update_user_roles(
+    user_id: int,
+    roles: list = Body(..., embed=True),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Update user roles - allows assigning multiple roles.
+    
+    Args:
+        user_id: User ID to update
+        roles: List of role strings (admin, author, editor, reviewer)
+        
+    Returns:
+        Updated user with all roles
+    """
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    allowed_roles = ["admin", "author", "editor", "reviewer"]
+    invalid_roles = [r for r in roles if r not in allowed_roles]
+    if invalid_roles:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid roles: {invalid_roles}. Allowed: {allowed_roles}"
+        )
+    
+    if not roles:
+        raise HTTPException(status_code=400, detail="At least one role is required")
+    
+    admin_id = current_user.get("id")
+    
+    # Get existing approved roles for this user
+    existing_roles = db.query(UserRole).filter(
+        UserRole.user_id == user_id,
+        UserRole.status == "approved"
+    ).all()
+    existing_role_names = {ur.role for ur in existing_roles}
+    
+    # Determine roles to add and remove
+    new_roles = set(roles)
+    roles_to_add = new_roles - existing_role_names
+    roles_to_remove = existing_role_names - new_roles
+    
+    # Remove roles that are no longer assigned
+    if roles_to_remove:
+        db.query(UserRole).filter(
+            UserRole.user_id == user_id,
+            UserRole.role.in_(roles_to_remove)
+        ).delete(synchronize_session=False)
+    
+    # Add new roles
+    for role in roles_to_add:
+        new_user_role = UserRole(
+            user_id=user_id,
+            role=role,
+            status="approved",
+            requested_at=datetime.utcnow(),
+            approved_by=admin_id,
+            approved_at=datetime.utcnow()
+        )
+        db.add(new_user_role)
+    
+    # Update primary role (first role in the list, prefer admin > editor > reviewer > author)
+    role_priority = {"admin": 4, "editor": 3, "reviewer": 2, "author": 1}
+    primary_role = max(roles, key=lambda r: role_priority.get(r, 0))
+    user.role = primary_role
+    
+    db.commit()
+    
+    # Fetch updated roles
+    updated_roles = db.query(UserRole).filter(
+        UserRole.user_id == user_id,
+        UserRole.status == "approved"
+    ).all()
+    
+    return {
+        "success": True,
+        "message": f"User roles updated successfully",
+        "user": user.to_dict(),
+        "roles": [ur.to_dict() for ur in updated_roles]
+    }
 
 
 @router.delete("/users/{user_id}")

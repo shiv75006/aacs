@@ -265,3 +265,341 @@
     gap: 12px;
   }
 }
+
+/* Role Management Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+}
+
+.closeBtn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.modalBody {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.userAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.userDetails h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  color: #1f2937;
+}
+
+.userDetails p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.roleInstructions {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.loadingRoles {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+.roleGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.roleCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fafafa;
+}
+
+.roleCard:hover {
+  border-color: #0066cc;
+  background: #f0f7ff;
+}
+
+.roleCard.roleSelected {
+  border-color: #0066cc;
+  background: #e8f4ff;
+}
+
+.roleIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.roleCard:nth-child(1) .roleIcon {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.roleCard:nth-child(2) .roleIcon {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.roleCard:nth-child(3) .roleIcon {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.roleCard:nth-child(4) .roleIcon {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.roleIcon span {
+  font-size: 24px;
+}
+
+.roleInfo {
+  flex: 1;
+}
+
+.roleInfo h4 {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.roleInfo p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.roleCheck {
+  flex-shrink: 0;
+}
+
+.roleCheck span {
+  font-size: 24px;
+  color: #d1d5db;
+}
+
+.roleSelected .roleCheck span {
+  color: #0066cc;
+}
+
+.selectedRoles {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.selectedLabel {
+  font-size: 0.85rem;
+  color: #6b7280;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.selectedBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selectedBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.selectedBadge.admin {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.selectedBadge.author {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.selectedBadge.editor {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.selectedBadge.reviewer {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.cancelBtn,
+.saveBtn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelBtn {
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.saveBtn {
+  background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
+  border: none;
+  color: white;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0052a3 0%, #003377 100%);
+}
+
+.saveBtn:disabled,
+.cancelBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .modalOverlay {
+    padding: 10px;
+  }
+  
+  .modal {
+    max-height: 95vh;
+  }
+  
+  .modalHeader {
+    padding: 16px 20px;
+  }
+  
+  .modalBody {
+    padding: 20px;
+  }
+  
+  .userInfo {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .roleCard {
+    flex-wrap: wrap;
+  }
+  
+  .modalFooter {
+    flex-direction: column;
+  }
+  
+  .cancelBtn,
+  .saveBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -114,6 +114,8 @@ export const acsApi = {
     listUsers: (skip = 0, limit = 20, search = '', role = '') =>
       apiService.get(`/api/v1/admin/users?skip=${skip}&limit=${limit}${search ? `&search=${search}` : ''}${role ? `&role=${role}` : ''}`),
     updateUserRole: (userId, role) => apiService.post(`/api/v1/admin/users/${userId}/role`, { role }),
+    getUserRoles: (userId) => apiService.get(`/api/v1/admin/users/${userId}/roles`),
+    updateUserRoles: (userId, roles) => apiService.put(`/api/v1/admin/users/${userId}/roles`, { roles }),
     deleteUser: (userId) => apiService.delete(`/api/v1/admin/users/${userId}`),
     listAllJournals: (skip = 0, limit = 20, search = '') =>
       apiService.get(`/api/v1/admin/journals?skip=${skip}&limit=${limit}${search ? `&search=${search}` : ''}`),
