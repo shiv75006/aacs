@@ -103,7 +103,7 @@
 }
 
 .formGroup {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   position: relative;
 }
 
@@ -113,6 +113,11 @@
   font-weight: 500;
   color: #374151;
   margin-bottom: 8px;
+}
+
+.required {
+  color: #ef4444;
+  font-weight: 600;
 }
 
 .select,
@@ -136,6 +141,17 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+/* Error state for inputs */
+.inputError {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2;
+}
+
+.inputError:focus {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
 .select {
   background: white;
   cursor: pointer;
@@ -146,12 +162,44 @@
   min-height: 120px;
 }
 
+/* Input footer with helper text and character count */
+.inputFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 6px;
+  gap: 12px;
+}
+
+.helperText {
+  font-size: 0.75rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.errorText {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: #ef4444;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.errorText span {
+  font-size: 14px;
+}
+
 .charCount {
-  position: absolute;
-  right: 8px;
-  bottom: -20px;
   font-size: 0.75rem;
   color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.charCountWarning {
+  color: #f59e0b;
+  font-weight: 500;
 }
 
 .infoNote {

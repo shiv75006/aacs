@@ -380,9 +380,11 @@ async def contact_editorial_office(
         recipient_email=recipient_emails[0],
         recipient_name=recipient_names[0],
         subject=subject,
-        message=message,
-        category=inquiry_type,
+        body=message,
+        email_type=inquiry_type,
+        status_at_send=paper.status,
         is_read=False,
+        delivery_status='pending',
         created_at=datetime.utcnow()
     )
     db.add(correspondence)
