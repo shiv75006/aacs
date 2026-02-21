@@ -1,0 +1,34 @@
+/* Shared Layout Styles for all portals */
+
+/* Base Layout */
+.portal-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+/* Main Content Area - accounts for header + sidebar */
+.portal-main {
+  flex: 1;
+  margin-left: 56px;  /* Sidebar width (icon-only) */
+  margin-top: 60px;   /* Header height */
+  min-height: calc(100vh - 60px);
+  overflow-y: auto;
+  transition: margin-left 0.2s ease;
+}
+
+.portal-content {
+  padding: 2rem;
+  min-height: 100%;
+}
+
+/* Responsive - Mobile: sidebar stays, just adjust if needed */
+@media (max-width: 768px) {
+  .portal-main {
+    margin-left: 56px;  /* Keep sidebar margin */
+    margin-top: 60px;
+  }
+  .portal-content {
+    padding: 1rem;
+  }
+}

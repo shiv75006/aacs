@@ -1,7 +1,7 @@
 .journal-detail-page {
   background-color: #EEF5FF;
   min-height: calc(100vh - 200px);
-  padding: 0;
+  padding: 1.5rem 2rem;
   color: #000000;
 }
 
@@ -24,9 +24,8 @@
 .journal-detail-title-section h1 {
   font-size: 36px;
   font-weight: 700;
-  margin-left: -100px;
-  margin-top: 3rem;
-  margin-bottom: 2rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
   font-family: 'Open Sans', sans-serif;
   color: #000000;
 }
@@ -34,10 +33,9 @@
 
 /* Main Container */
 .journal-detail-container {
-  max-width: 100%;
-  margin-left: 5rem;
-  margin-right: 5rem;
-  padding: 0 20px 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 0 40px 0;
   gap: 30px;
 }
 
@@ -221,7 +219,7 @@
 
 @media (max-width: 768px) {
   .journal-detail-page {
-    padding: 0;
+    padding: 1rem;
   }
 
   .journal-detail-header {
@@ -470,4 +468,217 @@
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Volumes and Issues Styles */
+.volumes-loading,
+.issues-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  color: #666;
+  font-family: 'Open Sans', sans-serif;
+}
+
+.spinner-small {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #EEF5FF;
+  border-top-color: #769FCD;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.no-volumes,
+.no-issues {
+  padding: 30px;
+  text-align: center;
+  color: #888;
+  background: #F9FAFB;
+  border-radius: 8px;
+  font-family: 'Open Sans', sans-serif;
+}
+
+.volumes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.volume-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: white;
+}
+
+.volume-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #F9FAFB;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  user-select: none;
+}
+
+.volume-header:hover {
+  background: #EEF5FF;
+}
+
+.volume-header.expanded {
+  background: #769FCD;
+  color: white;
+  border-bottom: 1px solid #5a8ac0;
+}
+
+.volume-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.volume-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.volume-icon .material-symbols-rounded {
+  font-size: 24px;
+  transition: transform 0.2s ease;
+}
+
+.volume-title {
+  font-weight: 600;
+  font-size: 16px;
+  font-family: 'Open Sans', sans-serif;
+}
+
+.volume-year {
+  font-size: 14px;
+  opacity: 0.8;
+  font-family: 'Open Sans', sans-serif;
+}
+
+.volume-issue-count {
+  font-size: 13px;
+  padding: 4px 12px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  font-family: 'Open Sans', sans-serif;
+}
+
+.volume-header.expanded .volume-issue-count {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.issues-container {
+  padding: 20px;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+}
+
+.issues-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.issue-card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background: #F9FAFB;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+  font-family: 'Open Sans', sans-serif;
+}
+
+.issue-card:hover {
+  border-color: #769FCD;
+  box-shadow: 0 4px 12px rgba(118, 159, 205, 0.15);
+  transform: translateY(-2px);
+}
+
+.issue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.issue-number {
+  font-weight: 600;
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.issue-month {
+  font-size: 12px;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.issue-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.issue-papers,
+.issue-pages {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.issue-papers .material-symbols-rounded,
+.issue-pages .material-symbols-rounded {
+  font-size: 16px;
+  color: #769FCD;
+}
+
+/* Responsive Volumes */
+@media (max-width: 768px) {
+  .volume-header {
+    padding: 14px 16px;
+  }
+
+  .volume-title {
+    font-size: 15px;
+  }
+
+  .volume-year {
+    font-size: 13px;
+  }
+
+  .issues-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .issue-card {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .volume-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .volume-issue-count {
+    align-self: flex-start;
+  }
 }

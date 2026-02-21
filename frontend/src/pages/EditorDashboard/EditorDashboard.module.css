@@ -5,7 +5,6 @@
   font-family: 'Inter', sans-serif;
   width: 100%;
   box-sizing: border-box;
-  padding: 0 16px;
 }
 
 /* Loading & Error States */
@@ -638,5 +637,57 @@
 
   .quickLinksGrid {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Request Access Section */
+.requestAccessSection {
+  margin-top: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-radius: 16px;
+  border: 1px solid #bbf7d0;
+  display: flex;
+  justify-content: center;
+}
+
+.requestAccessBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}
+
+.requestAccessBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.4);
+}
+
+.requestAccessBtn span {
+  font-size: 22px;
+}
+
+@media (max-width: 768px) {
+  .requestAccessSection {
+    margin-top: 16px;
+    padding: 16px;
+  }
+
+  .requestAccessBtn {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+
+  .requestAccessBtn span {
+    font-size: 20px;
   }
 }

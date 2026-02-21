@@ -1,14 +1,15 @@
 """Reviewer API endpoints"""
-from fastapi import APIRouter, Depends, status, HTTPException, Query, File, UploadFile
+from fastapi import APIRouter, Depends, status, HTTPException, Query, File, UploadFile, BackgroundTasks
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
 from datetime import datetime, date, timedelta
 import os
 from app.db.database import get_db
-from app.db.models import Paper, Journal, OnlineReview, User, ReviewerInvitation, ReviewSubmission
+from app.db.models import Paper, Journal, OnlineReview, User, ReviewerInvitation, ReviewSubmission, Editor
 from app.core.security import get_current_user, get_current_user_from_token_or_query
 from app.utils.auth_helpers import check_role, role_matches
+from app.services.correspondence_service import create_and_send_correspondence
 router = APIRouter(prefix="/api/v1/reviewer", tags=["Reviewer"])
 
 
@@ -135,6 +136,7 @@ async def get_pending_invitations(
 @router.post("/invitations/{invitation_id}/accept")
 async def accept_invitation(
     invitation_id: int,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -216,6 +218,49 @@ async def accept_invitation(
         
         paper = db.query(Paper).filter(Paper.id == invitation.paper_id).first()
         
+        # Notify editor that reviewer accepted
+        if paper:
+            # Get editor email (invited_by stores user ID)
+            editor = None
+            if invitation.invited_by:
+                editor = db.query(User).filter(User.id == invitation.invited_by).first()
+            
+            # Also try to find editor from journal's editor assignment
+            if not editor and paper.journal:
+                editor_record = db.query(Editor).filter(Editor.journal_id == paper.journal).first()
+                if editor_record:
+                    editor = db.query(User).filter(User.email == editor_record.email).first()
+            
+            if editor and editor.email:
+                journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
+                reviewer_user = db.query(User).filter(User.id == user_id).first()
+                reviewer_name = f"{reviewer_user.fname or ''} {reviewer_user.lname or ''}".strip() if reviewer_user else user_email
+                
+                # Calculate due date (typically 2-3 weeks from acceptance)
+                due_date = (datetime.utcnow() + timedelta(days=21)).strftime('%B %d, %Y')
+                
+                async def send_accept_notification():
+                    from app.db.database import SessionLocal
+                    email_db = SessionLocal()
+                    try:
+                        await create_and_send_correspondence(
+                            db=email_db,
+                            paper_id=paper.id,
+                            paper_code=paper.paper_code,
+                            paper_title=paper.title,
+                            journal_name=journal.fld_journal_name if journal else "AACS Journal",
+                            author_email=editor.email,
+                            author_name=f"{editor.fname or ''} {editor.lname or ''}".strip() or "Editor",
+                            email_type="invitation_accepted_editor",
+                            status_at_send=paper.status,
+                            reviewer_name=reviewer_name,
+                            due_date=due_date
+                        )
+                    finally:
+                        email_db.close()
+                
+                background_tasks.add_task(send_accept_notification)
+        
         return {
             "id": invitation.id,
             "paper_id": invitation.paper_id,
@@ -237,6 +282,7 @@ async def accept_invitation(
 async def decline_invitation(
     invitation_id: int,
     reason: str = Query(None),
+    background_tasks: BackgroundTasks = None,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -281,6 +327,44 @@ async def decline_invitation(
         db.refresh(invitation)
         
         paper = db.query(Paper).filter(Paper.id == invitation.paper_id).first()
+        
+        # Notify editor that reviewer declined
+        if paper and background_tasks:
+            editor = None
+            if invitation.invited_by:
+                editor = db.query(User).filter(User.id == invitation.invited_by).first()
+            
+            if not editor and paper.journal:
+                editor_record = db.query(Editor).filter(Editor.journal_id == paper.journal).first()
+                if editor_record:
+                    editor = db.query(User).filter(User.email == editor_record.email).first()
+            
+            if editor and editor.email:
+                journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
+                reviewer_user = db.query(User).filter(User.id == user_id).first()
+                reviewer_name = f"{reviewer_user.fname or ''} {reviewer_user.lname or ''}".strip() if reviewer_user else user_email
+                
+                async def send_decline_notification():
+                    from app.db.database import SessionLocal
+                    email_db = SessionLocal()
+                    try:
+                        await create_and_send_correspondence(
+                            db=email_db,
+                            paper_id=paper.id,
+                            paper_code=paper.paper_code,
+                            paper_title=paper.title,
+                            journal_name=journal.fld_journal_name if journal else "AACS Journal",
+                            author_email=editor.email,
+                            author_name=f"{editor.fname or ''} {editor.lname or ''}".strip() or "Editor",
+                            email_type="invitation_declined_editor",
+                            status_at_send=paper.status,
+                            reviewer_name=reviewer_name,
+                            decline_reason=reason or ""
+                        )
+                    finally:
+                        email_db.close()
+                
+                background_tasks.add_task(send_decline_notification)
         
         return {
             "id": invitation.id,
@@ -681,11 +765,13 @@ async def save_review_draft(
 async def submit_review_complete(
     review_id: int,
     review_data: dict,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Submit a completed review with full validation.
+    Sends notifications to editor and author.
     
     Args:
         review_id: Review assignment ID
@@ -770,6 +856,71 @@ async def submit_review_complete(
         db.refresh(review_submission)
         db.refresh(assignment)
         
+        # Send notifications to editor and author
+        if paper:
+            journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
+            reviewer_user = db.query(User).filter(User.id == int(reviewer_id)).first()
+            reviewer_name = f"{reviewer_user.fname or ''} {reviewer_user.lname or ''}".strip() if reviewer_user else "Reviewer"
+            recommendation = review_data.get('recommendation', 'N/A')
+            overall_rating = review_data.get('overall_rating', 'N/A')
+            
+            # Notify editor
+            editor = None
+            if paper.journal:
+                editor_record = db.query(Editor).filter(Editor.journal_id == paper.journal).first()
+                if editor_record:
+                    editor = db.query(User).filter(User.email == editor_record.email).first()
+            
+            if editor and editor.email:
+                async def send_editor_notification():
+                    from app.db.database import SessionLocal
+                    email_db = SessionLocal()
+                    try:
+                        await create_and_send_correspondence(
+                            db=email_db,
+                            paper_id=paper.id,
+                            paper_code=paper.paper_code,
+                            paper_title=paper.title,
+                            journal_name=journal.fld_journal_name if journal else "AACS Journal",
+                            author_email=editor.email,
+                            author_name=f"{editor.fname or ''} {editor.lname or ''}".strip() or "Editor",
+                            email_type="review_submitted_editor",
+                            status_at_send=paper.status,
+                            reviewer_name=reviewer_name,
+                            recommendation=recommendation,
+                            overall_rating=str(overall_rating)
+                        )
+                    finally:
+                        email_db.close()
+                
+                background_tasks.add_task(send_editor_notification)
+            
+            # Notify author that review is complete (without showing review details)
+            author = None
+            if paper.added_by and paper.added_by.isdigit():
+                author = db.query(User).filter(User.id == int(paper.added_by)).first()
+            
+            if author and author.email:
+                async def send_author_notification():
+                    from app.db.database import SessionLocal
+                    email_db = SessionLocal()
+                    try:
+                        await create_and_send_correspondence(
+                            db=email_db,
+                            paper_id=paper.id,
+                            paper_code=paper.paper_code,
+                            paper_title=paper.title,
+                            journal_name=journal.fld_journal_name if journal else "AACS Journal",
+                            author_email=author.email,
+                            author_name=f"{author.fname or ''} {author.lname or ''}".strip() or "Author",
+                            email_type="review_completed_author",
+                            status_at_send=paper.status
+                        )
+                    finally:
+                        email_db.close()
+                
+                background_tasks.add_task(send_author_notification)
+        
         return {
             "message": "Review submitted successfully",
             "review_submission": review_submission.to_dict(),
@@ -777,7 +928,8 @@ async def submit_review_complete(
                 "id": assignment.id,
                 "status": assignment.review_status,
                 "submitted_on": assignment.date_submitted.isoformat() if assignment.date_submitted else None
-            }
+            },
+            "notifications_sent": True
         }
     except HTTPException:
         raise

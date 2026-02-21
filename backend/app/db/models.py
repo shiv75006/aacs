@@ -140,7 +140,7 @@ class Paper(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     paper_code = Column(String(200), nullable=False, default="")
-    journal = Column(String(12), nullable=False, default="")
+    journal = Column(Integer, nullable=True)  # Journal ID as INT
     title = Column(String(500), nullable=False, default="")
     abstract = Column(String(1500), nullable=False, default="")
     keyword = Column(String(1000), nullable=False, default="")
@@ -197,6 +197,7 @@ class PaperPublished(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(250), nullable=False)
     abstract = Column(String(2000), nullable=False, default="")
+    p_reference = Column(Text, nullable=True)  # References/citations
     author = Column(String(1000), nullable=False, default="")
     journal = Column(String(250), nullable=False, default="")
     journal_id = Column(Integer, nullable=False)
@@ -205,8 +206,19 @@ class PaperPublished(Base):
     date = Column(DateTime, nullable=False)
     pages = Column(String(250), nullable=False, default="")
     keyword = Column(String(300), nullable=False, default="")
-    language = Column(String(20), nullable=False, default="")
-    paper = Column(String(200), nullable=True)
+    language = Column(String(20), nullable=False, default="en")
+    paper = Column(String(200), nullable=True)  # File path
+    # Access control - subscription by default, admin can change to open
+    access_type = Column(String(20), nullable=False, default="subscription")  # subscription, open
+    email = Column(String(100), nullable=True)  # Author email
+    affiliation = Column(String(100), nullable=True)  # Author affiliation
+    # DOI fields
+    doi = Column(String(100), nullable=True)  # DOI identifier (e.g., 10.58517/IJICM.2024.1101)
+    doi_status = Column(String(50), nullable=False, default="pending")  # pending, registered, failed
+    doi_registered_at = Column(DateTime, nullable=True)  # When DOI was registered with Crossref
+    crossref_batch_id = Column(String(100), nullable=True)  # Crossref deposit batch ID
+    # Link to original submission
+    paper_submission_id = Column(Integer, nullable=True)  # Reference to original paper.id
     
     def to_dict(self):
         """Convert model to dictionary"""
@@ -214,6 +226,7 @@ class PaperPublished(Base):
             "id": self.id,
             "title": self.title,
             "abstract": self.abstract,
+            "p_reference": self.p_reference,
             "author": self.author,
             "journal": self.journal,
             "journal_id": self.journal_id,
@@ -221,7 +234,17 @@ class PaperPublished(Base):
             "issue": self.issue,
             "date": self.date.isoformat() if self.date else None,
             "pages": self.pages,
-            "language": self.language
+            "keyword": self.keyword,
+            "language": self.language,
+            "paper": self.paper,
+            "access_type": self.access_type,
+            "email": self.email,
+            "affiliation": self.affiliation,
+            "doi": self.doi,
+            "doi_status": self.doi_status,
+            "doi_registered_at": self.doi_registered_at.isoformat() if self.doi_registered_at else None,
+            "crossref_batch_id": self.crossref_batch_id,
+            "paper_submission_id": self.paper_submission_id
         }
 
 
@@ -303,8 +326,81 @@ class Editor(Base):
     id = Column(Integer, primary_key=True, index=True)
     editor_name = Column(String(100), nullable=True)
     editor_email = Column(String(100), nullable=True)
-    journal_id = Column(String(100), nullable=True)
-    role = Column(String(50), nullable=True)
+    editor_address = Column(String(200), nullable=True)
+    editor_contact = Column(String(100), nullable=True)
+    editor_affiliation = Column(String(200), nullable=True)
+    editor_department = Column(String(200), nullable=True)
+    editor_college = Column(String(200), nullable=True)
+    password = Column(String(200), nullable=True)
+    journal_id = Column(Integer, nullable=True)  # Journal this editor is assigned to (INT)
+    role = Column(String(50), nullable=True)  # Editor, Admin
+    editor_type = Column(String(50), nullable=True, default="section_editor")  # chief_editor, section_editor
+    added_on = Column(DateTime, default=datetime.utcnow, nullable=True)
+    
+    def to_dict(self):
+        """Convert model to dictionary"""
+        return {
+            "id": self.id,
+            "editor_name": self.editor_name,
+            "editor_email": self.editor_email,
+            "journal_id": self.journal_id,
+            "role": self.role,
+            "editor_type": self.editor_type,
+            "editor_affiliation": self.editor_affiliation,
+            "editor_department": self.editor_department,
+            "editor_college": self.editor_college,
+            "editor_contact": self.editor_contact,
+            "added_on": self.added_on.isoformat() if self.added_on else None
+        }
+
+
+class Volume(Base):
+    """Volume model for journal volumes"""
+    __tablename__ = "volume"
+    __table_args__ = {"mysql_engine": "InnoDB"}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    journal = Column(String(250), nullable=False)  # Journal ID as string
+    volume_no = Column(Integer, nullable=False)
+    year = Column(String(200), nullable=True)
+    added_on = Column(Date, nullable=True)
+    
+    def to_dict(self):
+        """Convert model to dictionary"""
+        return {
+            "id": self.id,
+            "journal_id": self.journal,
+            "volume_no": self.volume_no,
+            "year": self.year,
+            "added_on": self.added_on.isoformat() if self.added_on else None
+        }
+
+
+class Issue(Base):
+    """Issue model for journal issues within volumes"""
+    __tablename__ = "issue"
+    __table_args__ = {"mysql_engine": "MyISAM"}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    pages = Column(String(7), nullable=True)  # Page range e.g., "1-212"
+    month = Column(String(16), nullable=True)  # Publication period e.g., "July-December"
+    volume = Column(Integer, nullable=True)  # Volume ID reference
+    journal = Column(Integer, nullable=True)  # Journal ID reference
+    add_on = Column(String(10), nullable=True)
+    issue_no = Column(Integer, nullable=True)  # Issue number within volume (1, 2, 3, 4)
+    complete_issue = Column(String(10), nullable=True)
+    
+    def to_dict(self):
+        """Convert model to dictionary"""
+        return {
+            "id": self.id,
+            "pages": self.pages,
+            "month": self.month,
+            "volume_id": self.volume,
+            "journal_id": self.journal,
+            "issue_no": self.issue_no,
+            "complete_issue": self.complete_issue
+        }
 
 
 class ReviewerInvitation(Base):
@@ -458,4 +554,242 @@ class PaperCoAuthor(Base):
             "author_order": self.author_order,
             "is_corresponding": self.is_corresponding,
             "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+# ============================================================================
+# MULTI-ROLE SYSTEM MODELS
+# ============================================================================
+
+class UserRole(Base):
+    """
+    Junction table for user-role assignments.
+    Allows users to have multiple roles (author, reviewer, editor, admin).
+    """
+    __tablename__ = "user_role"
+    __table_args__ = {"mysql_engine": "InnoDB"}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column(String(50), nullable=False)  # author, reviewer, editor, admin
+    status = Column(String(20), nullable=False, default="approved")  # pending, approved, rejected
+    
+    # Approval tracking
+    requested_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    approved_by = Column(Integer, ForeignKey("user.id"), nullable=True)
+    approved_at = Column(DateTime, nullable=True)
+    rejected_reason = Column(Text, nullable=True)
+    
+    # For editor role - journal assignment and type
+    journal_id = Column(Integer, nullable=True)  # Links to journal.fld_id
+    editor_type = Column(String(50), nullable=True)  # chief_editor, section_editor (for editor role)
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id], backref="user_roles")
+    approver = relationship("User", foreign_keys=[approved_by])
+    
+    def to_dict(self):
+        """Convert model to dictionary"""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "role": self.role,
+            "status": self.status,
+            "requested_at": self.requested_at.isoformat() if self.requested_at else None,
+            "approved_by": self.approved_by,
+            "approved_at": self.approved_at.isoformat() if self.approved_at else None,
+            "rejected_reason": self.rejected_reason,
+            "journal_id": self.journal_id,
+            "editor_type": self.editor_type,
+        }
+
+
+class RoleRequest(Base):
+    """
+    Tracks role access requests from users.
+    Users can request access to additional roles through their dashboard.
+    """
+    __tablename__ = "role_request"
+    __table_args__ = {"mysql_engine": "InnoDB"}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True)
+    requested_role = Column(String(50), nullable=False)  # author, reviewer, editor
+    status = Column(String(20), nullable=False, default="pending")  # pending, approved, rejected
+    
+    # Request details
+    reason = Column(Text, nullable=True)  # Why the user wants this role
+    requested_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Processing details
+    processed_by = Column(Integer, ForeignKey("user.id"), nullable=True)
+    processed_at = Column(DateTime, nullable=True)
+    admin_notes = Column(Text, nullable=True)  # Notes from admin during approval/rejection
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id], backref="role_requests")
+    processor = relationship("User", foreign_keys=[processed_by])
+    
+    def to_dict(self):
+        """Convert model to dictionary"""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "requested_role": self.requested_role,
+            "status": self.status,
+            "reason": self.reason,
+            "requested_at": self.requested_at.isoformat() if self.requested_at else None,
+            "processed_by": self.processed_by,
+            "processed_at": self.processed_at.isoformat() if self.processed_at else None,
+            "admin_notes": self.admin_notes,
+        }
+
+
+# ============================================================================
+# PAPER CORRESPONDENCE MODEL
+# ============================================================================
+
+class EmailTemplate(Base):
+    """
+    Model for email templates used in correspondence.
+    Templates can use placeholders like {{author_name}}, {{paper_title}}, etc.
+    """
+    __tablename__ = "email_template"
+    __table_args__ = {"mysql_engine": "InnoDB"}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)  # Display name
+    slug = Column(String(50), unique=True, nullable=False, index=True)  # Unique identifier
+    subject = Column(String(500), nullable=False)  # Email subject template
+    body_template = Column(Text, nullable=False)  # Email body template with placeholders
+    placeholders = Column(Text, nullable=True)  # JSON list of available placeholders
+    category = Column(String(50), nullable=False)  # submission, review, decision, general
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=True)
+    
+    def to_dict(self):
+        """Convert model to dictionary"""
+        import json
+        return {
+            "id": self.id,
+            "name": self.name,
+            "slug": self.slug,
+            "subject": self.subject,
+            "body_template": self.body_template,
+            "placeholders": json.loads(self.placeholders) if self.placeholders else [],
+            "category": self.category,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class PaperCorrespondence(Base):
+    """
+    Model for tracking all email correspondence related to paper lifecycle.
+    Stores email history with delivery status for author visibility.
+    """
+    __tablename__ = "paper_correspondence"
+    __table_args__ = {"mysql_engine": "InnoDB"}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    paper_id = Column(Integer, ForeignKey("paper.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # Sender info (admin/editor who sent the email)
+    sender_id = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True, index=True)
+    sender_role = Column(String(50), nullable=True)  # admin, editor
+    
+    # Recipient info (author only)
+    recipient_email = Column(String(255), nullable=False)
+    recipient_name = Column(String(255), nullable=True)
+    
+    # Email content
+    subject = Column(String(500), nullable=False)
+    body = Column(Text, nullable=False)
+    
+    # Template reference
+    template_id = Column(Integer, ForeignKey("email_template.id", ondelete="SET NULL"), nullable=True)
+    
+    # Email metadata
+    email_type = Column(String(50), nullable=False)  # submission_confirmed, under_review, revision_requested, accepted, rejected, published, resubmitted, general_inquiry
+    status_at_send = Column(String(50), nullable=True)  # Paper status when email was sent
+    
+    # Read tracking for author
+    is_read = Column(Boolean, default=False, nullable=False)
+    read_at = Column(DateTime, nullable=True)
+    
+    # Delivery tracking
+    delivery_status = Column(String(50), nullable=False, default="pending")  # pending, sent, delivered, failed, bounced
+    webhook_id = Column(String(100), nullable=True, unique=True, index=True)  # For delivery webhook tracking
+    webhook_received_at = Column(DateTime, nullable=True)
+    error_message = Column(Text, nullable=True)
+    retry_count = Column(Integer, nullable=False, default=0)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    sent_at = Column(DateTime, nullable=True)
+    
+    # Relationships
+    paper = relationship("Paper", backref="correspondence")
+    sender = relationship("User", foreign_keys=[sender_id])
+    template = relationship("EmailTemplate")
+    
+    def to_dict(self):
+        """Convert model to dictionary"""
+        return {
+            "id": self.id,
+            "paper_id": self.paper_id,
+            "sender_id": self.sender_id,
+            "sender_role": self.sender_role,
+            "sender_name": f"{self.sender.fname} {self.sender.lname}" if self.sender else "System",
+            "recipient_email": self.recipient_email,
+            "recipient_name": self.recipient_name,
+            "subject": self.subject,
+            "body": self.body,
+            "template_id": self.template_id,
+            "email_type": self.email_type,
+            "status_at_send": self.status_at_send,
+            "is_read": self.is_read,
+            "read_at": self.read_at.isoformat() if self.read_at else None,
+            "delivery_status": self.delivery_status,
+            "webhook_id": self.webhook_id,
+            "webhook_received_at": self.webhook_received_at.isoformat() if self.webhook_received_at else None,
+            "error_message": self.error_message,
+            "retry_count": self.retry_count,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "sent_at": self.sent_at.isoformat() if self.sent_at else None,
+        }
+
+
+# ============================================================================
+# NEWS / ANNOUNCEMENTS MODEL
+# ============================================================================
+
+class News(Base):
+    """
+    Model for news and announcements displayed on the website.
+    Can be journal-specific or general announcements.
+    """
+    __tablename__ = "news"
+    __table_args__ = {"extend_existing": True, "mysql_engine": "InnoDB"}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(300), nullable=False)
+    description = Column(Text, nullable=True)
+    added_on = Column(Date, default=datetime.utcnow, nullable=True)
+    journal_id = Column(Integer, ForeignKey("journal.fld_id", ondelete="SET NULL"), nullable=True, index=True)
+    
+    # Relationship to journal
+    journal = relationship("Journal", backref="news_items")
+    
+    def to_dict(self):
+        """Convert model to dictionary"""
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "added_on": self.added_on.isoformat() if self.added_on else None,
+            "journal_id": self.journal_id,
+            "journal_name": self.journal.fld_journal_name if self.journal else None,
         }

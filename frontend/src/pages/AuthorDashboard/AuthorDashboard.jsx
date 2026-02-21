@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRole } from '../../hooks/useRole';
+import { useAuth } from '../../hooks/useAuth';
 import DashboardSidebar from '../../components/shared/DashboardSidebar';
+import RequestAccessModal from '../../components/RequestAccessModal';
 import acsApi from '../../api/apiService.js';
 import styles from './AuthorDashboard.module.css';
 
 export const AuthorDashboard = () => {
   const { user } = useRole();
+  const { availableRoles } = useAuth();
+  const [showRequestModal, setShowRequestModal] = useState(false);
   const [stats, setStats] = useState({
     total_submissions: 0,
     accepted_papers: 0,
@@ -211,6 +215,23 @@ export const AuthorDashboard = () => {
           ]}
         />
       </div>
+
+      {/* Request Access Section - Always show so users can check status */}
+      <div className={styles.requestAccessSection}>
+        <button 
+          className={styles.requestAccessBtn}
+          onClick={() => setShowRequestModal(true)}
+        >
+          <span className="material-symbols-rounded">add_moderator</span>
+          Request Additional Role Access
+        </button>
+      </div>
+
+      {/* Request Access Modal */}
+      <RequestAccessModal
+        isOpen={showRequestModal}
+        onClose={() => setShowRequestModal(false)}
+      />
     </div>
   );
 };

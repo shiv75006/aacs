@@ -1,18 +1,9 @@
 import React from 'react';
-import { useNavigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import SidebarNav from '../../components/SidebarNav/SidebarNav';
-import './AdminLayout.css';
+import { Outlet } from 'react-router-dom';
+import Navbar from '../../components/Navbar';
+import '../shared/PortalLayout.css';
 
 const AdminLayout = () => {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   const adminSections = [
     {
       items: [
@@ -24,7 +15,8 @@ const AdminLayout = () => {
       items: [
         { icon: 'group', label: 'Users', path: '/admin/users' },
         { icon: 'library_books', label: 'Journals', path: '/admin/journals' },
-        { icon: 'assignment', label: 'All Submissions', path: '/admin/submissions' }
+        { icon: 'assignment', label: 'All Submissions', path: '/admin/submissions' },
+        { icon: 'how_to_reg', label: 'Role Requests', path: '/admin/role-requests' }
       ]
     },
     {
@@ -36,17 +28,10 @@ const AdminLayout = () => {
   ];
 
   return (
-    <div className="admin-layout">
-      {/* Admin Sidebar */}
-      <SidebarNav 
-        sections={adminSections}
-        theme="light"
-        onLogout={handleLogout}
-      />
-
-      {/* Main Content */}
-      <main className="admin-main">
-        <div className="admin-content">
+    <div className="portal-layout">
+      <Navbar sections={adminSections} portalName="Admin Portal" />
+      <main className="portal-main">
+        <div className="portal-content">
           <Outlet />
         </div>
       </main>

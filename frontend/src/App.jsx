@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider, ToastContext } from './contexts/ToastContext';
 import { ModalProvider, ModalContext } from './contexts/ModalContext';
@@ -8,8 +8,7 @@ import ProtectedAdminRoute from './components/shared/ProtectedAdminRoute';
 import ProtectedAuthorRoute from './components/shared/ProtectedAuthorRoute';
 import ProtectedEditorRoute from './components/shared/ProtectedEditorRoute';
 import ProtectedReviewerRoute from './components/shared/ProtectedReviewerRoute';
-import Header from './components/header/Header';
-import Footer from './components/footer/Footer';
+import Navbar from './components/Navbar';
 import ToastContainer from './components/toast/ToastContainer';
 import Modal from './components/modal/Modal';
 import { JournalsPage } from './pages/JournalsPage/JournalsPage';
@@ -26,6 +25,7 @@ import AdminUsers from './pages/AdminUsers/AdminUsers.jsx';
 import AdminJournals from './pages/AdminJournals/AdminJournals.jsx';
 import AdminSubmissions from './pages/AdminSubmissions/AdminSubmissions.jsx';
 import AdminSettings from './pages/AdminSettings/AdminSettings.jsx';
+import AdminRoleRequests from './pages/AdminRoleRequests/AdminRoleRequests.jsx';
 // Author layouts and pages
 import AuthorLayout from './layouts/AuthorLayout/AuthorLayout.jsx';
 import AuthorDashboard from './pages/AuthorDashboard/AuthorDashboard.jsx';
@@ -36,6 +36,7 @@ import EditorDashboard from './pages/EditorDashboard/EditorDashboard.jsx';
 import EditorPaperQueue from './pages/EditorPaperQueue/EditorPaperQueue.jsx';
 import EditorPendingDecision from './pages/EditorPendingDecision/EditorPendingDecision.jsx';
 import EditorReviewerList from './pages/EditorReviewerList/EditorReviewerList.jsx';
+import EditorJournals from './pages/EditorJournals/EditorJournals.jsx';
 // Reviewer layouts and pages
 import ReviewerLayout from './layouts/ReviewerLayout/ReviewerLayout.jsx';
 import ReviewerDashboard from './pages/ReviewerDashboard/ReviewerDashboard.jsx';
@@ -49,6 +50,12 @@ import ReviewPage from './pages/ReviewPage/ReviewPage.jsx';
 import EditorDecisionPanel from './components/EditorDecisionPanel.jsx';
 // Paper Details Page
 import PaperDetailsPage from './pages/PaperDetailsPage/PaperDetailsPage.jsx';
+// Editor Publishing Page
+import EditorPublishing from './pages/EditorPublishing/EditorPublishing.jsx';
+// Public Paper View Page
+import PublicPaperView from './pages/PublicPaperView/PublicPaperView.jsx';
+// Issue Papers Page
+import IssuePapersPage from './pages/IssuePapersPage/IssuePapersPage.jsx';
 
 function App() {
   return (
@@ -67,6 +74,12 @@ function App() {
 function AppContent() {
   const { toasts, removeToast } = React.useContext(ToastContext);
   const { isOpen, title, message, confirmText, cancelText, type, onConfirm, onCancel, closeModal } = React.useContext(ModalContext);
+  const location = useLocation();
+
+  // Determine if current route is a portal route (has its own Navbar)
+  const isPortalRoute = ['/admin', '/editor', '/author', '/reviewer'].some(
+    prefix => location.pathname.startsWith(prefix)
+  );
 
   const handleModalConfirm = () => {
     if (onConfirm) onConfirm();
@@ -80,17 +93,20 @@ function AppContent() {
 
   return (
     <div className="App">
-      <Header />
-      <main className="app-main">
+      {/* Only show global Navbar for non-portal routes */}
+      {!isPortalRoute && <Navbar sections={[]} portalName="" />}
+      <main className={`app-main ${isPortalRoute ? 'portal-main' : ''}`}>
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<DashboardPage />} />
           <Route path="/journals" element={<JournalsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/article/:id" element={<PublicPaperView />} />
 
           {/* Protected routes */}
           <Route path="/journal/:id" element={<ProtectedRoute><JournalDetailPage /></ProtectedRoute>} />
+          <Route path="/journal/:id/volume/:volumeNo/issue/:issueNo" element={<ProtectedRoute><IssuePapersPage /></ProtectedRoute>} />
           <Route path="/paper/:id" element={<ProtectedRoute><PaperDetailsPage /></ProtectedRoute>} />
           <Route path="/submit" element={<ProtectedRoute><SubmitPage /></ProtectedRoute>} />
           <Route path="/invitations/:token" element={<ProtectedRoute><InvitationPage /></ProtectedRoute>} />
@@ -103,6 +119,7 @@ function AppContent() {
               <Route path="journals" element={<AdminJournals />} />
               <Route path="submissions" element={<AdminSubmissions />} />
               <Route path="submissions/:id" element={<PaperDetailsPage />} />
+              <Route path="role-requests" element={<AdminRoleRequests />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
           </Route>
@@ -121,10 +138,12 @@ function AppContent() {
             <Route element={<EditorLayout />}>
               <Route path="dashboard" element={<EditorDashboard />} />
               <Route path="" element={<EditorDashboard />} />
+              <Route path="my-journals" element={<EditorJournals />} />
               <Route path="papers" element={<EditorPaperQueue />} />
               <Route path="papers/pending-decision" element={<EditorPendingDecision />} />
               <Route path="papers/:id" element={<PaperDetailsPage />} />
               <Route path="papers/:paperId/decision" element={<EditorDecisionPanel />} />
+              <Route path="publishing" element={<EditorPublishing />} />
               <Route path="reviewers" element={<EditorReviewerList />} />
             </Route>
           </Route>

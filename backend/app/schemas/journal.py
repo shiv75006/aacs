@@ -52,6 +52,9 @@ class JournalRequest(BaseModel):
     publication: Optional[str] = Field(None, max_length=200, description="Publication policy URL/path")
     advertisement: Optional[str] = Field(None, max_length=200, description="Advertisement URL/path")
     description: Optional[str] = Field(None, description="Journal description")
+    chief_editor_id: Optional[int] = Field(None, description="ID of the chief editor to assign")
+    co_editor_id: Optional[int] = Field(None, description="ID of the co-editor to assign")
+    section_editor_ids: Optional[List[int]] = Field(None, description="List of section editor IDs to assign")
     
     class Config:
         json_schema_extra = {
@@ -128,6 +131,7 @@ class JournalListResponse(BaseModel):
     issn_online: Optional[str] = Field(None, description="ISSN Online")
     issn_print: Optional[str] = Field(None, description="ISSN Print")
     chief_editor: Optional[str] = Field(None, description="Chief editor")
+    co_editor: Optional[str] = Field(None, description="Co-editor")
     journal_logo: str = Field(..., description="Journal logo path")
     description: str = Field(..., description="Journal description")
     

@@ -1,8 +1,13 @@
 """Journal API endpoints"""
 from fastapi import APIRouter, Depends, status, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import desc
+from datetime import datetime
+import re
 from app.db.database import get_db
-from app.db.models import Journal, JournalDetails
+from app.db.models import Journal, JournalDetails, Volume, Issue, PaperPublished, Editor, User, UserRole
+from app.core.security import get_current_user
+from app.utils.auth_helpers import check_role
 from app.schemas.journal import (
     JournalRequest, JournalResponse, JournalListResponse,
     JournalDetailRequest, JournalDetailResponse
@@ -11,6 +16,18 @@ from typing import List, Optional
 from datetime import date
 
 router = APIRouter(prefix="/api/v1/journals", tags=["Journals"])
+
+
+def strip_html_tags(text: str) -> str:
+    """Remove HTML tags from text and clean up whitespace"""
+    if not text:
+        return text
+    # Remove HTML tags
+    clean = re.sub(r'<[^>]+>', '', text)
+    # Replace multiple whitespace/newlines with single space
+    clean = re.sub(r'\s+', ' ', clean)
+    # Strip leading/trailing whitespace
+    return clean.strip()
 
 
 @router.get(
@@ -40,6 +57,7 @@ async def list_journals(
             issn_online=j.issn_ol,
             issn_print=j.issn_prt,
             chief_editor=j.cheif_editor,
+            co_editor=j.co_editor,
             journal_logo=j.journal_logo,
             description=j.description
         )
@@ -142,12 +160,19 @@ async def get_journal_details(journal_id: int, db: Session = Depends(get_db)):
     summary="Create a new journal",
     description="Create a new journal (admin only)"
 )
-async def create_journal(data: JournalRequest, db: Session = Depends(get_db)):
+async def create_journal(
+    data: JournalRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
     """
     Create a new journal.
     
-    Requires all mandatory fields. This is typically an admin operation.
+    Requires all mandatory fields. This is an admin-only operation.
     """
+    # Verify admin access
+    if not check_role(current_user.get("role"), "admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
     # Check if journal with same name already exists
     existing = db.query(Journal).filter(
         Journal.fld_journal_name == data.fld_journal_name
@@ -185,6 +210,42 @@ async def create_journal(data: JournalRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_journal)
     
+    # Assign chief editor if provided (using user_role table)
+    if data.chief_editor_id:
+        # chief_editor_id is now a user_role ID
+        chief_role = db.query(UserRole).filter(
+            UserRole.id == data.chief_editor_id,
+            UserRole.role == "editor"
+        ).first()
+        if chief_role:
+            chief_role.journal_id = new_journal.fld_id
+            chief_role.editor_type = 'chief_editor'
+            db.commit()
+    
+    # Assign co-editor if provided (using user_role table)
+    if data.co_editor_id:
+        co_role = db.query(UserRole).filter(
+            UserRole.id == data.co_editor_id,
+            UserRole.role == "editor"
+        ).first()
+        if co_role:
+            co_role.journal_id = new_journal.fld_id
+            co_role.editor_type = 'co_editor'
+            db.commit()
+    
+    # Assign section editors if provided (using user_role table)
+    if data.section_editor_ids:
+        for role_id in data.section_editor_ids:
+            # section_editor_ids are now user_role IDs
+            section_role = db.query(UserRole).filter(
+                UserRole.id == role_id,
+                UserRole.role == "editor"
+            ).first()
+            if section_role:
+                section_role.journal_id = new_journal.fld_id
+                section_role.editor_type = 'section_editor'
+        db.commit()
+    
     return JournalResponse(
         id=new_journal.fld_id,
         name=new_journal.fld_journal_name,
@@ -218,13 +279,19 @@ async def create_journal(data: JournalRequest, db: Session = Depends(get_db)):
 async def update_journal(
     journal_id: int,
     data: JournalRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Update an existing journal.
     
     - **journal_id**: The journal ID to update
+    
+    Admin-only operation.
     """
+    # Verify admin access
+    if not check_role(current_user.get("role"), "admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
     journal = db.query(Journal).filter(Journal.fld_id == journal_id).first()
     if not journal:
         raise HTTPException(
@@ -284,12 +351,21 @@ async def update_journal(
     summary="Delete a journal",
     description="Delete a journal (admin only)"
 )
-async def delete_journal(journal_id: int, db: Session = Depends(get_db)):
+async def delete_journal(
+    journal_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
     """
     Delete a specific journal.
     
     - **journal_id**: The journal ID to delete
+    
+    Admin-only operation.
     """
+    # Verify admin access
+    if not check_role(current_user.get("role"), "admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
     journal = db.query(Journal).filter(Journal.fld_id == journal_id).first()
     if not journal:
         raise HTTPException(
@@ -304,3 +380,301 @@ async def delete_journal(journal_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return None
+
+
+# ============================================================================
+# VOLUME AND ISSUE ENDPOINTS
+# ============================================================================
+
+@router.get(
+    "/{journal_id}/volumes",
+    status_code=status.HTTP_200_OK,
+    summary="Get journal volumes",
+    description="Retrieve all volumes for a specific journal"
+)
+async def get_journal_volumes(
+    journal_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Get all volumes for a specific journal, ordered by volume number descending.
+    
+    - **journal_id**: The journal ID
+    
+    Returns list of volumes with their issues count.
+    """
+    # Verify journal exists
+    journal = db.query(Journal).filter(Journal.fld_id == journal_id).first()
+    if not journal:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Journal with ID {journal_id} not found"
+        )
+    
+    # Get volumes for this journal (journal field stores journal_id as string)
+    volumes = db.query(Volume).filter(
+        Volume.journal == str(journal_id)
+    ).order_by(desc(Volume.volume_no)).all()
+    
+    volumes_list = []
+    for vol in volumes:
+        # Count issues in this volume
+        issue_count = db.query(Issue).filter(
+            Issue.volume == vol.id
+        ).count()
+        
+        volumes_list.append({
+            "id": vol.id,
+            "volume_no": vol.volume_no,
+            "year": vol.year,
+            "issue_count": issue_count,
+            "added_on": vol.added_on.isoformat() if vol.added_on else None
+        })
+    
+    return {
+        "journal_id": journal_id,
+        "journal_name": journal.fld_journal_name,
+        "total_volumes": len(volumes_list),
+        "volumes": volumes_list
+    }
+
+
+@router.get(
+    "/{journal_id}/volumes/{volume_id}/issues",
+    status_code=status.HTTP_200_OK,
+    summary="Get volume issues",
+    description="Retrieve all issues for a specific volume"
+)
+async def get_volume_issues(
+    journal_id: int,
+    volume_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Get all issues for a specific volume.
+    
+    - **journal_id**: The journal ID
+    - **volume_id**: The volume ID
+    
+    Returns list of issues with article counts.
+    """
+    # Verify journal exists
+    journal = db.query(Journal).filter(Journal.fld_id == journal_id).first()
+    if not journal:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Journal with ID {journal_id} not found"
+        )
+    
+    # Verify volume exists and belongs to this journal
+    volume = db.query(Volume).filter(
+        Volume.id == volume_id,
+        Volume.journal == str(journal_id)
+    ).first()
+    if not volume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Volume with ID {volume_id} not found for this journal"
+        )
+    
+    # Get issues for this volume
+    issues = db.query(Issue).filter(
+        Issue.volume == volume_id
+    ).order_by(Issue.issue_no).all()
+    
+    issues_list = []
+    for issue in issues:
+        # Count published papers in this issue
+        paper_count = db.query(PaperPublished).filter(
+            PaperPublished.journal_id == journal_id,
+            PaperPublished.volume == str(volume.volume_no),
+            PaperPublished.issue == str(issue.issue_no)
+        ).count()
+        
+        issues_list.append({
+            "id": issue.id,
+            "issue_no": issue.issue_no,
+            "month": issue.month,
+            "pages": issue.pages,
+            "paper_count": paper_count,
+            "complete_issue": issue.complete_issue
+        })
+    
+    return {
+        "journal_id": journal_id,
+        "journal_name": journal.fld_journal_name,
+        "volume_id": volume_id,
+        "volume_no": volume.volume_no,
+        "year": volume.year,
+        "total_issues": len(issues_list),
+        "issues": issues_list
+    }
+
+
+@router.get(
+    "/{journal_id}/issues",
+    status_code=status.HTTP_200_OK,
+    summary="Get all journal issues",
+    description="Retrieve all issues for a journal with volume information"
+)
+async def get_all_journal_issues(
+    journal_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Get all issues for a journal, grouped by volume.
+    
+    - **journal_id**: The journal ID
+    
+    Returns hierarchical structure of volumes and their issues.
+    """
+    # Verify journal exists
+    journal = db.query(Journal).filter(Journal.fld_id == journal_id).first()
+    if not journal:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Journal with ID {journal_id} not found"
+        )
+    
+    # Get all volumes for this journal
+    volumes = db.query(Volume).filter(
+        Volume.journal == str(journal_id)
+    ).order_by(desc(Volume.volume_no)).all()
+    
+    result = []
+    for vol in volumes:
+        # Get issues for this volume
+        issues = db.query(Issue).filter(
+            Issue.volume == vol.id
+        ).order_by(Issue.issue_no).all()
+        
+        issues_list = []
+        for issue in issues:
+            # Count published papers in this issue
+            paper_count = db.query(PaperPublished).filter(
+                PaperPublished.journal_id == journal_id,
+                PaperPublished.volume == str(vol.volume_no),
+                PaperPublished.issue == str(issue.issue_no)
+            ).count()
+            
+            issues_list.append({
+                "id": issue.id,
+                "issue_no": issue.issue_no,
+                "month": issue.month,
+                "pages": issue.pages,
+                "paper_count": paper_count,
+                "complete_issue": issue.complete_issue
+            })
+        
+        result.append({
+            "volume_id": vol.id,
+            "volume_no": vol.volume_no,
+            "year": vol.year,
+            "issues": issues_list
+        })
+    
+    return {
+        "journal_id": journal_id,
+        "journal_name": journal.fld_journal_name,
+        "journal_short": journal.short_form,
+        "volumes": result
+    }
+
+
+@router.get(
+    "/{journal_id}/issues/{volume_no}/{issue_no}/papers",
+    status_code=status.HTTP_200_OK,
+    summary="Get papers in an issue",
+    description="Retrieve all published papers in a specific issue"
+)
+async def get_issue_papers(
+    journal_id: int,
+    volume_no: int,
+    issue_no: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Get all published papers in a specific issue.
+    
+    - **journal_id**: The journal ID
+    - **volume_no**: The volume number
+    - **issue_no**: The issue number
+    
+    Returns list of published papers with metadata.
+    """
+    # Verify journal exists
+    journal = db.query(Journal).filter(Journal.fld_id == journal_id).first()
+    if not journal:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Journal with ID {journal_id} not found"
+        )
+    
+    # Get volume info for the year
+    volume = db.query(Volume).filter(
+        Volume.journal == str(journal_id),
+        Volume.volume_no == volume_no
+    ).first()
+    
+    if not volume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Volume {volume_no} not found for journal {journal_id}"
+        )
+    
+    # Get issue info
+    issue = db.query(Issue).filter(
+        Issue.volume == volume.id,
+        Issue.issue_no == issue_no
+    ).first()
+    
+    if not issue:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Issue {issue_no} not found in volume {volume_no}"
+        )
+    
+    # Get published papers - note: paper_published stores volume.id and issue.id as strings
+    papers = db.query(PaperPublished).filter(
+        PaperPublished.journal_id == journal_id,
+        PaperPublished.volume == str(volume.id),
+        PaperPublished.issue == str(issue.id)
+    ).order_by(PaperPublished.pages).all()
+    
+    papers_list = []
+    for paper in papers:
+        # Strip HTML tags and clean up text
+        clean_title = strip_html_tags(paper.title)
+        clean_abstract = strip_html_tags(paper.abstract)
+        clean_author = strip_html_tags(paper.author)
+        clean_keyword = strip_html_tags(paper.keyword)
+        clean_pages = strip_html_tags(paper.pages) if paper.pages else None
+        clean_doi = strip_html_tags(paper.doi) if paper.doi else None
+        
+        # Truncate abstract if needed
+        if clean_abstract and len(clean_abstract) > 300:
+            clean_abstract = clean_abstract[:300] + "..."
+        
+        papers_list.append({
+            "id": paper.id,
+            "title": clean_title,
+            "author": clean_author,
+            "abstract": clean_abstract,
+            "pages": clean_pages,
+            "doi": clean_doi,
+            "doi_url": f"https://doi.org/{clean_doi}" if clean_doi else None,
+            "access_type": paper.access_type,
+            "keyword": clean_keyword,
+            "date": paper.date.isoformat() if paper.date else None
+        })
+    
+    return {
+        "journal_id": journal_id,
+        "journal_name": journal.fld_journal_name,
+        "volume_no": volume_no,
+        "year": volume.year if volume else None,
+        "issue_no": issue_no,
+        "month": issue.month if issue else None,
+        "total_papers": len(papers_list),
+        "papers": papers_list
+    }

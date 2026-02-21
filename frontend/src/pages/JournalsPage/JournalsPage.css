@@ -1,7 +1,7 @@
 .journals-page {
   min-height: calc(100vh - 200px);
   background-color: #EEF5FF;
-  padding: 40px 20px;
+  padding: 1.5rem 2rem;
 }
 
 .journals-header-wrapper {
@@ -161,7 +161,7 @@
 
 @media (max-width: 768px) {
   .journals-page {
-    padding: 20px 15px;
+    padding: 1rem;
   }
 
   .journals-header-wrapper {

@@ -1,15 +1,17 @@
 """Author API endpoints"""
-from fastapi import APIRouter, Depends, status, HTTPException, Query, UploadFile, File, Form
+from fastapi import APIRouter, Depends, status, HTTPException, Query, UploadFile, File, Form, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
 from datetime import datetime
 import json
 from app.db.database import get_db
-from app.db.models import User, Paper, PaperComment, OnlineReview, ReviewSubmission, ReviewerInvitation, PaperCoAuthor, Journal
+from app.db.models import User, Paper, PaperComment, OnlineReview, ReviewSubmission, ReviewerInvitation, PaperCoAuthor, Journal, PaperCorrespondence, Editor
 from app.core.security import get_current_user, get_current_user_from_token_or_query
 from app.utils.file_handler import save_uploaded_file
 from app.utils.auth_helpers import check_role
 from app.utils.email_service import send_submission_confirmation
+from app.schemas.correspondence import CorrespondenceResponse, CorrespondenceListResponse
+from app.services.correspondence_service import create_and_send_correspondence
 
 router = APIRouter(prefix="/api/v1/author", tags=["Author"])
 
@@ -185,6 +187,167 @@ async def get_submission_detail(
     }
 
 
+@router.get("/submissions/{paper_id}/correspondence", response_model=CorrespondenceListResponse)
+async def get_submission_correspondence(
+    paper_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get email correspondence history for a submission.
+    
+    Returns all notification emails sent to the author for this paper,
+    ordered by most recent first.
+    
+    Args:
+        paper_id: Paper ID
+        
+    Returns:
+        List of correspondence entries with delivery status
+    """
+    if not check_role(current_user.get("role"), "author"):
+        raise HTTPException(status_code=403, detail="Author access required")
+    
+    user_id = str(current_user.get("id"))
+    
+    # Verify paper belongs to this author
+    paper = db.query(Paper).filter(
+        Paper.id == paper_id,
+        Paper.added_by == user_id
+    ).first()
+    
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    # Get all correspondence for this paper
+    correspondence_entries = db.query(PaperCorrespondence).filter(
+        PaperCorrespondence.paper_id == paper_id
+    ).order_by(desc(PaperCorrespondence.created_at)).all()
+    
+    correspondence_list = []
+    for entry in correspondence_entries:
+        correspondence_list.append(CorrespondenceResponse(
+            id=entry.id,
+            paper_id=entry.paper_id,
+            recipient_email=entry.recipient_email,
+            recipient_name=entry.recipient_name,
+            subject=entry.subject,
+            body=entry.body,
+            email_type=entry.email_type,
+            status_at_send=entry.status_at_send,
+            delivery_status=entry.delivery_status,
+            webhook_id=entry.webhook_id,
+            webhook_received_at=entry.webhook_received_at,
+            error_message=entry.error_message,
+            retry_count=entry.retry_count,
+            created_at=entry.created_at,
+            sent_at=entry.sent_at
+        ))
+    
+    return CorrespondenceListResponse(
+        total=len(correspondence_list),
+        paper_id=paper_id,
+        paper_title=paper.title,
+        correspondence=correspondence_list
+    )
+
+
+@router.put("/submissions/{paper_id}/correspondence/{correspondence_id}/read")
+async def mark_correspondence_as_read(
+    paper_id: int,
+    correspondence_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Mark a correspondence item as read.
+    
+    Args:
+        paper_id: Paper ID
+        correspondence_id: Correspondence ID
+        
+    Returns:
+        Updated correspondence with read status
+    """
+    if not check_role(current_user.get("role"), "author"):
+        raise HTTPException(status_code=403, detail="Author access required")
+    
+    user_id = str(current_user.get("id"))
+    
+    # Verify paper belongs to this author
+    paper = db.query(Paper).filter(
+        Paper.id == paper_id,
+        Paper.added_by == user_id
+    ).first()
+    
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    # Get correspondence
+    correspondence = db.query(PaperCorrespondence).filter(
+        PaperCorrespondence.id == correspondence_id,
+        PaperCorrespondence.paper_id == paper_id
+    ).first()
+    
+    if not correspondence:
+        raise HTTPException(status_code=404, detail="Correspondence not found")
+    
+    # Mark as read if not already
+    if not correspondence.is_read:
+        correspondence.is_read = True
+        correspondence.read_at = datetime.utcnow()
+        db.commit()
+        db.refresh(correspondence)
+    
+    return {
+        "message": "Correspondence marked as read",
+        "id": correspondence.id,
+        "is_read": correspondence.is_read,
+        "read_at": correspondence.read_at.isoformat() if correspondence.read_at else None
+    }
+
+
+@router.get("/submissions/{paper_id}/unread-count")
+async def get_unread_correspondence_count(
+    paper_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get count of unread correspondence for a paper.
+    
+    Args:
+        paper_id: Paper ID
+        
+    Returns:
+        Count of unread correspondence
+    """
+    if not check_role(current_user.get("role"), "author"):
+        raise HTTPException(status_code=403, detail="Author access required")
+    
+    user_id = str(current_user.get("id"))
+    
+    # Verify paper belongs to this author
+    paper = db.query(Paper).filter(
+        Paper.id == paper_id,
+        Paper.added_by == user_id
+    ).first()
+    
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    # Count unread correspondence
+    unread_count = db.query(func.count(PaperCorrespondence.id)).filter(
+        PaperCorrespondence.paper_id == paper_id,
+        PaperCorrespondence.is_read == False
+    ).scalar() or 0
+    
+    return {
+        "paper_id": paper_id,
+        "unread_count": unread_count
+    }
+
+
 @router.post("/submit-paper")
 async def submit_paper(
     title: str = Form(...),
@@ -197,6 +360,7 @@ async def submit_paper(
     terms_accepted: bool = Form(default=False),
     author_details: str = Form(...),  # JSON string with primary author details
     co_authors: str = Form(default="[]"),  # JSON string array of co-authors
+    background_tasks: BackgroundTasks = None,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -274,7 +438,7 @@ async def submit_paper(
             title=title,
             abstract=abstract,
             keyword=keywords,
-            journal=str(journal_id),
+            journal=journal_id,  # journal is now INT, no str() conversion needed
             author=current_user.get("email", ""),
             added_by=str(current_user.get("id", "")),
             status="submitted",  # Must match database ENUM values
@@ -324,14 +488,50 @@ async def submit_paper(
         db.commit()
         logger.info(f"Saved {len(co_authors_data)} co-authors for paper {new_paper.id}")
         
-        # Return success response immediately (skip email for now)
+        # Send submission confirmation email via background task
+        email_queued = False
+        if background_tasks:
+            # Get author info
+            author = db.query(User).filter(User.id == current_user.get("id")).first()
+            
+            # Get journal info
+            journal = db.query(Journal).filter(Journal.fld_id == journal_id).first()
+            
+            if author and author.email:
+                author_name = f"{author.fname or ''} {author.lname or ''}".strip() or "Author"
+                journal_name = journal.fld_journal_name if journal else "AACS Journal"
+                
+                async def send_submission_email():
+                    from app.db.database import SessionLocal
+                    email_db = SessionLocal()
+                    try:
+                        await create_and_send_correspondence(
+                            db=email_db,
+                            paper_id=new_paper.id,
+                            paper_code=new_paper.paper_code,
+                            paper_title=new_paper.title,
+                            journal_name=journal_name,
+                            author_email=author.email,
+                            author_name=author_name,
+                            email_type="submission_confirmed",
+                            status_at_send="submitted"
+                        )
+                    finally:
+                        email_db.close()
+                
+                background_tasks.add_task(send_submission_email)
+                email_queued = True
+                logger.info(f"Submission confirmation email queued for paper {new_paper.id}")
+        
+        # Return success response
         response_data = {
             "id": new_paper.id,
             "title": new_paper.title,
             "status": new_paper.status,
             "file": new_paper.file,
             "submitted_date": new_paper.added_on.isoformat() if new_paper.added_on else None,
-            "co_authors_count": len(co_authors_data)
+            "co_authors_count": len(co_authors_data),
+            "email_notification_queued": email_queued
         }
         logger.info(f"Returning response: {response_data}")
         return response_data
@@ -535,6 +735,7 @@ async def resubmit_paper(
     file: UploadFile = File(...),
     revision_reason: str = Form(...),
     change_summary: str = Form(None),
+    background_tasks: BackgroundTasks = None,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -611,11 +812,74 @@ async def resubmit_paper(
         db.commit()
         db.refresh(paper)
         
+        # Send resubmission confirmation email to author and notify editor
+        email_queued = False
+        if background_tasks:
+            author = db.query(User).filter(User.id == current_user.get("id")).first()
+            journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
+            
+            if author and author.email:
+                author_name = f"{author.fname or ''} {author.lname or ''}".strip() or "Author"
+                journal_name = journal.fld_journal_name if journal else "AACS Journal"
+                
+                # Notify author of successful resubmission
+                async def send_resubmit_email():
+                    from app.db.database import SessionLocal
+                    email_db = SessionLocal()
+                    try:
+                        await create_and_send_correspondence(
+                            db=email_db,
+                            paper_id=paper.id,
+                            paper_code=paper.paper_code,
+                            paper_title=paper.title,
+                            journal_name=journal_name,
+                            author_email=author.email,
+                            author_name=author_name,
+                            email_type="resubmitted",
+                            status_at_send="resubmitted",
+                            version_number=paper.version_number
+                        )
+                    finally:
+                        email_db.close()
+                
+                background_tasks.add_task(send_resubmit_email)
+                email_queued = True
+                
+                # Also notify editor about the revision
+                editor = None
+                if paper.journal:
+                    editor_record = db.query(Editor).filter(Editor.journal_id == paper.journal).first()
+                    if editor_record:
+                        editor = db.query(User).filter(User.email == editor_record.email).first()
+                
+                if editor and editor.email:
+                    async def send_editor_notification():
+                        from app.db.database import SessionLocal
+                        email_db = SessionLocal()
+                        try:
+                            await create_and_send_correspondence(
+                                db=email_db,
+                                paper_id=paper.id,
+                                paper_code=paper.paper_code,
+                                paper_title=paper.title,
+                                journal_name=journal_name,
+                                author_email=editor.email,
+                                author_name=f"{editor.fname or ''} {editor.lname or ''}".strip() or "Editor",
+                                email_type="revision_received_editor",
+                                status_at_send="resubmitted",
+                                version_number=paper.version_number
+                            )
+                        finally:
+                            email_db.close()
+                    
+                    background_tasks.add_task(send_editor_notification)
+        
         return {
             "message": "Paper resubmitted successfully",
             "paper_id": paper.id,
             "version_number": paper.version_number,
-            "status": paper.status
+            "status": paper.status,
+            "email_notification_queued": email_queued
         }
     except Exception as e:
         db.rollback()

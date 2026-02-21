@@ -4,6 +4,7 @@ import { useJournals } from '../../hooks/useJournals';
 import { useToast } from '../../hooks/useToast';
 import { useModal } from '../../hooks/useModal';
 import { useRole } from '../../hooks/useRole';
+import { acsApi } from '../../api/apiService';
 import Breadcrumbs from '../../components/breadcrumbs/Breadcrumbs';
 import './JournalDetailPage.css';
 
@@ -17,12 +18,53 @@ const JournalDetailPage = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editFormData, setEditFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Volume and Issue state
+  const [volumes, setVolumes] = useState([]);
+  const [loadingVolumes, setLoadingVolumes] = useState(false);
+  const [expandedVolumes, setExpandedVolumes] = useState({});
+  const [volumeIssues, setVolumeIssues] = useState({});
 
   useEffect(() => {
     if (id) {
       getJournalById(id);
+      fetchVolumes(id);
     }
   }, [id, getJournalById]);
+
+  // Fetch volumes for the journal
+  const fetchVolumes = async (journalId) => {
+    setLoadingVolumes(true);
+    try {
+      const response = await acsApi.journals.getVolumes(journalId);
+      setVolumes(response.volumes || []);
+    } catch (err) {
+      console.error('Failed to load volumes:', err);
+    } finally {
+      setLoadingVolumes(false);
+    }
+  };
+
+  // Toggle volume expansion and fetch issues
+  const toggleVolume = async (volumeId) => {
+    setExpandedVolumes(prev => ({
+      ...prev,
+      [volumeId]: !prev[volumeId]
+    }));
+
+    // Fetch issues if not already loaded
+    if (!volumeIssues[volumeId] && !expandedVolumes[volumeId]) {
+      try {
+        const response = await acsApi.journals.getVolumeIssues(id, volumeId);
+        setVolumeIssues(prev => ({
+          ...prev,
+          [volumeId]: response.issues || []
+        }));
+      } catch (err) {
+        console.error('Failed to load issues:', err);
+      }
+    }
+  };
 
   useEffect(() => {
     if (selectedJournal && isEditMode) {
@@ -344,6 +386,87 @@ const JournalDetailPage = () => {
                   </div>
                 </section>
               )}
+
+              {/* Volumes and Issues Section */}
+              <section className="journal-detail-section">
+                <h2>Volumes & Issues</h2>
+                {loadingVolumes ? (
+                  <div className="volumes-loading">
+                    <div className="spinner-small"></div>
+                    <span>Loading volumes...</span>
+                  </div>
+                ) : volumes.length === 0 ? (
+                  <div className="no-volumes">
+                    <p>No volumes available yet for this journal.</p>
+                  </div>
+                ) : (
+                  <div className="volumes-list">
+                    {volumes.map((volume) => (
+                      <div key={volume.id} className="volume-item">
+                        <div 
+                          className={`volume-header ${expandedVolumes[volume.id] ? 'expanded' : ''}`}
+                          onClick={() => toggleVolume(volume.id)}
+                        >
+                          <div className="volume-info">
+                            <span className="volume-icon">
+                              <span className="material-symbols-rounded">
+                                {expandedVolumes[volume.id] ? 'expand_less' : 'expand_more'}
+                              </span>
+                            </span>
+                            <span className="volume-title">Volume {volume.volume_no}</span>
+                            <span className="volume-year">({volume.year})</span>
+                          </div>
+                          <span className="volume-issue-count">
+                            {volume.issue_count} {volume.issue_count === 1 ? 'Issue' : 'Issues'}
+                          </span>
+                        </div>
+                        
+                        {expandedVolumes[volume.id] && (
+                          <div className="issues-container">
+                            {!volumeIssues[volume.id] ? (
+                              <div className="issues-loading">
+                                <div className="spinner-small"></div>
+                                <span>Loading issues...</span>
+                              </div>
+                            ) : volumeIssues[volume.id].length === 0 ? (
+                              <div className="no-issues">
+                                <p>No issues in this volume yet.</p>
+                              </div>
+                            ) : (
+                              <div className="issues-grid">
+                                {volumeIssues[volume.id].map((issue) => (
+                                  <Link 
+                                    key={issue.id} 
+                                    to={`/journal/${id}/volume/${volume.volume_no}/issue/${issue.issue_no}`}
+                                    className="issue-card"
+                                  >
+                                    <div className="issue-header">
+                                      <span className="issue-number">Issue {issue.issue_no}</span>
+                                      {issue.month && <span className="issue-month">{issue.month}</span>}
+                                    </div>
+                                    <div className="issue-details">
+                                      <span className="issue-papers">
+                                        <span className="material-symbols-rounded">article</span>
+                                        {issue.paper_count} {issue.paper_count === 1 ? 'Paper' : 'Papers'}
+                                      </span>
+                                      {issue.pages && (
+                                        <span className="issue-pages">
+                                          <span className="material-symbols-rounded">menu_book</span>
+                                          {issue.pages} pages
+                                        </span>
+                                      )}
+                                    </div>
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
             </div>
           </div>
         </>

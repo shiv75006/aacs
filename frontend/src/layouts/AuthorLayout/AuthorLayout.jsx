@@ -1,31 +1,34 @@
 import React from 'react';
-import { Link, useNavigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import './AuthorLayout.css';
+import { Outlet } from 'react-router-dom';
+import Navbar from '../../components/Navbar';
+import '../shared/PortalLayout.css';
 
 const AuthorLayout = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  const authorSections = [
+    {
+      items: [
+        { icon: 'dashboard', label: 'Dashboard', path: '/author' }
+      ]
+    },
+    {
+      title: 'Papers',
+      items: [
+        { icon: 'description', label: 'My Submissions', path: '/author/submissions' }
+      ]
+    },
+    {
+      title: 'Quick Links',
+      items: [
+        { icon: 'add_circle', label: 'Submit Paper', path: '/submit' }
+      ]
+    }
+  ];
 
   return (
-    <div className="author-layout">
-      <aside className="author-sidebar">
-        <div className="author-logo">
-          <h2>Author Portal</h2>
-        </div>
-
-        <nav className="author-nav">
-          <div className="nav-section">
-            <h4>My Work</h4>
-            <Link to="/author/submissions" className="nav-link">
-               My Submissions
-            </Link>
-          </div>
-        </nav>
-      </aside>
-
-      <main className="author-main">
-        <div className="author-content">
+    <div className="portal-layout">
+      <Navbar sections={authorSections} portalName="Author Portal" />
+      <main className="portal-main">
+        <div className="portal-content">
           <Outlet />
         </div>
       </main>

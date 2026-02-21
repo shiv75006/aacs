@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import acsApi from '../../api/apiService';
+import { createJournal } from '../../services/journals';
 import { useToast } from '../../hooks/useToast';
 import { useModal } from '../../hooks/useModal';
 import styles from './AdminJournals.module.css';
@@ -16,6 +17,44 @@ const AdminJournals = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingId, setDeletingId] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditorsModal, setShowEditorsModal] = useState(false);
+  const [selectedJournal, setSelectedJournal] = useState(null);
+  const [journalEditors, setJournalEditors] = useState({ chief_editor: null, co_editor: null, section_editors: [] });
+  const [users, setUsers] = useState([]);
+  const [newJournal, setNewJournal] = useState({
+    fld_journal_name: '',
+    short_form: '',
+    freq: 'Quarterly',
+    issn_ol: '',
+    issn_prt: '',
+    cheif_editor: '',
+    co_editor: '',
+    password: 'default',
+    description: '',
+    journal_image: '',
+    journal_logo: '',
+    guidelines: '',
+    copyright: '',
+    membership: '',
+    subscription: '',
+    publication: '',
+    advertisement: '',
+    abs_ind: '',
+  });
+  const [newEditor, setNewEditor] = useState({
+    editor_name: '',
+    editor_email: '',
+    editor_type: 'section_editor',
+    editor_affiliation: '',
+  });
+  const [savingJournal, setSavingJournal] = useState(false);
+  const [savingEditor, setSavingEditor] = useState(false);
+  const [availableEditors, setAvailableEditors] = useState([]);
+  const [selectedChiefEditor, setSelectedChiefEditor] = useState('');
+  const [selectedCoEditor, setSelectedCoEditor] = useState('');
+  const [selectedSectionEditors, setSelectedSectionEditors] = useState([]);
+  const [loadingEditors, setLoadingEditors] = useState(false);
   const journalsPerPage = 6;
 
   const fetchJournals = useCallback(async () => {
@@ -97,9 +136,149 @@ const AdminJournals = () => {
     });
   };
 
-  const handleAddJournal = () => {
-    console.log('Add new journal');
-    // TODO: Implement add journal modal/page
+  const handleAddJournal = async () => {
+    setShowAddModal(true);
+    // Fetch available editors for dropdown
+    setLoadingEditors(true);
+    try {
+      const response = await acsApi.admin.listEditors(0, 100);
+      setAvailableEditors(response.editors || []);
+    } catch (err) {
+      console.error('Failed to fetch editors:', err);
+      setAvailableEditors([]);
+    } finally {
+      setLoadingEditors(false);
+    }
+  };
+
+  const handleSaveJournal = async () => {
+    if (!newJournal.fld_journal_name || !newJournal.short_form) {
+      showError('Journal name and short form are required', 4000);
+      return;
+    }
+    
+    setSavingJournal(true);
+    try {
+      // Get editor names from selected editors
+      const chiefEditor = availableEditors.find(e => e.id === parseInt(selectedChiefEditor));
+      const coEditor = availableEditors.find(e => e.id === parseInt(selectedCoEditor));
+      const journalData = {
+        ...newJournal,
+        cheif_editor: chiefEditor?.editor_name || newJournal.cheif_editor,
+        co_editor: coEditor?.editor_name || newJournal.co_editor,
+        chief_editor_id: selectedChiefEditor ? parseInt(selectedChiefEditor) : null,
+        co_editor_id: selectedCoEditor ? parseInt(selectedCoEditor) : null,
+        section_editor_ids: selectedSectionEditors.map(id => parseInt(id)),
+      };
+      
+      const created = await createJournal(journalData);
+      success(`Journal "${created.name}" created successfully!`, 4000);
+      setShowAddModal(false);
+      setNewJournal({
+        fld_journal_name: '',
+        short_form: '',
+        freq: 'Quarterly',
+        issn_ol: '',
+        issn_prt: '',
+        cheif_editor: '',
+        co_editor: '',
+        password: 'default',
+        description: '',
+        journal_image: '',
+        journal_logo: '',
+        guidelines: '',
+        copyright: '',
+        membership: '',
+        subscription: '',
+        publication: '',
+        advertisement: '',
+        abs_ind: '',
+      });
+      setSelectedChiefEditor('');
+      setSelectedCoEditor('');
+      setSelectedSectionEditors([]);
+      fetchJournals();
+    } catch (err) {
+      showError(err.response?.data?.detail || 'Failed to create journal', 5000);
+    } finally {
+      setSavingJournal(false);
+    }
+  };
+
+  const handleManageEditors = async (journal) => {
+    setSelectedJournal(journal);
+    setShowEditorsModal(true);
+    try {
+      const response = await acsApi.admin.getJournalEditors(journal.id);
+      setJournalEditors({
+        chief_editor: response.chief_editor,
+        co_editor: response.co_editor,
+        section_editors: response.section_editors || []
+      });
+    } catch (err) {
+      showError('Failed to load editors', 4000);
+    }
+  };
+
+  const handleAddEditor = async () => {
+    if (!newEditor.editor_name || !newEditor.editor_email) {
+      showError('Editor name and email are required', 4000);
+      return;
+    }
+    
+    setSavingEditor(true);
+    try {
+      await acsApi.admin.createEditor({
+        editor_name: newEditor.editor_name,
+        editor_email: newEditor.editor_email,
+        journal_id: selectedJournal.id,
+        editor_type: newEditor.editor_type,
+        editor_affiliation: newEditor.editor_affiliation,
+      });
+      success('Editor added successfully!', 4000);
+      setNewEditor({
+        editor_name: '',
+        editor_email: '',
+        editor_type: 'section_editor',
+        editor_affiliation: '',
+      });
+      // Refresh editors
+      const response = await acsApi.admin.getJournalEditors(selectedJournal.id);
+      setJournalEditors({
+        chief_editor: response.chief_editor,
+        co_editor: response.co_editor,
+        section_editors: response.section_editors || []
+      });
+    } catch (err) {
+      showError(err.response?.data?.detail || 'Failed to add editor', 5000);
+    } finally {
+      setSavingEditor(false);
+    }
+  };
+
+  const handleRemoveEditor = async (editorId, editorName) => {
+    confirm({
+      title: 'Remove Editor',
+      message: `Are you sure you want to remove "${editorName}" from this journal?`,
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      type: 'warning',
+      onConfirm: async () => {
+        try {
+          await acsApi.admin.deleteEditor(editorId);
+          success(`Editor "${editorName}" removed successfully!`, 4000);
+          // Refresh editors
+          const response = await acsApi.admin.getJournalEditors(selectedJournal.id);
+          setJournalEditors({
+            chief_editor: response.chief_editor,
+            co_editor: response.co_editor,
+            section_editors: response.section_editors || []
+          });
+        } catch (err) {
+          showError(err.response?.data?.detail || 'Failed to remove editor', 5000);
+        }
+      },
+    });
   };
 
   return (
@@ -171,6 +350,14 @@ const AdminJournals = () => {
                       <span className="material-symbols-rounded">edit</span>
                     </button>
                     <button 
+                      className={styles.actionBtn} 
+                      onClick={() => handleManageEditors(journal)}
+                      title="Manage editors"
+                      disabled={deletingId === journal.id}
+                    >
+                      <span className="material-symbols-rounded">group</span>
+                    </button>
+                    <button 
                       className={`${styles.actionBtn} ${styles.deleteBtn}`}
                       onClick={() => handleDelete(journal)}
                       title="Delete journal"
@@ -193,26 +380,24 @@ const AdminJournals = () => {
                   <div className={styles.avatarGroup}>
                     {journal.chief_editor && (
                       <div 
-                        className={styles.avatar}
+                        className={`${styles.avatar} ${styles.chiefAvatar}`}
                         style={{ backgroundColor: getAvatarColor(journal.chief_editor, 0) }}
-                        title={journal.chief_editor}
+                        title={`Chief Editor: ${journal.chief_editor}`}
                       >
                         {getInitials(journal.chief_editor)}
                       </div>
                     )}
                     {journal.co_editor && (
                       <div 
-                        className={styles.avatar}
+                        className={`${styles.avatar} ${styles.coAvatar}`}
                         style={{ backgroundColor: getAvatarColor(journal.co_editor, 1) }}
-                        title={journal.co_editor}
+                        title={`Co-Editor: ${journal.co_editor}`}
                       >
                         {getInitials(journal.co_editor)}
                       </div>
                     )}
-                    {(journal.chief_editor || journal.co_editor) && (
-                      <span className={styles.avatarCount}>
-                        +{(journal.chief_editor ? 1 : 0) + (journal.co_editor ? 1 : 0)}
-                      </span>
+                    {!journal.chief_editor && !journal.co_editor && (
+                      <span className={styles.noEditorText}>No editors assigned</span>
                     )}
                   </div>
                 </div>
@@ -250,6 +435,431 @@ const AdminJournals = () => {
             </div>
           )}
         </>
+      )}
+
+      {/* Add Journal Modal */}
+      {showAddModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowAddModal(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>Add New Journal</h2>
+              <button className={styles.closeBtn} onClick={() => setShowAddModal(false)}>
+                <span className="material-symbols-rounded">close</span>
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {/* Basic Information */}
+              <h3 className={styles.sectionTitle}>Basic Information</h3>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Journal Name *</label>
+                  <input
+                    type="text"
+                    value={newJournal.fld_journal_name}
+                    onChange={(e) => setNewJournal({...newJournal, fld_journal_name: e.target.value})}
+                    placeholder="International Journal of..."
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Short Form *</label>
+                  <input
+                    type="text"
+                    value={newJournal.short_form}
+                    onChange={(e) => setNewJournal({...newJournal, short_form: e.target.value})}
+                    placeholder="IJCS"
+                  />
+                </div>
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>ISSN Online</label>
+                  <input
+                    type="text"
+                    value={newJournal.issn_ol}
+                    onChange={(e) => setNewJournal({...newJournal, issn_ol: e.target.value})}
+                    placeholder="XXXX-XXXX"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>ISSN Print</label>
+                  <input
+                    type="text"
+                    value={newJournal.issn_prt}
+                    onChange={(e) => setNewJournal({...newJournal, issn_prt: e.target.value})}
+                    placeholder="XXXX-XXXX"
+                  />
+                </div>
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Frequency</label>
+                  <select
+                    value={newJournal.freq}
+                    onChange={(e) => setNewJournal({...newJournal, freq: e.target.value})}
+                  >
+                    <option value="Monthly">Monthly</option>
+                    <option value="Bi-Monthly">Bi-Monthly</option>
+                    <option value="Quarterly">Quarterly</option>
+                    <option value="Semi-Annual">Semi-Annual</option>
+                    <option value="Annual">Annual</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Abstract Indexing</label>
+                  <input
+                    type="text"
+                    value={newJournal.abs_ind}
+                    onChange={(e) => setNewJournal({...newJournal, abs_ind: e.target.value})}
+                    placeholder="e.g., Scopus, Web of Science"
+                  />
+                </div>
+              </div>
+              
+              {/* Editorial Team */}
+              <h3 className={styles.sectionTitle}>Editorial Team</h3>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Chief Editor</label>
+                  <select
+                    value={selectedChiefEditor}
+                    onChange={(e) => setSelectedChiefEditor(e.target.value)}
+                    disabled={loadingEditors}
+                  >
+                    <option value="">
+                      {loadingEditors ? 'Loading editors...' : 'Select Chief Editor'}
+                    </option>
+                    {availableEditors
+                      .filter(editor => editor.id !== parseInt(selectedCoEditor))
+                      .map((editor) => (
+                        <option key={editor.id} value={editor.id}>
+                          {editor.editor_name} ({editor.editor_email})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Co-Editor</label>
+                  <select
+                    value={selectedCoEditor}
+                    onChange={(e) => setSelectedCoEditor(e.target.value)}
+                    disabled={loadingEditors}
+                  >
+                    <option value="">
+                      {loadingEditors ? 'Loading editors...' : 'Select Co-Editor'}
+                    </option>
+                    {availableEditors
+                      .filter(editor => editor.id !== parseInt(selectedChiefEditor))
+                      .map((editor) => (
+                        <option key={editor.id} value={editor.id}>
+                          {editor.editor_name} ({editor.editor_email})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+              <div className={styles.formGroup}>
+                <label>Section Editors</label>
+                <div className={styles.multiSelectContainer}>
+                  {loadingEditors ? (
+                    <p className={styles.loadingText}>Loading editors...</p>
+                  ) : (
+                    <div className={styles.editorCheckboxList}>
+                      {availableEditors
+                        .filter(editor => 
+                          editor.id !== parseInt(selectedChiefEditor) && 
+                          editor.id !== parseInt(selectedCoEditor)
+                        )
+                        .map((editor) => (
+                          <label key={editor.id} className={styles.editorCheckbox}>
+                            <input
+                              type="checkbox"
+                              checked={selectedSectionEditors.includes(String(editor.id))}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedSectionEditors([...selectedSectionEditors, String(editor.id)]);
+                                } else {
+                                  setSelectedSectionEditors(selectedSectionEditors.filter(id => id !== String(editor.id)));
+                                }
+                              }}
+                            />
+                            <span className={styles.editorCheckboxLabel}>
+                              {editor.editor_name}
+                              <span className={styles.editorCheckboxEmail}>{editor.editor_email}</span>
+                            </span>
+                          </label>
+                        ))}
+                      {availableEditors.length === 0 && (
+                        <p className={styles.noEditorsText}>No editors available. Create editors first.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {selectedSectionEditors.length > 0 && (
+                  <p className={styles.selectedCount}>
+                    {selectedSectionEditors.length} section editor(s) selected
+                  </p>
+                )}
+              </div>
+
+              {/* Media & Branding */}
+              <h3 className={styles.sectionTitle}>Media & Branding</h3>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Journal Image URL</label>
+                  <input
+                    type="text"
+                    value={newJournal.journal_image}
+                    onChange={(e) => setNewJournal({...newJournal, journal_image: e.target.value})}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Journal Logo URL</label>
+                  <input
+                    type="text"
+                    value={newJournal.journal_logo}
+                    onChange={(e) => setNewJournal({...newJournal, journal_logo: e.target.value})}
+                    placeholder="https://example.com/logo.png"
+                  />
+                </div>
+              </div>
+
+              {/* Policies & Documents */}
+              <h3 className={styles.sectionTitle}>Policies & Documents</h3>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Guidelines URL</label>
+                  <input
+                    type="text"
+                    value={newJournal.guidelines}
+                    onChange={(e) => setNewJournal({...newJournal, guidelines: e.target.value})}
+                    placeholder="https://example.com/guidelines.pdf"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Copyright URL</label>
+                  <input
+                    type="text"
+                    value={newJournal.copyright}
+                    onChange={(e) => setNewJournal({...newJournal, copyright: e.target.value})}
+                    placeholder="https://example.com/copyright.pdf"
+                  />
+                </div>
+              </div>
+
+              {/* Subscription & Business */}
+              <h3 className={styles.sectionTitle}>Subscription & Business</h3>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Membership URL</label>
+                  <input
+                    type="text"
+                    value={newJournal.membership}
+                    onChange={(e) => setNewJournal({...newJournal, membership: e.target.value})}
+                    placeholder="https://example.com/membership"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Subscription URL</label>
+                  <input
+                    type="text"
+                    value={newJournal.subscription}
+                    onChange={(e) => setNewJournal({...newJournal, subscription: e.target.value})}
+                    placeholder="https://example.com/subscription"
+                  />
+                </div>
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Publication URL</label>
+                  <input
+                    type="text"
+                    value={newJournal.publication}
+                    onChange={(e) => setNewJournal({...newJournal, publication: e.target.value})}
+                    placeholder="https://example.com/publication"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Advertisement URL</label>
+                  <input
+                    type="text"
+                    value={newJournal.advertisement}
+                    onChange={(e) => setNewJournal({...newJournal, advertisement: e.target.value})}
+                    placeholder="https://example.com/advertisement"
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <h3 className={styles.sectionTitle}>Description</h3>
+              <div className={styles.formGroup}>
+                <label>Journal Description</label>
+                <textarea
+                  value={newJournal.description}
+                  onChange={(e) => setNewJournal({...newJournal, description: e.target.value})}
+                  placeholder="Enter a detailed description of the journal..."
+                  rows={4}
+                />
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={styles.cancelBtn} onClick={() => setShowAddModal(false)}>
+                Cancel
+              </button>
+              <button 
+                className={styles.saveBtn} 
+                onClick={handleSaveJournal}
+                disabled={savingJournal}
+              >
+                {savingJournal ? 'Creating...' : 'Create Journal'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Editors Modal */}
+      {showEditorsModal && selectedJournal && (
+        <div className={styles.modalOverlay} onClick={() => setShowEditorsModal(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>Manage Editors - {selectedJournal.name}</h2>
+              <button className={styles.closeBtn} onClick={() => setShowEditorsModal(false)}>
+                <span className="material-symbols-rounded">close</span>
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {/* Chief Editor */}
+              <div className={styles.editorSection}>
+                <h3>Chief Editor</h3>
+                {journalEditors.chief_editor ? (
+                  <div className={styles.editorCard}>
+                    <div className={styles.editorInfo}>
+                      <strong>{journalEditors.chief_editor.editor_name}</strong>
+                      <span>{journalEditors.chief_editor.editor_email}</span>
+                    </div>
+                    <button 
+                      className={styles.removeBtn}
+                      onClick={() => handleRemoveEditor(journalEditors.chief_editor.id, journalEditors.chief_editor.editor_name)}
+                    >
+                      <span className="material-symbols-rounded">person_remove</span>
+                    </button>
+                  </div>
+                ) : (
+                  <p className={styles.noEditor}>No chief editor assigned</p>
+                )}
+              </div>
+
+              {/* Co-Editor */}
+              <div className={styles.editorSection}>
+                <h3>Co-Editor</h3>
+                {journalEditors.co_editor ? (
+                  <div className={styles.editorCard}>
+                    <div className={styles.editorInfo}>
+                      <strong>{journalEditors.co_editor.editor_name}</strong>
+                      <span>{journalEditors.co_editor.editor_email}</span>
+                    </div>
+                    <button 
+                      className={styles.removeBtn}
+                      onClick={() => handleRemoveEditor(journalEditors.co_editor.id, journalEditors.co_editor.editor_name)}
+                    >
+                      <span className="material-symbols-rounded">person_remove</span>
+                    </button>
+                  </div>
+                ) : (
+                  <p className={styles.noEditor}>No co-editor assigned</p>
+                )}
+              </div>
+
+              {/* Section Editors */}
+              <div className={styles.editorSection}>
+                <h3>Section Editors ({journalEditors.section_editors.length})</h3>
+                {journalEditors.section_editors.length > 0 ? (
+                  journalEditors.section_editors.map((editor) => (
+                    <div key={editor.id} className={styles.editorCard}>
+                      <div className={styles.editorInfo}>
+                        <strong>{editor.editor_name}</strong>
+                        <span>{editor.editor_email}</span>
+                      </div>
+                      <button 
+                        className={styles.removeBtn}
+                        onClick={() => handleRemoveEditor(editor.id, editor.editor_name)}
+                      >
+                        <span className="material-symbols-rounded">person_remove</span>
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className={styles.noEditor}>No section editors assigned</p>
+                )}
+              </div>
+
+              {/* Add New Editor Form */}
+              <div className={styles.addEditorForm}>
+                <h3>Add New Editor</h3>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label>Name *</label>
+                    <input
+                      type="text"
+                      value={newEditor.editor_name}
+                      onChange={(e) => setNewEditor({...newEditor, editor_name: e.target.value})}
+                      placeholder="Editor name"
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Email *</label>
+                    <input
+                      type="email"
+                      value={newEditor.editor_email}
+                      onChange={(e) => setNewEditor({...newEditor, editor_email: e.target.value})}
+                      placeholder="editor@example.com"
+                    />
+                  </div>
+                </div>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label>Editor Type</label>
+                    <select
+                      value={newEditor.editor_type}
+                      onChange={(e) => setNewEditor({...newEditor, editor_type: e.target.value})}
+                    >
+                      <option value="section_editor">Section Editor</option>
+                      <option value="co_editor" disabled={!!journalEditors.co_editor}>
+                        Co-Editor {journalEditors.co_editor ? '(Already assigned)' : ''}
+                      </option>
+                      <option value="chief_editor" disabled={!!journalEditors.chief_editor}>
+                        Chief Editor {journalEditors.chief_editor ? '(Already assigned)' : ''}
+                      </option>
+                    </select>
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Affiliation</label>
+                    <input
+                      type="text"
+                      value={newEditor.editor_affiliation}
+                      onChange={(e) => setNewEditor({...newEditor, editor_affiliation: e.target.value})}
+                      placeholder="University/Institution"
+                    />
+                  </div>
+                </div>
+                <button 
+                  className={styles.addEditorBtn}
+                  onClick={handleAddEditor}
+                  disabled={savingEditor}
+                >
+                  <span className="material-symbols-rounded">person_add</span>
+                  {savingEditor ? 'Adding...' : 'Add Editor'}
+                </button>
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={styles.closeModalBtn} onClick={() => setShowEditorsModal(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

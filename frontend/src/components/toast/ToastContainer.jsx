@@ -3,10 +3,6 @@ import Toast from './Toast';
 import './Toast.css';
 
 const ToastContainer = ({ toasts, onRemoveToast }) => {
-  React.useEffect(() => {
-    console.log('Toasts updated:', toasts);
-  }, [toasts]);
-
   return (
     <div className="toast-container">
       {toasts.map((toast) => (

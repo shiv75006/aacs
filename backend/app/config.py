@@ -31,6 +31,16 @@ class Settings(BaseSettings):
     # CORS Configuration
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
     
+    # Crossref DOI Configuration
+    CROSSREF_USERNAME: str = ""  # Your Crossref username
+    CROSSREF_PASSWORD: str = ""  # Your Crossref password
+    CROSSREF_DOI_PREFIX: str = "10.58517"  # AACS DOI prefix
+    CROSSREF_DEPOSITOR_NAME: str = "AACS Journals"
+    CROSSREF_DEPOSITOR_EMAIL: str = "info@aacsjournals.com"
+    CROSSREF_API_URL: str = "https://doi.crossref.org/servlet/deposit"
+    CROSSREF_TEST_URL: str = "https://test.crossref.org/servlet/deposit"
+    CROSSREF_TEST_MODE: bool = True  # Set to False for production
+    
     class Config:
         env_file = ".env"
         case_sensitive = True

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { authService } from '../services/authService';
 import { formatApiError } from '../utils/errorFormatter';
+import acsApi from '../api/apiService';
 
 export const AuthContext = createContext();
 
@@ -9,10 +10,32 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Multi-role state
+  const [roles, setRoles] = useState([]); // All approved roles
+  const [activeRole, setActiveRole] = useState(null); // Currently active role
+  const [pendingRoleRequests, setPendingRoleRequests] = useState([]); // Pending role requests
+  const [availableRoles, setAvailableRoles] = useState([]); // Roles user can request
+
+  // Fetch user roles from API
+  const fetchUserRoles = useCallback(async () => {
+    try {
+      const response = await acsApi.roles.getMyRoles();
+      setRoles(response.approved_roles || []);
+      setActiveRole(response.active_role || null);
+      setPendingRoleRequests(response.pending_requests || []);
+      setAvailableRoles(response.available_roles || []);
+      return response;
+    } catch (err) {
+      console.error('Error fetching user roles:', err);
+      // Don't throw - roles API might not be available during initial load
+      return null;
+    }
+  }, []);
 
   // Initialize auth state from localStorage on mount
   useEffect(() => {
-    const initializeAuth = () => {
+    const initializeAuth = async () => {
       try {
         const token = authService.getToken();
         const storedUser = authService.getStoredUser();
@@ -20,6 +43,10 @@ export const AuthProvider = ({ children }) => {
         if (token && storedUser) {
           setUser(storedUser);
           setIsAuthenticated(true);
+          setActiveRole(storedUser.role?.toLowerCase() || null);
+          
+          // Fetch roles after auth is initialized
+          await fetchUserRoles();
         } else {
           setIsAuthenticated(false);
         }
@@ -32,7 +59,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     initializeAuth();
-  }, []);
+  }, [fetchUserRoles]);
 
   // Login function
   const login = useCallback(async (email, password) => {
@@ -54,6 +81,10 @@ export const AuthProvider = ({ children }) => {
       authService.storeUser(userData);
       setUser(userData);
       setIsAuthenticated(true);
+      setActiveRole(userData.role?.toLowerCase() || null);
+      
+      // Fetch user's roles after login
+      await fetchUserRoles();
 
       return userData;
     } catch (err) {
@@ -63,7 +94,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchUserRoles]);
 
   // Signup function
   const signup = useCallback(async (formData) => {
@@ -103,6 +134,11 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
       setError(null);
+      // Clear multi-role state
+      setRoles([]);
+      setActiveRole(null);
+      setPendingRoleRequests([]);
+      setAvailableRoles([]);
     } catch (err) {
       console.error('Error during logout:', err);
     }
@@ -129,6 +165,10 @@ export const AuthProvider = ({ children }) => {
 
       authService.storeUser(userData);
       setUser(userData);
+      setActiveRole(userData.role?.toLowerCase() || activeRole);
+      
+      // Also refresh roles
+      await fetchUserRoles();
 
       return userData;
     } catch (err) {
@@ -139,7 +179,56 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [logout]);
+  }, [logout, activeRole, fetchUserRoles]);
+
+  // Switch active role
+  const switchRole = useCallback(async (newRole) => {
+    try {
+      setLoading(true);
+      const response = await acsApi.roles.switchRole(newRole);
+      
+      if (response.success) {
+        setActiveRole(response.active_role);
+        
+        // Update user object with new active role
+        const updatedUser = { ...user, role: response.active_role };
+        setUser(updatedUser);
+        authService.storeUser(updatedUser);
+        
+        return response;
+      }
+    } catch (err) {
+      console.error('Error switching role:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Request a new role
+  const requestRole = useCallback(async (role, reason = '') => {
+    try {
+      const response = await acsApi.roles.requestRole(role, reason);
+      // Refresh roles to update pending requests
+      await fetchUserRoles();
+      return response;
+    } catch (err) {
+      console.error('Error requesting role:', err);
+      throw err;
+    }
+  }, [fetchUserRoles]);
+
+  // Check if user has a specific role
+  const hasRole = useCallback((role) => {
+    if (!role) return false;
+    const roleLower = role.toLowerCase();
+    
+    // Check active role
+    if (activeRole?.toLowerCase() === roleLower) return true;
+    
+    // Check approved roles
+    return roles.some(r => r.role?.toLowerCase() === roleLower);
+  }, [activeRole, roles]);
 
   const value = {
     user,
@@ -151,6 +240,15 @@ export const AuthProvider = ({ children }) => {
     logout,
     clearError,
     refreshUser,
+    // Multi-role exports
+    roles,
+    activeRole,
+    pendingRoleRequests,
+    availableRoles,
+    switchRole,
+    requestRole,
+    hasRole,
+    fetchUserRoles,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

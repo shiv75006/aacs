@@ -25,7 +25,6 @@ export const AdminDashboard = () => {
         
         // Fetch dashboard stats
         const statsData = await acsApi.admin.getDashboardStats();
-        console.log('Dashboard stats received:', statsData);
         setStats({
           total_users: statsData?.total_users || 0,
           total_journals: statsData?.total_journals || 0,
@@ -37,7 +36,6 @@ export const AdminDashboard = () => {
         // Fetch recent papers
         try {
           const papersData = await acsApi.admin.listAllPapers(0, 5);
-          console.log('Papers data received:', papersData);
           const papers = papersData?.papers || papersData || [];
           setRecentPapers(Array.isArray(papers) ? papers.slice(0, 5) : []);
         } catch (paperErr) {

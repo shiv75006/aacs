@@ -28,41 +28,50 @@ const LandingPage = () => {
         const journalsData = await acsApi.journals.listJournals();
         setJournals(journalsData.slice(0, 3) || []);
 
-        // Fetch news/articles
-        const newsData = await acsApi.news.listNews();
-        setNews(newsData.slice(0, 4) || []);
-
-        // Mock announcements
-        setAnnouncements([
-          {
-            id: 1,
-            title: 'AACS Journal Rankings Updated',
-            date: '2024-02-12',
-            type: 'Update',
-            typeColor: 'blue',
-          },
-          {
-            id: 2,
-            title: 'New Editorial Board Members',
-            date: '2024-02-09',
-            type: 'Staff',
-            typeColor: 'gray',
-          },
-          {
-            id: 3,
-            title: 'Call for Special Issues',
-            date: '2024-02-06',
-            type: 'Call for Papers',
-            typeColor: 'red',
-          },
-          {
-            id: 4,
-            title: 'Conference Announcements',
-            date: '2024-02-04',
-            type: 'Event',
-            typeColor: 'green',
-          },
-        ]);
+        // Fetch news/announcements from backend
+        try {
+          const newsResponse = await acsApi.news.list(0, 10);
+          const newsData = newsResponse?.data || [];
+          
+          // Separate news into articles and announcements
+          // Articles can be all news, announcements shows recent ones with badges
+          setNews(newsData.slice(0, 4));
+          
+          // Transform news data to announcements format with type badges
+          const announcementData = newsData.slice(0, 4).map((item, index) => {
+            const typeColors = ['blue', 'green', 'red', 'gray'];
+            const types = ['Update', 'News', 'Important', 'Info'];
+            return {
+              id: item.id,
+              title: item.title,
+              date: item.added_on || new Date().toISOString().split('T')[0],
+              type: types[index % types.length],
+              typeColor: typeColors[index % typeColors.length],
+              description: item.description,
+              journal_name: item.journal_name
+            };
+          });
+          setAnnouncements(announcementData);
+        } catch (newsError) {
+          console.log('News not available:', newsError);
+          // Set mock announcements as fallback
+          setAnnouncements([
+            {
+              id: 1,
+              title: 'AACS Journal Rankings Updated',
+              date: '2024-02-12',
+              type: 'Update',
+              typeColor: 'blue',
+            },
+            {
+              id: 2,
+              title: 'New Editorial Board Members',
+              date: '2024-02-09',
+              type: 'Staff',
+              typeColor: 'gray',
+            },
+          ]);
+        }
 
         setLoading(false);
       } catch (err) {
@@ -212,12 +221,21 @@ const LandingPage = () => {
                           <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
                             {article.title || article.name}
                           </h4>
+                          {article.description && (
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                              {article.description}
+                            </p>
+                          )}
                           <div className="flex items-center space-x-2 mt-2">
                             <span className="text-xs font-medium text-slate-400">
-                              {new Date(article.createdAt || article.date).toLocaleDateString()}
+                              {article.added_on ? new Date(article.added_on).toLocaleDateString() : (article.createdAt ? new Date(article.createdAt).toLocaleDateString() : 'Recent')}
                             </span>
-                            <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                            <span className="text-xs text-primary font-bold">Science</span>
+                            {article.journal_name && (
+                              <>
+                                <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                <span className="text-xs text-primary font-bold">{article.journal_name}</span>
+                              </>
+                            )}
                           </div>
                         </div>
                       ))

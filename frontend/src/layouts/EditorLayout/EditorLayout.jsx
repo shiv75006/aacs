@@ -1,18 +1,9 @@
 import React from 'react';
-import { useNavigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import SidebarNav from '../../components/SidebarNav/SidebarNav';
-import './EditorLayout.css';
+import { Outlet } from 'react-router-dom';
+import Navbar from '../../components/Navbar';
+import '../shared/PortalLayout.css';
 
 const EditorLayout = () => {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   const editorSections = [
     {
       items: [
@@ -20,31 +11,32 @@ const EditorLayout = () => {
       ]
     },
     {
-      title: 'Papers',
+      title: 'Journals',
       items: [
-        { icon: 'assignment', label: 'Paper Queue', path: '/editor/papers' },
-        { icon: 'done_all', label: 'Pending Decision', path: '/editor/papers/pending-decision' }
+        { icon: 'library_books', label: 'My Journals', path: '/editor/my-journals' }
       ]
     },
     {
-      title: 'Reviewers',
+      title: 'Papers',
       items: [
-        { icon: 'group', label: 'Available Reviewers', path: '/editor/reviewers' }
+        { icon: 'assignment', label: 'Paper Queue', path: '/editor/papers' },
+        { icon: 'done_all', label: 'Pending Decision', path: '/editor/papers/pending-decision' },
+        { icon: 'publish', label: 'Publishing', path: '/editor/publishing' }
+      ]
+    },
+    {
+      title: 'Team',
+      items: [
+        { icon: 'group', label: 'Reviewers', path: '/editor/reviewers' }
       ]
     }
   ];
 
   return (
-    <div className="editor-layout">
-      {/* Editor Sidebar with dark theme */}
-      <SidebarNav 
-        sections={editorSections}
-        theme="dark"
-        onLogout={handleLogout}
-      />
-
-      <main className="editor-main">
-        <div className="editor-content">
+    <div className="portal-layout">
+      <Navbar sections={editorSections} portalName="Editor Portal" />
+      <main className="portal-main">
+        <div className="portal-content">
           <Outlet />
         </div>
       </main>

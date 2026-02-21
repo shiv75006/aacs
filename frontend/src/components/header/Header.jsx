@@ -1,13 +1,23 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { RoleSwitcher } from '../RoleSwitcher';
 import logo from '../../assets/aacs_logo_new.png';
 import styles from './Header.module.css';
 
 const Header = () => {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, activeRole, roles } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Use activeRole for display, fall back to user.role
+  const displayRole = activeRole || user?.role?.toLowerCase();
+  
+  // Check if user has a specific role (either active or in roles list)
+  const hasRoleAccess = (role) => {
+    if (displayRole === role) return true;
+    return roles?.some(r => r.role?.toLowerCase() === role && r.status === 'approved');
+  };
 
   const handleLogout = () => {
     logout();
@@ -22,6 +32,17 @@ const Header = () => {
     return user?.email?.[0]?.toUpperCase() || 'U';
   };
 
+  // Get dashboard link based on active role
+  const getDashboardPath = () => {
+    switch (displayRole) {
+      case 'admin': return '/admin';
+      case 'editor': return '/editor';
+      case 'reviewer': return '/reviewer';
+      case 'author': return '/author';
+      default: return '/author';
+    }
+  };
+
   return (
     <nav className={styles.navbar}>
       <div className={styles.container}>
@@ -34,24 +55,16 @@ const Header = () => {
           <li><Link className={styles.navLink} to="/journals">Journals</Link></li>
           <li><Link className={styles.navLink} to="/submit">Submit Paper</Link></li>
           
-          {isAuthenticated && user?.role === 'admin' && (
-            <li><Link className={styles.navLink} to="/admin">Dashboard</Link></li>
-          )}
-
-          {isAuthenticated && user?.role === 'author' && (
-            <li><Link className={styles.navLink} to="/author">Dashboard</Link></li>
-          )}
-
-          {isAuthenticated && user?.role === 'editor' && (
-            <li><Link className={styles.navLink} to="/editor">Dashboard</Link></li>
-          )}
-
-          {isAuthenticated && user?.role === 'reviewer' && (
-            <li><Link className={styles.navLink} to="/reviewer">Dashboard</Link></li>
+          {/* Show dashboard link based on active role */}
+          {isAuthenticated && displayRole && (
+            <li><Link className={styles.navLink} to={getDashboardPath()}>Dashboard</Link></li>
           )}
 
           {isAuthenticated ? (
             <li className={styles.userMenu}>
+              {/* Role Switcher - shows when user has multiple roles */}
+              <RoleSwitcher />
+              
               <button 
                 className={styles.userToggle}
                 onClick={() => setMenuOpen(!menuOpen)}
@@ -59,21 +72,22 @@ const Header = () => {
                 <span className={styles.avatar}>{getInitials()}</span>
                 <div className={styles.userInfo}>
                   <span className={styles.userName}>{user?.fname} {user?.lname}</span>
-                  <span className={styles.userRole}>{user?.role}</span>
+                  <span className={styles.userRole}>{displayRole}</span>
                 </div>
               </button>
               {menuOpen && (
                 <div className={styles.dropdown}>
-                  {user?.role === 'admin' && (
+                  {/* Show links for all roles user has access to */}
+                  {hasRoleAccess('admin') && (
                     <Link to="/admin" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>Admin Dashboard</Link>
                   )}
-                  {user?.role === 'author' && (
+                  {hasRoleAccess('author') && (
                     <Link to="/author" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>My Submissions</Link>
                   )}
-                  {user?.role === 'editor' && (
+                  {hasRoleAccess('editor') && (
                     <Link to="/editor" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>Editor Panel</Link>
                   )}
-                  {user?.role === 'reviewer' && (
+                  {hasRoleAccess('reviewer') && (
                     <Link to="/reviewer" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>Review Panel</Link>
                   )}
                   <Link to="/profile" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>Profile</Link>

@@ -9,7 +9,7 @@ from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from app.config import settings
-from app.api.v1 import auth, journals, admin, author, editor, reviewer, articles
+from app.api.v1 import auth, journals, admin, author, editor, reviewer, articles, roles, webhooks
 from app.core.rate_limit import limiter, get_rate_limit_key
 from app.scheduler.tasks import start_scheduler, shutdown_scheduler
 
@@ -122,6 +122,8 @@ app.include_router(admin.router)
 app.include_router(author.router)
 app.include_router(editor.router)
 app.include_router(reviewer.router)
+app.include_router(roles.router)
+app.include_router(webhooks.router)
 
 
 @app.exception_handler(Exception)

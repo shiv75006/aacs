@@ -32,19 +32,13 @@
   justify-content: space-between;
   margin-bottom: 3rem;
   position: relative;
-  padding: 0 40px;
+  padding: 0 20px;
 }
 
-/* Base connecting line behind all steps */
-.stepper::before {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 60px;
-  right: 60px;
-  height: 3px;
-  background: #e8e8e8;
-  z-index: 0;
+@media (min-width: 768px) {
+  .stepper {
+    padding: 0 40px;
+  }
 }
 
 .step {
@@ -53,28 +47,29 @@
   align-items: center;
   position: relative;
   z-index: 1;
+  flex: 1;
 }
 
-/* Progress line - appears after completed steps */
+/* Connector line between steps */
 .step:not(:last-child)::after {
   content: '';
   position: absolute;
   top: 20px;
-  left: 50%;
-  width: 0;
+  left: calc(50% + 20px);
+  right: calc(-50% + 20px);
   height: 3px;
-  background: var(--green-color, #27ae60);
+  background: #e0e0e0;
   z-index: 0;
 }
 
+/* Green line for completed steps */
 .step.completed:not(:last-child)::after {
-  width: calc(100% + 100px);
-  left: 50%;
+  background: var(--green-color, #27ae60);
 }
 
+/* Partial line for in-progress step */
 .step.inProgress:not(:last-child)::after {
-  width: 50%;
-  left: 50%;
+  background: linear-gradient(to right, var(--green-color, #27ae60) 0%, #e0e0e0 0%);
 }
 
 .stepContent {
@@ -147,6 +142,66 @@
   font-weight: 600;
 }
 
+/* Responsive stepper for mobile */
+@media (max-width: 640px) {
+  .stepper {
+    padding: 0 10px;
+  }
+  
+  .stepDot {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .step:not(:last-child)::after {
+    top: 18px;
+    left: calc(50% + 18px);
+    right: calc(-50% + 18px);
+    height: 2px;
+  }
+  
+  .stepLabel strong {
+    font-size: 8px;
+  }
+  
+  .stepLabel h4 {
+    font-size: 11px;
+  }
+  
+  .stepIcon {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stepper {
+    padding: 0 5px;
+  }
+  
+  .stepDot {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .step:not(:last-child)::after {
+    top: 16px;
+    left: calc(50% + 16px);
+    right: calc(-50% + 16px);
+  }
+  
+  .stepLabel strong {
+    font-size: 7px;
+  }
+  
+  .stepLabel h4 {
+    font-size: 9px;
+  }
+  
+  .stepIcon {
+    font-size: 14px;
+  }
+}
+
 /* Form Content */
 .formCard {
   background: white;
@@ -208,6 +263,55 @@
 .textarea {
   resize: vertical;
   min-height: 120px;
+}
+
+/* Validation Error Styles */
+.fieldError {
+  /* Container styling when there's an error */
+}
+
+.inputError {
+  border-color: #e74c3c !important;
+  background-color: #fef5f5;
+}
+
+.inputError:focus {
+  border-color: #e74c3c !important;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15) !important;
+}
+
+.errorText {
+  display: block;
+  color: #e74c3c;
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.fieldMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.charCount {
+  color: #95a5a6;
+  font-size: 12px;
+}
+
+.helperText {
+  color: #95a5a6;
+  font-size: 12px;
+}
+
+.stepSubtitle {
+  color: #7f8c8d;
+  font-size: 14px;
+  margin: -10px 0 24px 0;
+  font-style: italic;
 }
 
 /* File Upload */
@@ -824,6 +928,11 @@
 .termsLink {
   color: #2c5aa0;
   text-decoration: underline;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
 }
 
 .termsLink:hover {
@@ -911,5 +1020,181 @@
   .addCoAuthorBtn {
     width: 100%;
     justify-content: center;
+  }
+}
+
+/* Terms and Conditions Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalContent {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1a3a6d;
+  font-weight: 600;
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.modalClose:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.modalBody {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  line-height: 1.7;
+}
+
+.modalBody h3 {
+  color: #1a3a6d;
+  font-size: 1.1rem;
+  margin: 0 0 10px 0;
+  font-weight: 600;
+}
+
+.modalBody h3:not(:first-child) {
+  margin-top: 24px;
+}
+
+.modalBody p {
+  color: #444;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.modalFooter {
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  background: #f9f9f9;
+  border-radius: 0 0 12px 12px;
+}
+
+/* Modal responsive styles */
+@media (max-width: 768px) {
+  .modalOverlay {
+    padding: 10px;
+  }
+
+  .modalContent {
+    max-height: 90vh;
+  }
+
+  .modalHeader {
+    padding: 16px 20px;
+  }
+
+  .modalHeader h2 {
+    font-size: 1.25rem;
+  }
+
+  .modalBody {
+    padding: 20px;
+  }
+
+  .modalBody h3 {
+    font-size: 1rem;
+  }
+
+  .modalFooter {
+    padding: 14px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalOverlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modalContent {
+    max-height: 95vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .modalHeader {
+    padding: 14px 16px;
+  }
+
+  .modalBody {
+    padding: 16px;
+  }
+
+  .modalFooter {
+    padding: 12px 16px;
+    border-radius: 0;
   }
 }

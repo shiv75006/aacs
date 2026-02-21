@@ -34,6 +34,9 @@ export const SubmitPaperForm = () => {
   const [journals, setJournals] = useState([]);
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordChips, setKeywordChips] = useState([]);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [touched, setTouched] = useState({});
   
   const [formData, setFormData] = useState({
     // Step 1: Paper Metadata
@@ -98,8 +101,93 @@ export const SubmitPaperForm = () => {
     loadInitialData();
   }, []);
 
+  // Validation helper functions
+  const validateEmail = (email) => {
+    if (!email) return true; // Optional field
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateField = (field, value) => {
+    switch (field) {
+      case 'title':
+        if (!value?.trim()) return 'Paper title is required';
+        if (value.trim().length < 10) return 'Title must be at least 10 characters';
+        if (value.length > 500) return 'Title must not exceed 500 characters';
+        return '';
+      case 'abstract':
+        if (!value?.trim()) return 'Abstract is required';
+        if (value.trim().length < 100) return 'Abstract must be at least 100 characters';
+        if (value.length > 2000) return 'Abstract must not exceed 2000 characters';
+        return '';
+      case 'keywords':
+        if (keywordChips.length === 0) return 'At least one keyword is required';
+        return '';
+      case 'research_area':
+        if (!value?.trim()) return 'Research area is required';
+        return '';
+      case 'journal_id':
+        if (!value) return 'Please select a journal';
+        return '';
+      case 'first_name':
+        if (!value?.trim()) return 'First name is required';
+        if (value.trim().length < 2) return 'First name must be at least 2 characters';
+        return '';
+      case 'last_name':
+        if (!value?.trim()) return 'Last name is required';
+        if (value.trim().length < 2) return 'Last name must be at least 2 characters';
+        return '';
+      case 'salutation':
+        if (!value) return 'Salutation is required';
+        return '';
+      case 'designation':
+        if (!value?.trim()) return 'Designation is required';
+        return '';
+      case 'department':
+        if (!value?.trim()) return 'Department is required';
+        return '';
+      case 'organisation':
+        if (!value?.trim()) return 'Organisation is required';
+        return '';
+      case 'email':
+        if (!value?.trim()) return 'Email is required';
+        if (!validateEmail(value)) return 'Please enter a valid email address';
+        return '';
+      default:
+        return '';
+    }
+  };
+
+  const handleBlur = (field) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    const value = formData[field];
+    const error = validateField(field, value);
+    setFieldErrors(prev => ({ ...prev, [field]: error }));
+  };
+
+  const handleAuthorBlur = (field) => {
+    const touchedKey = `author_${field}`;
+    setTouched(prev => ({ ...prev, [touchedKey]: true }));
+    const value = formData.authorDetails[field];
+    const error = validateField(field, value);
+    setFieldErrors(prev => ({ ...prev, [touchedKey]: error }));
+  };
+
+  const handleCoAuthorBlur = (index, field) => {
+    const touchedKey = `coauthor_${index}_${field}`;
+    setTouched(prev => ({ ...prev, [touchedKey]: true }));
+    const value = formData.coAuthors[index]?.[field];
+    const error = validateField(field, value);
+    setFieldErrors(prev => ({ ...prev, [touchedKey]: error }));
+  };
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (touched[field]) {
+      const error = validateField(field, value);
+      setFieldErrors(prev => ({ ...prev, [field]: error }));
+    }
   };
 
   const handleAuthorChange = (field, value) => {
@@ -107,6 +195,12 @@ export const SubmitPaperForm = () => {
       ...prev,
       authorDetails: { ...prev.authorDetails, [field]: value }
     }));
+    // Clear error when user starts typing
+    const touchedKey = `author_${field}`;
+    if (touched[touchedKey]) {
+      const error = validateField(field, value);
+      setFieldErrors(prev => ({ ...prev, [touchedKey]: error }));
+    }
   };
 
   // Keyword chip handling
@@ -177,6 +271,12 @@ export const SubmitPaperForm = () => {
         idx === index ? { ...co, [field]: value } : co
       )
     }));
+    // Validate on change if field was touched
+    const touchedKey = `coauthor_${index}_${field}`;
+    if (touched[touchedKey]) {
+      const error = validateField(field, value);
+      setFieldErrors(prev => ({ ...prev, [touchedKey]: error }));
+    }
   };
 
   const handleFileChange = (e) => {
@@ -202,49 +302,91 @@ export const SubmitPaperForm = () => {
   };
 
   const validateStep = (step) => {
+    const errors = {};
+    let isValid = true;
+
     const validations = {
       1: () => {
-        if (!formData.journal_id) {
-          addToast('Please select a journal', 'error');
-          return false;
+        // Title validation
+        const titleError = validateField('title', formData.title);
+        if (titleError) {
+          errors.title = titleError;
+          isValid = false;
         }
-        if (!formData.title || formData.title.length < 10) {
-          addToast('Title must be at least 10 characters', 'error');
-          return false;
+
+        // Abstract validation
+        const abstractError = validateField('abstract', formData.abstract);
+        if (abstractError) {
+          errors.abstract = abstractError;
+          isValid = false;
         }
-        if (!formData.abstract || formData.abstract.length < 100) {
-          addToast('Abstract must be at least 100 characters', 'error');
-          return false;
-        }
-        if (formData.abstract.length > 2000) {
-          addToast('Abstract must not exceed 2000 characters', 'error');
-          return false;
-        }
+
+        // Keywords validation
         if (keywordChips.length === 0) {
-          addToast('Please enter at least one keyword', 'error');
-          return false;
+          errors.keywords = 'At least one keyword is required';
+          isValid = false;
         }
-        return true;
+
+        // Research area validation (now required)
+        const researchAreaError = validateField('research_area', formData.research_area);
+        if (researchAreaError) {
+          errors.research_area = researchAreaError;
+          isValid = false;
+        }
+
+        // Journal validation
+        const journalError = validateField('journal_id', formData.journal_id);
+        if (journalError) {
+          errors.journal_id = journalError;
+          isValid = false;
+        }
+
+        if (!isValid) {
+          setFieldErrors(prev => ({ ...prev, ...errors }));
+          setTouched(prev => ({ ...prev, title: true, abstract: true, keywords: true, research_area: true, journal_id: true }));
+          addToast('Please fix the errors in the form', 'error');
+        }
+        return isValid;
       },
       2: () => {
         const { authorDetails } = formData;
-        if (!authorDetails.first_name?.trim()) {
-          addToast('First name is required', 'error');
-          return false;
-        }
-        if (!authorDetails.last_name?.trim()) {
-          addToast('Last name is required', 'error');
-          return false;
-        }
-        // Validate co-authors if any
-        for (let i = 0; i < formData.coAuthors.length; i++) {
-          const co = formData.coAuthors[i];
-          if (!co.first_name?.trim() || !co.last_name?.trim()) {
-            addToast(`Co-author ${i + 1}: First and last name are required`, 'error');
-            return false;
+        const requiredAuthorFields = ['salutation', 'first_name', 'last_name', 'designation', 'department', 'organisation'];
+        
+        // Validate primary author (all fields required)
+        requiredAuthorFields.forEach(field => {
+          const error = validateField(field, authorDetails[field]);
+          if (error) {
+            errors[`author_${field}`] = error;
+            isValid = false;
           }
+        });
+
+        // Validate co-authors (all fields required)
+        formData.coAuthors.forEach((co, index) => {
+          const requiredCoAuthorFields = ['salutation', 'first_name', 'last_name', 'email', 'designation', 'department', 'organisation'];
+          requiredCoAuthorFields.forEach(field => {
+            const error = validateField(field, co[field]);
+            if (error) {
+              errors[`coauthor_${index}_${field}`] = error;
+              isValid = false;
+            }
+          });
+        });
+
+        if (!isValid) {
+          setFieldErrors(prev => ({ ...prev, ...errors }));
+          // Mark all author fields as touched
+          const touchedFields = {};
+          requiredAuthorFields.forEach(f => touchedFields[`author_${f}`] = true);
+          formData.coAuthors.forEach((_, i) => {
+            ['salutation', 'first_name', 'last_name', 'email', 'designation', 'department', 'organisation'].forEach(f => {
+              touchedFields[`coauthor_${i}_${f}`] = true;
+            });
+          });
+          setTouched(prev => ({ ...prev, ...touchedFields }));
+          addToast('Please fill in all required author details', 'error');
         }
-        return true;
+        return isValid;
       },
       3: () => {
         if (!formData.file) {
@@ -367,7 +509,7 @@ export const SubmitPaperForm = () => {
           <div>
             <h2>Step 1: Paper Metadata</h2>
             
-            <div className={styles.field}>
+            <div className={`${styles.field} ${touched.title && fieldErrors.title ? styles.fieldError : ''}`}>
               <label htmlFor="title">Paper Title *</label>
               <input
                 id="title"
@@ -375,27 +517,39 @@ export const SubmitPaperForm = () => {
                 placeholder="Enter paper title (minimum 10 characters)"
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
+                onBlur={() => handleBlur('title')}
                 maxLength={500}
-                className={styles.input}
+                className={`${styles.input} ${touched.title && fieldErrors.title ? styles.inputError : ''}`}
               />
-              <small>{formData.title.length}/500 characters</small>
+              <div className={styles.fieldMeta}>
+                <small className={styles.charCount}>{formData.title.length}/500 characters</small>
+                {touched.title && fieldErrors.title && (
+                  <span className={styles.errorText}>{fieldErrors.title}</span>
+                )}
+              </div>
             </div>
 
-            <div className={styles.field}>
+            <div className={`${styles.field} ${touched.abstract && fieldErrors.abstract ? styles.fieldError : ''}`}>
               <label htmlFor="abstract">Abstract *</label>
               <textarea
                 id="abstract"
                 placeholder="Enter paper abstract (100-2000 characters)"
                 value={formData.abstract}
                 onChange={(e) => handleInputChange('abstract', e.target.value)}
+                onBlur={() => handleBlur('abstract')}
                 maxLength={2000}
                 rows={6}
-                className={styles.textarea}
+                className={`${styles.textarea} ${touched.abstract && fieldErrors.abstract ? styles.inputError : ''}`}
               />
-              <small>{formData.abstract.length}/2000 characters</small>
+              <div className={styles.fieldMeta}>
+                <small className={styles.charCount}>{formData.abstract.length}/2000 characters (min: 100)</small>
+                {touched.abstract && fieldErrors.abstract && (
+                  <span className={styles.errorText}>{fieldErrors.abstract}</span>
+                )}
+              </div>
             </div>
 
-            <div className={styles.field}>
+            <div className={`${styles.field} ${touched.keywords && fieldErrors.keywords ? styles.fieldError : ''}`}>
               <label htmlFor="keywords">Keywords *</label>
               <input
                 id="keywords"
@@ -404,9 +558,22 @@ export const SubmitPaperForm = () => {
                 value={keywordInput}
                 onChange={handleKeywordInputChange}
                 onKeyDown={handleKeywordKeyDown}
-                className={styles.input}
+                onBlur={() => {
+                  setTouched(prev => ({ ...prev, keywords: true }));
+                  if (keywordChips.length === 0) {
+                    setFieldErrors(prev => ({ ...prev, keywords: 'At least one keyword is required' }));
+                  } else {
+                    setFieldErrors(prev => ({ ...prev, keywords: '' }));
+                  }
+                }}
+                className={`${styles.input} ${touched.keywords && fieldErrors.keywords ? styles.inputError : ''}`}
               />
-              <small>Separate keywords with commas or press Enter</small>
+              <div className={styles.fieldMeta}>
+                <small className={styles.helperText}>Separate keywords with commas or press Enter</small>
+                {touched.keywords && fieldErrors.keywords && (
+                  <span className={styles.errorText}>{fieldErrors.keywords}</span>
+                )}
+              </div>
               {keywordChips.length > 0 && (
                 <div className={styles.keywordChipsBelow}>
                   {keywordChips.map((kw, idx) => (
@@ -426,32 +593,40 @@ export const SubmitPaperForm = () => {
             </div>
 
             <div className={styles.fieldRow}>
-              <div className={styles.field}>
-                <label htmlFor="research_area">Research Area</label>
+              <div className={`${styles.field} ${touched.research_area && fieldErrors.research_area ? styles.fieldError : ''}`}>
+                <label htmlFor="research_area">Research Area *</label>
                 <input
                   id="research_area"
                   type="text"
                   placeholder="e.g., Machine Learning, Bioinformatics"
                   value={formData.research_area}
                   onChange={(e) => handleInputChange('research_area', e.target.value)}
+                  onBlur={() => handleBlur('research_area')}
                   maxLength={200}
-                  className={styles.input}
+                  className={`${styles.input} ${touched.research_area && fieldErrors.research_area ? styles.inputError : ''}`}
                 />
+                {touched.research_area && fieldErrors.research_area && (
+                  <span className={styles.errorText}>{fieldErrors.research_area}</span>
+                )}
               </div>
 
-              <div className={styles.field}>
+              <div className={`${styles.field} ${touched.journal_id && fieldErrors.journal_id ? styles.fieldError : ''}`}>
                 <label htmlFor="journal">Select Journal *</label>
                 <select
                   id="journal"
                   value={formData.journal_id}
                   onChange={(e) => handleInputChange('journal_id', e.target.value)}
-                  className={styles.select}
+                  onBlur={() => handleBlur('journal_id')}
+                  className={`${styles.select} ${touched.journal_id && fieldErrors.journal_id ? styles.inputError : ''}`}
                 >
                   <option value="">-- Select Journal --</option>
                   {journals.map(j => (
                     <option key={j.id} value={j.id}>{j.name}</option>
                   ))}
                 </select>
+                {touched.journal_id && fieldErrors.journal_id && (
+                  <span className={styles.errorText}>{fieldErrors.journal_id}</span>
+                )}
               </div>
             </div>
 
@@ -466,6 +641,7 @@ export const SubmitPaperForm = () => {
                 rows={3}
                 className={styles.textarea}
               />
+              <small className={styles.helperText}>Any special notes or requests you'd like to communicate to the editor</small>
             </div>
           </div>
         )}
@@ -474,6 +650,7 @@ export const SubmitPaperForm = () => {
         {currentStep === 2 && (
           <div>
             <h2>Step 2: Author Details</h2>
+            <p className={styles.stepSubtitle}>All fields marked with * are required</p>
             
             {/* Primary Author */}
             <div className={styles.authorSection}>
@@ -483,20 +660,24 @@ export const SubmitPaperForm = () => {
               </h3>
               
               <div className={styles.fieldRow}>
-                <div className={styles.fieldSmall}>
-                  <label htmlFor="author_salutation">Salutation</label>
+                <div className={`${styles.fieldSmall} ${touched.author_salutation && fieldErrors.author_salutation ? styles.fieldError : ''}`}>
+                  <label htmlFor="author_salutation">Salutation *</label>
                   <select
                     id="author_salutation"
                     value={formData.authorDetails.salutation}
                     onChange={(e) => handleAuthorChange('salutation', e.target.value)}
-                    className={styles.select}
+                    onBlur={() => handleAuthorBlur('salutation')}
+                    className={`${styles.select} ${touched.author_salutation && fieldErrors.author_salutation ? styles.inputError : ''}`}
                   >
                     {SALUTATION_OPTIONS.map(opt => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                   </select>
+                  {touched.author_salutation && fieldErrors.author_salutation && (
+                    <span className={styles.errorText}>{fieldErrors.author_salutation}</span>
+                  )}
                 </div>
-                <div className={styles.field}>
+                <div className={`${styles.field} ${touched.author_first_name && fieldErrors.author_first_name ? styles.fieldError : ''}`}>
                   <label htmlFor="author_fname">First Name *</label>
                   <input
                     id="author_fname"
@@ -504,8 +685,12 @@ export const SubmitPaperForm = () => {
                     placeholder="First name"
                     value={formData.authorDetails.first_name}
                     onChange={(e) => handleAuthorChange('first_name', e.target.value)}
-                    className={styles.input}
+                    onBlur={() => handleAuthorBlur('first_name')}
+                    className={`${styles.input} ${touched.author_first_name && fieldErrors.author_first_name ? styles.inputError : ''}`}
                   />
+                  {touched.author_first_name && fieldErrors.author_first_name && (
+                    <span className={styles.errorText}>{fieldErrors.author_first_name}</span>
+                  )}
                 </div>
                 <div className={styles.field}>
                   <label htmlFor="author_mname">Middle Name</label>
@@ -518,7 +703,7 @@ export const SubmitPaperForm = () => {
                     className={styles.input}
                   />
                 </div>
-                <div className={styles.field}>
+                <div className={`${styles.field} ${touched.author_last_name && fieldErrors.author_last_name ? styles.fieldError : ''}`}>
                   <label htmlFor="author_lname">Last Name *</label>
                   <input
                     id="author_lname"
@@ -526,44 +711,60 @@ export const SubmitPaperForm = () => {
                     placeholder="Last name"
                     value={formData.authorDetails.last_name}
                     onChange={(e) => handleAuthorChange('last_name', e.target.value)}
-                    className={styles.input}
+                    onBlur={() => handleAuthorBlur('last_name')}
+                    className={`${styles.input} ${touched.author_last_name && fieldErrors.author_last_name ? styles.inputError : ''}`}
                   />
+                  {touched.author_last_name && fieldErrors.author_last_name && (
+                    <span className={styles.errorText}>{fieldErrors.author_last_name}</span>
+                  )}
                 </div>
               </div>
 
               <div className={styles.fieldRow}>
-                <div className={styles.field}>
-                  <label htmlFor="author_designation">Designation/Occupation</label>
+                <div className={`${styles.field} ${touched.author_designation && fieldErrors.author_designation ? styles.fieldError : ''}`}>
+                  <label htmlFor="author_designation">Designation/Occupation *</label>
                   <input
                     id="author_designation"
                     type="text"
                     placeholder="e.g., Associate Professor"
                     value={formData.authorDetails.designation}
                     onChange={(e) => handleAuthorChange('designation', e.target.value)}
-                    className={styles.input}
+                    onBlur={() => handleAuthorBlur('designation')}
+                    className={`${styles.input} ${touched.author_designation && fieldErrors.author_designation ? styles.inputError : ''}`}
                   />
+                  {touched.author_designation && fieldErrors.author_designation && (
+                    <span className={styles.errorText}>{fieldErrors.author_designation}</span>
+                  )}
                 </div>
-                <div className={styles.field}>
-                  <label htmlFor="author_department">Department</label>
+                <div className={`${styles.field} ${touched.author_department && fieldErrors.author_department ? styles.fieldError : ''}`}>
+                  <label htmlFor="author_department">Department *</label>
                   <input
                     id="author_department"
                     type="text"
                     placeholder="e.g., Computer Science"
                     value={formData.authorDetails.department}
                     onChange={(e) => handleAuthorChange('department', e.target.value)}
-                    className={styles.input}
+                    onBlur={() => handleAuthorBlur('department')}
+                    className={`${styles.input} ${touched.author_department && fieldErrors.author_department ? styles.inputError : ''}`}
                   />
+                  {touched.author_department && fieldErrors.author_department && (
+                    <span className={styles.errorText}>{fieldErrors.author_department}</span>
+                  )}
                 </div>
-                <div className={styles.field}>
-                  <label htmlFor="author_organisation">Organisation</label>
+                <div className={`${styles.field} ${touched.author_organisation && fieldErrors.author_organisation ? styles.fieldError : ''}`}>
+                  <label htmlFor="author_organisation">Organisation *</label>
                   <input
                     id="author_organisation"
                     type="text"
                     placeholder="e.g., University of Technology"
                     value={formData.authorDetails.organisation}
                     onChange={(e) => handleAuthorChange('organisation', e.target.value)}
-                    className={styles.input}
+                    onBlur={() => handleAuthorBlur('organisation')}
+                    className={`${styles.input} ${touched.author_organisation && fieldErrors.author_organisation ? styles.inputError : ''}`}
                   />
+                  {touched.author_organisation && fieldErrors.author_organisation && (
+                    <span className={styles.errorText}>{fieldErrors.author_organisation}</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -598,27 +799,35 @@ export const SubmitPaperForm = () => {
                     </div>
 
                     <div className={styles.fieldRow}>
-                      <div className={styles.fieldSmall}>
-                        <label>Salutation</label>
+                      <div className={`${styles.fieldSmall} ${touched[`coauthor_${index}_salutation`] && fieldErrors[`coauthor_${index}_salutation`] ? styles.fieldError : ''}`}>
+                        <label>Salutation *</label>
                         <select
                           value={coAuthor.salutation}
                           onChange={(e) => updateCoAuthor(index, 'salutation', e.target.value)}
-                          className={styles.select}
+                          onBlur={() => handleCoAuthorBlur(index, 'salutation')}
+                          className={`${styles.select} ${touched[`coauthor_${index}_salutation`] && fieldErrors[`coauthor_${index}_salutation`] ? styles.inputError : ''}`}
                         >
                           {SALUTATION_OPTIONS.map(opt => (
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                           ))}
                         </select>
+                        {touched[`coauthor_${index}_salutation`] && fieldErrors[`coauthor_${index}_salutation`] && (
+                          <span className={styles.errorText}>{fieldErrors[`coauthor_${index}_salutation`]}</span>
+                        )}
                       </div>
-                      <div className={styles.field}>
+                      <div className={`${styles.field} ${touched[`coauthor_${index}_first_name`] && fieldErrors[`coauthor_${index}_first_name`] ? styles.fieldError : ''}`}>
                         <label>First Name *</label>
                         <input
                           type="text"
                           placeholder="First name"
                           value={coAuthor.first_name}
                           onChange={(e) => updateCoAuthor(index, 'first_name', e.target.value)}
-                          className={styles.input}
+                          onBlur={() => handleCoAuthorBlur(index, 'first_name')}
+                          className={`${styles.input} ${touched[`coauthor_${index}_first_name`] && fieldErrors[`coauthor_${index}_first_name`] ? styles.inputError : ''}`}
                         />
+                        {touched[`coauthor_${index}_first_name`] && fieldErrors[`coauthor_${index}_first_name`] && (
+                          <span className={styles.errorText}>{fieldErrors[`coauthor_${index}_first_name`]}</span>
+                        )}
                       </div>
                       <div className={styles.field}>
                         <label>Middle Name</label>
@@ -630,61 +839,81 @@ export const SubmitPaperForm = () => {
                           className={styles.input}
                         />
                       </div>
-                      <div className={styles.field}>
+                      <div className={`${styles.field} ${touched[`coauthor_${index}_last_name`] && fieldErrors[`coauthor_${index}_last_name`] ? styles.fieldError : ''}`}>
                         <label>Last Name *</label>
                         <input
                           type="text"
                           placeholder="Last name"
                           value={coAuthor.last_name}
                           onChange={(e) => updateCoAuthor(index, 'last_name', e.target.value)}
-                          className={styles.input}
+                          onBlur={() => handleCoAuthorBlur(index, 'last_name')}
+                          className={`${styles.input} ${touched[`coauthor_${index}_last_name`] && fieldErrors[`coauthor_${index}_last_name`] ? styles.inputError : ''}`}
                         />
+                        {touched[`coauthor_${index}_last_name`] && fieldErrors[`coauthor_${index}_last_name`] && (
+                          <span className={styles.errorText}>{fieldErrors[`coauthor_${index}_last_name`]}</span>
+                        )}
                       </div>
                     </div>
 
                     <div className={styles.fieldRow}>
-                      <div className={styles.field}>
-                        <label>Email</label>
+                      <div className={`${styles.field} ${touched[`coauthor_${index}_email`] && fieldErrors[`coauthor_${index}_email`] ? styles.fieldError : ''}`}>
+                        <label>Email *</label>
                         <input
                           type="email"
                           placeholder="Email address"
                           value={coAuthor.email}
                           onChange={(e) => updateCoAuthor(index, 'email', e.target.value)}
-                          className={styles.input}
+                          onBlur={() => handleCoAuthorBlur(index, 'email')}
+                          className={`${styles.input} ${touched[`coauthor_${index}_email`] && fieldErrors[`coauthor_${index}_email`] ? styles.inputError : ''}`}
                         />
+                        {touched[`coauthor_${index}_email`] && fieldErrors[`coauthor_${index}_email`] && (
+                          <span className={styles.errorText}>{fieldErrors[`coauthor_${index}_email`]}</span>
+                        )}
                       </div>
-                      <div className={styles.field}>
-                        <label>Designation</label>
+                      <div className={`${styles.field} ${touched[`coauthor_${index}_designation`] && fieldErrors[`coauthor_${index}_designation`] ? styles.fieldError : ''}`}>
+                        <label>Designation *</label>
                         <input
                           type="text"
                           placeholder="Designation"
                           value={coAuthor.designation}
                           onChange={(e) => updateCoAuthor(index, 'designation', e.target.value)}
-                          className={styles.input}
+                          onBlur={() => handleCoAuthorBlur(index, 'designation')}
+                          className={`${styles.input} ${touched[`coauthor_${index}_designation`] && fieldErrors[`coauthor_${index}_designation`] ? styles.inputError : ''}`}
                         />
+                        {touched[`coauthor_${index}_designation`] && fieldErrors[`coauthor_${index}_designation`] && (
+                          <span className={styles.errorText}>{fieldErrors[`coauthor_${index}_designation`]}</span>
+                        )}
                       </div>
                     </div>
 
                     <div className={styles.fieldRow}>
-                      <div className={styles.field}>
-                        <label>Department</label>
+                      <div className={`${styles.field} ${touched[`coauthor_${index}_department`] && fieldErrors[`coauthor_${index}_department`] ? styles.fieldError : ''}`}>
+                        <label>Department *</label>
                         <input
                           type="text"
                           placeholder="Department"
                           value={coAuthor.department}
                           onChange={(e) => updateCoAuthor(index, 'department', e.target.value)}
-                          className={styles.input}
+                          onBlur={() => handleCoAuthorBlur(index, 'department')}
+                          className={`${styles.input} ${touched[`coauthor_${index}_department`] && fieldErrors[`coauthor_${index}_department`] ? styles.inputError : ''}`}
                         />
+                        {touched[`coauthor_${index}_department`] && fieldErrors[`coauthor_${index}_department`] && (
+                          <span className={styles.errorText}>{fieldErrors[`coauthor_${index}_department`]}</span>
+                        )}
                       </div>
-                      <div className={styles.field}>
-                        <label>Organisation</label>
+                      <div className={`${styles.field} ${touched[`coauthor_${index}_organisation`] && fieldErrors[`coauthor_${index}_organisation`] ? styles.fieldError : ''}`}>
+                        <label>Organisation *</label>
                         <input
                           type="text"
                           placeholder="Organisation"
                           value={coAuthor.organisation}
                           onChange={(e) => updateCoAuthor(index, 'organisation', e.target.value)}
-                          className={styles.input}
+                          onBlur={() => handleCoAuthorBlur(index, 'organisation')}
+                          className={`${styles.input} ${touched[`coauthor_${index}_organisation`] && fieldErrors[`coauthor_${index}_organisation`] ? styles.inputError : ''}`}
                         />
+                        {touched[`coauthor_${index}_organisation`] && fieldErrors[`coauthor_${index}_organisation`] && (
+                          <span className={styles.errorText}>{fieldErrors[`coauthor_${index}_organisation`]}</span>
+                        )}
                       </div>
                     </div>
 
@@ -848,7 +1077,17 @@ export const SubmitPaperForm = () => {
                     onChange={(e) => handleInputChange('termsAccepted', e.target.checked)}
                   />
                   <span>
-                    I agree to the <a href="#terms" className={styles.termsLink}>Terms and Conditions</a>
+                    I agree to the{' '}
+                    <button 
+                      type="button" 
+                      className={styles.termsLink}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowTermsModal(true);
+                      }}
+                    >
+                      Terms and Conditions
+                    </button>
                   </span>
                 </label>
                 <div className={styles.termsNote}>
@@ -895,6 +1134,100 @@ export const SubmitPaperForm = () => {
       </div>
 
       {loading && <div className={styles.loadingOverlay}>Processing your submission...</div>}
+
+      {/* Terms and Conditions Modal */}
+      {showTermsModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowTermsModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>Terms and Conditions</h2>
+              <button 
+                className={styles.modalClose} 
+                onClick={() => setShowTermsModal(false)}
+                aria-label="Close modal"
+              >
+                ×
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <h3>1. Submission Guidelines</h3>
+              <p>
+                By submitting a manuscript to this journal, you agree to the following terms and conditions. 
+                Please read them carefully before proceeding with your submission.
+              </p>
+
+              <h3>2. Originality and Plagiarism</h3>
+              <p>
+                Authors must ensure that their work is entirely original. Any work or words of others must be 
+                appropriately cited. Plagiarism in any form, including self-plagiarism, is unacceptable and 
+                will result in immediate rejection of the manuscript.
+              </p>
+
+              <h3>3. Multiple, Redundant, or Concurrent Publication</h3>
+              <p>
+                Authors should not submit the same manuscript to more than one journal concurrently. 
+                Submitting the same manuscript to multiple journals simultaneously constitutes unethical 
+                publishing behavior and is unacceptable.
+              </p>
+
+              <h3>4. Authorship</h3>
+              <p>
+                Authorship should be limited to those who have made a significant contribution to the 
+                conception, design, execution, or interpretation of the reported study. All those who 
+                have made significant contributions should be listed as co-authors.
+              </p>
+
+              <h3>5. Disclosure and Conflicts of Interest</h3>
+              <p>
+                All authors should disclose in their manuscript any financial or other substantive 
+                conflict of interest that might be construed to influence the results or interpretation 
+                of their manuscript.
+              </p>
+
+              <h3>6. Peer Review Process</h3>
+              <p>
+                All submitted manuscripts undergo a rigorous peer review process. Authors agree to 
+                participate in this process and respond to reviewers' comments in a timely manner.
+              </p>
+
+              <h3>7. Copyright</h3>
+              <p>
+                Upon acceptance, authors transfer copyright of their article to the journal. Authors 
+                retain the right to use their own material in future works, provided proper acknowledgment 
+                is given to the original publication.
+              </p>
+
+              <h3>8. Publication Ethics</h3>
+              <p>
+                Authors must follow the highest standards of publication ethics. Any attempt to manipulate 
+                the review process, citation data, or engage in any other form of misconduct will be 
+                investigated and appropriate action will be taken.
+              </p>
+
+              <h3>9. Data Access and Retention</h3>
+              <p>
+                Authors may be asked to provide the raw data in connection with a paper for editorial 
+                review, and should be prepared to provide public access to such data if practicable.
+              </p>
+
+              <h3>10. Corrections and Retractions</h3>
+              <p>
+                If significant errors are discovered after publication, authors are obligated to notify 
+                the journal promptly. The journal reserves the right to issue corrections or retractions 
+                as appropriate.
+              </p>
+            </div>
+            <div className={styles.modalFooter}>
+              <button 
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={() => setShowTermsModal(false)}
+              >
+                I Understand
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -80,6 +80,9 @@ export const acsApi = {
     listJournals: (skip = 0, limit = 3) => 
       apiService.get(`/api/v1/journals/?skip=${skip}&limit=${limit}`),
     getDetail: (id) => apiService.get(`/api/v1/journals/${id}`),
+    getVolumes: (journalId) => apiService.get(`/api/v1/journals/${journalId}/volumes`),
+    getVolumeIssues: (journalId, volumeId) => apiService.get(`/api/v1/journals/${journalId}/volumes/${volumeId}/issues`),
+    getAllIssues: (journalId) => apiService.get(`/api/v1/journals/${journalId}/issues`),
   },
 
   // Articles/News
@@ -91,6 +94,13 @@ export const acsApi = {
     getDetail: (id) => apiService.get(`/api/v1/articles/${id}`),
     getByJournal: (journalId, skip = 0, limit = 10) => 
       apiService.get(`/api/v1/articles/journal/${journalId}?skip=${skip}&limit=${limit}`),
+  },
+
+  // Public News/Announcements (no auth required)
+  news: {
+    list: (skip = 0, limit = 10, journalId = null) => 
+      apiService.get(`/api/v1/articles/news?skip=${skip}&limit=${limit}${journalId ? `&journal_id=${journalId}` : ''}`),
+    getDetail: (newsId) => apiService.get(`/api/v1/articles/news/${newsId}`),
   },
 
   // Legacy methods for backwards compatibility
@@ -113,6 +123,45 @@ export const acsApi = {
     getPaperDetail: (paperId) => apiService.get(`/api/v1/admin/papers/${paperId}`),
     getRecentActivity: (limit = 20) => apiService.get(`/api/v1/admin/activity?limit=${limit}`),
     getPapersByStatus: () => apiService.get('/api/v1/admin/stats/papers-by-status'),
+    // Admin can also invite reviewers using the editor endpoint (which accepts both roles)
+    inviteReviewer: (paperId, reviewerEmail, dueDays = 14) =>
+      apiService.post(`/api/v1/editor/papers/${paperId}/invite-reviewer?reviewer_email=${encodeURIComponent(reviewerEmail)}&due_days=${dueDays}`),
+    listReviewers: (skip = 0, limit = 50, search = '') =>
+      apiService.get(`/api/v1/editor/reviewers?skip=${skip}&limit=${limit}${search ? `&search=${search}` : ''}`),
+    
+    // Editor Management
+    listEditors: (skip = 0, limit = 50, journalId = null, editorType = null, search = '') =>
+      apiService.get(`/api/v1/admin/editors?skip=${skip}&limit=${limit}${journalId ? `&journal_id=${journalId}` : ''}${editorType ? `&editor_type=${editorType}` : ''}${search ? `&search=${search}` : ''}`),
+    createEditor: (editorData) => apiService.post('/api/v1/admin/editors', editorData),
+    updateEditor: (editorId, editorData) => apiService.put(`/api/v1/admin/editors/${editorId}`, editorData),
+    deleteEditor: (editorId) => apiService.delete(`/api/v1/admin/editors/${editorId}`),
+    getJournalEditors: (journalId) => apiService.get(`/api/v1/admin/journals/${journalId}/editors`),
+    
+    // Admin User Creation
+    createUser: (userData) => apiService.post('/api/v1/admin/users/create', userData),
+    
+    // News/Announcements Management
+    listNews: (skip = 0, limit = 20, journalId = null) =>
+      apiService.get(`/api/v1/admin/news?skip=${skip}&limit=${limit}${journalId ? `&journal_id=${journalId}` : ''}`),
+    createNews: (newsData) => apiService.post('/api/v1/admin/news', newsData),
+    updateNews: (newsId, newsData) => apiService.put(`/api/v1/admin/news/${newsId}`, newsData),
+    deleteNews: (newsId) => apiService.delete(`/api/v1/admin/news/${newsId}`),
+    
+    // Email Templates
+    listEmailTemplates: (category = null) =>
+      apiService.get(`/api/v1/admin/email-templates${category ? `?category=${category}` : ''}`),
+    getEmailTemplate: (templateId) =>
+      apiService.get(`/api/v1/admin/email-templates/${templateId}`),
+    createEmailTemplate: (templateData) =>
+      apiService.post('/api/v1/admin/email-templates', templateData),
+    updateEmailTemplate: (templateId, templateData) =>
+      apiService.put(`/api/v1/admin/email-templates/${templateId}`, templateData),
+    
+    // Paper Correspondence (Admin)
+    getPaperCorrespondence: (paperId) =>
+      apiService.get(`/api/v1/admin/papers/${paperId}/correspondence`),
+    sendCorrespondence: (paperId, data) =>
+      apiService.post(`/api/v1/admin/papers/${paperId}/correspondence`, data),
   },
 
   // Author endpoints
@@ -191,6 +240,12 @@ export const acsApi = {
       apiClient.get(`/api/v1/author/submissions/${paperId}/reviews/${reviewId}/download-report`, {
         responseType: 'blob'
       }),
+    // Correspondence/Notification history
+    getCorrespondence: (paperId) => apiService.get(`/api/v1/author/submissions/${paperId}/correspondence`),
+    markCorrespondenceRead: (paperId, correspondenceId) =>
+      apiService.put(`/api/v1/author/submissions/${paperId}/correspondence/${correspondenceId}/read`),
+    getUnreadCount: (paperId) =>
+      apiService.get(`/api/v1/author/submissions/${paperId}/unread-count`),
     // Get URLs for viewing files in browser
     getViewPaperUrl: (paperId) => `/api/v1/author/submissions/${paperId}/view`,
     getViewReviewReportUrl: (paperId, reviewId) => `/api/v1/author/submissions/${paperId}/reviews/${reviewId}/view-report`,
@@ -223,6 +278,10 @@ export const acsApi = {
     assignReviewerToPaper: (paperId, reviewerId, dueDays = 14) =>
       apiService.post(`/api/v1/editor/papers/${paperId}/assign-reviewer`, { reviewer_id: reviewerId, due_days: dueDays }),
     
+    // My Journals - Journals assigned to this editor
+    getMyJournals: () => apiService.get('/api/v1/editor/my-journals'),
+    updateJournal: (journalId, journalData) => apiService.put(`/api/v1/editor/journals/${journalId}`, journalData),
+    
     // Phase 6: Editor Decision Panel
     getPapersPendingDecision: (skip = 0, limit = 20) =>
       apiService.get(`/api/v1/editor/papers-pending-decision?skip=${skip}&limit=${limit}`),
@@ -230,6 +289,27 @@ export const acsApi = {
       apiService.post(`/api/v1/editor/papers/${paperId}/decision`, decisionData),
     getPaperDecision: (paperId) =>
       apiService.get(`/api/v1/editor/papers/${paperId}/decision`),
+    
+    // Publishing workflow
+    getReadyToPublish: (skip = 0, limit = 20) =>
+      apiService.get(`/api/v1/editor/ready-to-publish?skip=${skip}&limit=${limit}`),
+    publishPaper: (paperId, publishData) =>
+      apiService.post(`/api/v1/editor/papers/${paperId}/publish`, publishData),
+    checkDoiStatus: (paperId) =>
+      apiService.get(`/api/v1/editor/papers/${paperId}/doi-status`),
+    
+    // Email Templates (Editor can also access)
+    listEmailTemplates: (category = null) =>
+      apiService.get(`/api/v1/admin/email-templates${category ? `?category=${category}` : ''}`),
+    
+    // Paper Correspondence (Editor)
+    getPaperCorrespondence: (paperId) =>
+      apiService.get(`/api/v1/admin/papers/${paperId}/correspondence`),
+    sendCorrespondence: (paperId, data) =>
+      apiService.post(`/api/v1/admin/papers/${paperId}/correspondence`, data),
+    
+    // View paper PDF
+    getViewPaperUrl: (paperId) => `/api/v1/editor/papers/${paperId}/view`,
   },
 
   // Invitation endpoints (public, no auth required)
@@ -272,6 +352,43 @@ export const acsApi = {
       apiService.post(`/api/v1/reviewer/invitations/${invitationId}/accept`, {}),
     declineInvitation: (invitationId, reason = '') =>
       apiService.post(`/api/v1/reviewer/invitations/${invitationId}/decline?${reason ? `reason=${encodeURIComponent(reason)}` : ''}`, {}),
+  },
+
+  // Role Management endpoints
+  roles: {
+    // Get current user's roles and pending requests
+    getMyRoles: () => apiService.get('/api/v1/roles/my-roles'),
+    
+    // Request a new role
+    requestRole: (requestedRole, reason = '') =>
+      apiService.post('/api/v1/roles/request', { requested_role: requestedRole, reason }),
+    
+    // Switch active role/persona
+    switchRole: (role) =>
+      apiService.post('/api/v1/roles/switch', { role }),
+    
+    // Admin: List all role requests
+    listRequests: (statusFilter = '', skip = 0, limit = 20) =>
+      apiService.get(`/api/v1/roles/requests?skip=${skip}&limit=${limit}${statusFilter ? `&status_filter=${statusFilter}` : ''}`),
+    
+    // Admin: Process (approve/reject) a role request
+    processRequest: (requestId, action, adminNotes = '', journalId = null) =>
+      apiService.patch(`/api/v1/roles/requests/${requestId}`, { 
+        action, 
+        admin_notes: adminNotes,
+        journal_id: journalId 
+      }),
+    
+    // Admin: Get roles for a specific user
+    getUserRoles: (userId) => apiService.get(`/api/v1/roles/users/${userId}/roles`),
+    
+    // Admin: Directly assign role to user
+    assignRole: (userId, role, journalId = null) =>
+      apiService.post(`/api/v1/roles/users/${userId}/roles?role=${role}${journalId ? `&journal_id=${journalId}` : ''}`),
+    
+    // Admin: Revoke role from user
+    revokeRole: (userId, role) =>
+      apiService.delete(`/api/v1/roles/users/${userId}/roles/${role}`),
   },
 };
 

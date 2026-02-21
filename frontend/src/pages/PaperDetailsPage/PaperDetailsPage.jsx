@@ -7,6 +7,7 @@ import acsApi from '../../api/apiService';
 import paperNormalizer from '../../services/paperNormalizer';
 import FileViewer from '../../components/FileViewer/FileViewer';
 import StatusChips from '../../components/StatusChips/StatusChips';
+import ContactEditorialModal from '../../components/ContactEditorialModal';
 import styles from './PaperDetailsPage.module.css';
 
 const PaperDetailsPage = () => {
@@ -29,6 +30,22 @@ const PaperDetailsPage = () => {
   const [filteredReviewers, setFilteredReviewers] = useState([]);
   const [loadingReviewers, setLoadingReviewers] = useState(false);
   const [showReviewerDropdown, setShowReviewerDropdown] = useState(false);
+  // Author resubmission state
+  const [showResubmitForm, setShowResubmitForm] = useState(false);
+  const [resubmitFile, setResubmitFile] = useState(null);
+  const [revisionReason, setRevisionReason] = useState('');
+  const [changeSummary, setChangeSummary] = useState('');
+  const [resubmitting, setResubmitting] = useState(false);
+  // Correspondence history
+  const [correspondence, setCorrespondence] = useState([]);
+  const [loadingCorrespondence, setLoadingCorrespondence] = useState(false);
+  const [showCorrespondence, setShowCorrespondence] = useState(false);
+  // Contact Editorial Modal (for admin/editor)
+  const [showContactModal, setShowContactModal] = useState(false);
+  // Revision history
+  const [revisionHistory, setRevisionHistory] = useState([]);
+  const [loadingRevisions, setLoadingRevisions] = useState(false);
+  const [showRevisions, setShowRevisions] = useState(false);
 
   useEffect(() => {
     fetchPaperDetails();
@@ -50,7 +67,10 @@ const PaperDetailsPage = () => {
   const fetchAvailableReviewers = async () => {
     try {
       setLoadingReviewers(true);
-      const response = await acsApi.editor.listReviewers(0, 100);
+      // Use appropriate API based on role
+      const response = isAdmin() 
+        ? await acsApi.admin.listReviewers(0, 100)
+        : await acsApi.editor.listReviewers(0, 100);
       setAvailableReviewers(response.reviewers || []);
       setFilteredReviewers(response.reviewers || []);
     } catch (err) {
@@ -58,6 +78,82 @@ const PaperDetailsPage = () => {
       showError('Failed to load available reviewers', 3000);
     } finally {
       setLoadingReviewers(false);
+    }
+  };
+
+  // Fetch correspondence history for author
+  const fetchCorrespondence = async () => {
+    if (!paper?.id) return;
+    try {
+      setLoadingCorrespondence(true);
+      let response;
+      if (isAuthor()) {
+        response = await acsApi.author.getCorrespondence(paper.id);
+      } else if (isAdmin() || isEditor()) {
+        response = await acsApi.admin.getPaperCorrespondence(paper.id);
+      }
+      setCorrespondence(response?.correspondence || []);
+    } catch (err) {
+      console.error('Failed to fetch correspondence:', err);
+      // Don't show error toast, just log it
+    } finally {
+      setLoadingCorrespondence(false);
+    }
+  };
+
+  // Handle contact modal close
+  const handleContactModalClose = (sent) => {
+    setShowContactModal(false);
+    if (sent) {
+      success('Correspondence sent successfully');
+      // Refresh correspondence list if it's visible
+      if (showCorrespondence) {
+        fetchCorrespondence();
+      }
+    }
+  };
+
+  // Fetch revision history for author
+  const fetchRevisionHistory = async () => {
+    if (!paper?.id || !isAuthor()) return;
+    try {
+      setLoadingRevisions(true);
+      const response = await acsApi.author.getRevisionHistory(paper.id);
+      setRevisionHistory(response.revisions || []);
+    } catch (err) {
+      console.error('Failed to fetch revision history:', err);
+    } finally {
+      setLoadingRevisions(false);
+    }
+  };
+
+  // Handle paper resubmission
+  const handleResubmit = async () => {
+    if (!resubmitFile) {
+      showError('Please select a revised paper file', 3000);
+      return;
+    }
+    if (!revisionReason.trim()) {
+      showError('Please provide a reason/summary for your revisions', 3000);
+      return;
+    }
+
+    try {
+      setResubmitting(true);
+      await acsApi.author.resubmitPaper(paper.id, resubmitFile, revisionReason, changeSummary);
+      success('Paper resubmitted successfully!', 4000);
+      setShowResubmitForm(false);
+      setResubmitFile(null);
+      setRevisionReason('');
+      setChangeSummary('');
+      // Refresh paper details
+      await fetchPaperDetails();
+    } catch (err) {
+      console.error('Error resubmitting paper:', err);
+      const errorMsg = err.response?.data?.detail || 'Failed to resubmit paper';
+      showError(errorMsg, 5000);
+    } finally {
+      setResubmitting(false);
     }
   };
 
@@ -99,7 +195,12 @@ const PaperDetailsPage = () => {
 
     try {
       setAssigningReviewer(true);
-      await acsApi.editor.inviteReviewer(paper.id, reviewerEmail, dueDays);
+      // Use appropriate API based on role
+      if (isAdmin()) {
+        await acsApi.admin.inviteReviewer(paper.id, reviewerEmail, dueDays);
+      } else {
+        await acsApi.editor.inviteReviewer(paper.id, reviewerEmail, dueDays);
+      }
       success(`Reviewer invitation sent to ${reviewerEmail}`, 4000);
       setReviewerEmail('');
       setSearchReviewers('');
@@ -249,366 +350,832 @@ const PaperDetailsPage = () => {
     );
   }
 
+  // Format date helper
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const formatDateTime = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleString('en-US', { 
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: true 
+    });
+  };
+
+  // Get initials for avatar
+  const getInitials = (name) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <div className={styles.header}>
-        <button className={styles.backBtn} onClick={() => navigate(-1)}>
-          <span className="material-symbols-rounded">arrow_back</span>
-          Back
-        </button>
-      </div>
+      {/* Sticky Header */}
+      <header className={styles.pageHeader}>
+        <div className={styles.headerContent}>
+          {/* Back Link */}
+          <button className={styles.backLink} onClick={() => navigate(-1)}>
+            <span className="material-symbols-rounded">arrow_back</span>
+            <span>Back to Dashboard</span>
+          </button>
 
-      {/* Main Content */}
-      <div className={styles.mainContent}>
-        {/* Paper Overview */}
-        <div className={styles.card}>
-          <div className={styles.titleSection}>
-            <h1 className={styles.title}>{paper.title}</h1>
-            <StatusChips status={paper.status} />
+          {/* Title Section */}
+          <div className={styles.headerMain}>
+            <div className={styles.headerLeft}>
+              <StatusChips status={paper.status} />
+              <h1 className={styles.pageTitle}>{paper.title}</h1>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className={styles.headerActions}>
+              <button className={styles.btnOutline} onClick={handleViewPaper}>
+                <span className="material-symbols-rounded">visibility</span>
+                View PDF
+              </button>
+              
+              {isAuthor() && (paper.status === 'correction' || paper.status === 'revision_requested') && (
+                <button className={styles.btnDark} onClick={() => setShowResubmitForm(!showResubmitForm)}>
+                  <span className="material-symbols-rounded">edit</span>
+                  Revise
+                </button>
+              )}
+              
+              {(isEditor() || isAdmin()) && (
+                <button className={styles.btnDark} onClick={() => {
+                  setShowAssignReviewer(true);
+                  if (!availableReviewers.length) {
+                    fetchAvailableReviewers();
+                  }
+                }}>
+                  <span className="material-symbols-rounded">person_add</span>
+                  Assign Reviewer
+                </button>
+              )}
+            </div>
           </div>
+        </div>
+      </header>
 
-          <div className={styles.metaGrid}>
-            <div className={styles.metaItem}>
-              <label>Paper ID</label>
-              <span>{paper.id}</span>
-            </div>
-            <div className={styles.metaItem}>
-              <label>Journal</label>
-              <span>{paper.journal?.name || 'Unknown'}</span>
-            </div>
-            <div className={styles.metaItem}>
-              <label>Submitted Date</label>
-              <span>{new Date(paper.submittedDate).toLocaleDateString()}</span>
-            </div>
-            {paper.paperCode && (
+      {/* Main Content - Two Column Layout */}
+      <div className={styles.pageContent}>
+        {/* Left Column - Main Content */}
+        <div className={styles.mainColumn}>
+          {/* Meta Info Card */}
+          <section className={styles.metaCard}>
+            <div className={styles.metaGrid}>
               <div className={styles.metaItem}>
-                <label>Paper Code</label>
-                <span>{paper.paperCode}</span>
+                <p className={styles.metaLabel}>Paper ID</p>
+                <p className={styles.metaValue}>{paper.paperCode || `#${paper.id}`}</p>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Author Information */}
-        <div className={styles.card}>
-          <h2 className={styles.sectionTitle}>Author Information</h2>
-          <div className={styles.authorInfo}>
-            <div>
-              <p className={styles.authorName}>{paper.author?.name || 'Unknown Author'}</p>
-              {paper.author?.email && <p className={styles.authorEmail}>{paper.author.email}</p>}
+              <div className={styles.metaItem}>
+                <p className={styles.metaLabel}>Journal</p>
+                <p className={styles.metaValue}>{paper.journal?.name || 'IJSE 2026'}</p>
+              </div>
+              <div className={styles.metaItem}>
+                <p className={styles.metaLabel}>Submitted</p>
+                <p className={styles.metaValue}>{formatDate(paper.submittedDate)}</p>
+              </div>
+              <div className={styles.metaItem}>
+                <p className={styles.metaLabel}>Primary Author</p>
+                <p className={styles.metaValue}>{paper.author?.name || 'Unknown'}</p>
+              </div>
             </div>
-            {paper.coAuthors && paper.coAuthors.length > 0 && (
-              <div className={styles.coAuthors}>
-                <h4>Co-Authors</h4>
-                <ul>
-                  {paper.coAuthors.map((author, idx) => (
-                    <li key={idx}>{author}</li>
+          </section>
+
+          {/* Abstract Section */}
+          <section className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <span className="material-symbols-rounded">subject</span>
+              <h2 className={styles.sectionTitle}>Abstract</h2>
+            </div>
+            <div className={styles.sectionCard}>
+              <p className={styles.abstractText}>{paper.abstract || 'No abstract provided'}</p>
+            </div>
+          </section>
+
+          {/* Keywords */}
+          {paper.keywords && paper.keywords.length > 0 && (
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <span className="material-symbols-rounded">label</span>
+                <h2 className={styles.sectionTitle}>Keywords</h2>
+              </div>
+              <div className={styles.sectionCard}>
+                <div className={styles.keywordsList}>
+                  {paper.keywords.map((kw, idx) => (
+                    <span key={idx} className={styles.keyword}>{kw}</span>
                   ))}
-                </ul>
+                </div>
               </div>
-            )}
-          </div>
-        </div>
+            </section>
+          )}
 
-        {/* Abstract */}
-        <div className={styles.card}>
-          <h2 className={styles.sectionTitle}>Abstract</h2>
-          <p className={styles.abstractText}>{paper.abstract || 'No abstract provided'}</p>
-        </div>
+          {/* Reviews Section */}
+          {(isEditor() || isAdmin() || isAuthor()) && paper.reviews && paper.reviews.length > 0 && (
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <span className="material-symbols-rounded">reviews</span>
+                <h2 className={styles.sectionTitle}>Reviewer Feedback ({paper.reviews.length})</h2>
+                {paper.status === 'revision_requested' && (
+                  <span className={styles.actionBadge}>Action Required</span>
+                )}
+              </div>
+              
+              <div className={styles.reviewsCard}>
+                {paper.reviews.map((review, idx) => (
+                  <div key={review.id} className={styles.reviewBlock}>
+                    <div className={styles.reviewContent}>
+                      {/* Reviewer Header */}
+                      <div className={styles.reviewerHeader}>
+                        <div className={styles.reviewerInfo}>
+                          <div className={styles.reviewerAvatar}>
+                            {getInitials(review.reviewerName || `Reviewer ${idx + 1}`)}
+                          </div>
+                          <span className={styles.reviewerName}>
+                            {isEditor() || isAdmin() ? review.reviewerName : `Reviewer #${idx + 1}`}
+                          </span>
+                        </div>
+                        {review.overallRating && (
+                          <div className={styles.overallRating}>
+                            <span className="material-symbols-rounded">star</span>
+                            <span>{review.overallRating.toFixed(1)} / 5.0</span>
+                          </div>
+                        )}
+                      </div>
 
-        {/* Keywords */}
-        {paper.keywords && paper.keywords.length > 0 && (
-          <div className={styles.card}>
-            <h2 className={styles.sectionTitle}>Keywords</h2>
-            <div className={styles.keywordsList}>
-              {paper.keywords.map((kw, idx) => (
-                <span key={idx} className={styles.keyword}>
-                  {kw}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* File */}
-        <div className={styles.card}>
-          <h2 className={styles.sectionTitle}>Paper Document</h2>
-          <FileViewer
-            filePath={paper.filePath}
-            fileName={paper.fileName}
-            fileSize={paper.fileSize}
-            submittedDate={paper.submittedDate}
-          />
-        </div>
-
-        {/* Reviews Section - Visible to Editor, Admin, Author */}
-        {(isEditor() || isAdmin() || isAuthor()) && paper.reviews && paper.reviews.length > 0 && (
-          <div className={styles.card}>
-            <h2 className={styles.sectionTitle}>Reviews ({paper.reviews.length})</h2>
-            <div className={styles.reviewsList}>
-              {paper.reviews.map((review) => (
-                <div
-                  key={review.id}
-                  className={styles.reviewItem}
-                  onClick={() => setExpandedReviewId(expandedReviewId === review.id ? null : review.id)}
-                >
-                  <div className={styles.reviewHeader}>
-                    <div className={styles.reviewerInfo}>
-                      <p className={styles.reviewerName}>{review.reviewerName}</p>
-                      {isEditor() || isAdmin() ? (
-                        <p className={styles.reviewerEmail}>{review.reviewerEmail}</p>
-                      ) : null}
-                    </div>
-                    <div className={styles.reviewMeta}>
-                      {review.status && (
-                        <span className={`${styles.reviewStatus} ${styles[`status${review.status.replace(/_/g, '')}`.toLowerCase()]}`}>
-                          {review.status.replace(/_/g, ' ').toUpperCase()}
-                        </span>
-                      )}
-                      {review.overallRating && (
-                        <span className={styles.rating}>
-                          ⭐ {review.overallRating.toFixed(1)}
-                        </span>
-                      )}
-                      <span className={styles.expandIcon}>
-                        {expandedReviewId === review.id ? '−' : '+'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {expandedReviewId === review.id && (
-                    <div className={styles.reviewBody}>
+                      {/* Rating Bars */}
                       {(review.technicalQuality || review.clarity || review.originality || review.significance) && (
                         <div className={styles.ratingsGrid}>
                           {review.technicalQuality && (
                             <div className={styles.ratingItem}>
-                              <label>Technical Quality</label>
-                              <span>{review.technicalQuality}/5</span>
+                              <p className={styles.ratingLabel}>Technical</p>
+                              <div className={styles.ratingBar}>
+                                <div className={styles.ratingTrack}>
+                                  <div 
+                                    className={styles.ratingFill} 
+                                    style={{ width: `${(review.technicalQuality / 5) * 100}%` }}
+                                  />
+                                </div>
+                                <span className={styles.ratingValue}>{review.technicalQuality}/5</span>
+                              </div>
                             </div>
                           )}
                           {review.clarity && (
                             <div className={styles.ratingItem}>
-                              <label>Clarity</label>
-                              <span>{review.clarity}/5</span>
+                              <p className={styles.ratingLabel}>Clarity</p>
+                              <div className={styles.ratingBar}>
+                                <div className={styles.ratingTrack}>
+                                  <div 
+                                    className={styles.ratingFill} 
+                                    style={{ width: `${(review.clarity / 5) * 100}%` }}
+                                  />
+                                </div>
+                                <span className={styles.ratingValue}>{review.clarity}/5</span>
+                              </div>
                             </div>
                           )}
                           {review.originality && (
                             <div className={styles.ratingItem}>
-                              <label>Originality</label>
-                              <span>{review.originality}/5</span>
+                              <p className={styles.ratingLabel}>Originality</p>
+                              <div className={styles.ratingBar}>
+                                <div className={styles.ratingTrack}>
+                                  <div 
+                                    className={styles.ratingFill} 
+                                    style={{ width: `${(review.originality / 5) * 100}%` }}
+                                  />
+                                </div>
+                                <span className={styles.ratingValue}>{review.originality}/5</span>
+                              </div>
                             </div>
                           )}
                           {review.significance && (
                             <div className={styles.ratingItem}>
-                              <label>Significance</label>
-                              <span>{review.significance}/5</span>
+                              <p className={styles.ratingLabel}>Significance</p>
+                              <div className={styles.ratingBar}>
+                                <div className={styles.ratingTrack}>
+                                  <div 
+                                    className={styles.ratingFill} 
+                                    style={{ width: `${(review.significance / 5) * 100}%` }}
+                                  />
+                                </div>
+                                <span className={styles.ratingValue}>{review.significance}/5</span>
+                              </div>
                             </div>
                           )}
                         </div>
                       )}
 
+                      {/* Recommendation */}
                       {review.recommendation && (
-                        <div className={styles.recommendation}>
-                          <label>Recommendation</label>
-                          <p>{review.recommendation}</p>
+                        <div className={styles.reviewField}>
+                          <h4 className={styles.fieldLabel}>Critical Requirement</h4>
+                          <p className={styles.fieldValue}>{review.recommendation}</p>
                         </div>
                       )}
 
+                      {/* Comments */}
                       {review.authorComments && (
-                        <div className={styles.comments}>
-                          <label>Comments for Authors</label>
-                          <p>{review.authorComments}</p>
+                        <div className={styles.reviewField}>
+                          <h4 className={styles.fieldLabel}>Comments</h4>
+                          <p className={styles.fieldComment}>"{review.authorComments}"</p>
                         </div>
                       )}
 
+                      {/* Confidential Comments - Editor Only */}
                       {(isEditor() || isAdmin()) && review.confidentialComments && (
-                        <div className={styles.confidential}>
-                          <label>Confidential Comments (Editor Only)</label>
-                          <p>{review.confidentialComments}</p>
+                        <div className={styles.reviewFieldConfidential}>
+                          <h4 className={styles.fieldLabel}>Confidential Comments (Editor Only)</h4>
+                          <p className={styles.fieldComment}>{review.confidentialComments}</p>
                         </div>
-                      )}
-
-                      {review.submittedDate && (
-                        <p className={styles.submittedDate}>
-                          Submitted: {new Date(review.submittedDate).toLocaleDateString()}
-                        </p>
-                      )}
-
-                      {/* View Review Report Button */}
-                      {review.reviewReportFile && (
-                        <button
-                          className={styles.downloadReportBtn}
-                          onClick={(e) => handleViewReviewReport(review.id, e)}
-                          title="View Review Report"
-                        >
-                          <span className="material-symbols-rounded">visibility</span>
-                          View Review Report
-                        </button>
                       )}
                     </div>
-                  )}
+
+                    {/* Download Report Button */}
+                    {review.reviewReportFile && (
+                      <div className={styles.reviewFooter}>
+                        <button 
+                          className={styles.downloadBtn}
+                          onClick={(e) => handleDownloadReviewReport(review.id, e)}
+                        >
+                          <span className="material-symbols-rounded">download</span>
+                          Download Full Report
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Resubmit Form - kept inline as it's author-specific */}
+          {showResubmitForm && isAuthor() && (
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <span className="material-symbols-rounded">upload_file</span>
+                <h2 className={styles.sectionTitle}>Resubmit Revised Paper</h2>
+              </div>
+              <div className={styles.sectionCard}>
+                <p className={styles.resubmitNote}>
+                  Please upload your revised manuscript addressing the reviewer's comments and provide a summary of the changes made.
+                </p>
+                <div className={styles.form}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="revisedFile">Revised Paper File *</label>
+                    <input
+                      type="file"
+                      id="revisedFile"
+                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => setResubmitFile(e.target.files[0])}
+                      disabled={resubmitting}
+                      className={styles.fileInput}
+                    />
+                    {resubmitFile && (
+                      <p className={styles.selectedFile}>
+                        <span className="material-symbols-rounded">description</span>
+                        {resubmitFile.name} ({(resubmitFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </p>
+                    )}
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="revisionReason">Revision Summary *</label>
+                    <textarea
+                      id="revisionReason"
+                      value={revisionReason}
+                      onChange={(e) => setRevisionReason(e.target.value)}
+                      placeholder="Briefly describe the changes made in response to the reviewer comments..."
+                      rows={4}
+                      disabled={resubmitting}
+                      className={styles.textarea}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label htmlFor="changeSummary">Detailed Change Log (Optional)</label>
+                    <textarea
+                      id="changeSummary"
+                      value={changeSummary}
+                      onChange={(e) => setChangeSummary(e.target.value)}
+                      placeholder="List specific changes made..."
+                      rows={6}
+                      disabled={resubmitting}
+                      className={styles.textarea}
+                    />
+                  </div>
+
+                  <div className={styles.formActions}>
+                    <button
+                      className={styles.btnPrimary}
+                      onClick={handleResubmit}
+                      disabled={resubmitting || !resubmitFile || !revisionReason.trim()}
+                    >
+                      {resubmitting ? 'Resubmitting...' : 'Submit Revision'}
+                    </button>
+                    <button
+                      className={styles.btnSecondary}
+                      onClick={() => {
+                        setShowResubmitForm(false);
+                        setResubmitFile(null);
+                        setRevisionReason('');
+                        setChangeSummary('');
+                      }}
+                      disabled={resubmitting}
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className={styles.actions}>
-          {isEditor() && (
-            <>
-              <button
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                onClick={() => setShowAssignReviewer(!showAssignReviewer)}
-              >
-                <span className="material-symbols-rounded">person_add</span>
-                Assign Reviewer
-              </button>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleViewPaper}>
-                <span className="material-symbols-rounded">visibility</span>
-                View Paper
-              </button>
-            </>
-          )}
-
-          {isAdmin() && (
-            <>
-              <button
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                onClick={() => setShowAssignReviewer(!showAssignReviewer)}
-              >
-                <span className="material-symbols-rounded">person_add</span>
-                Assign Reviewer
-              </button>
-              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleViewPaper}>
-                <span className="material-symbols-rounded">visibility</span>
-                View Paper
-              </button>
-            </>
-          )}
-
-          {isAuthor() && (
-            <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleViewPaper}>
-              <span className="material-symbols-rounded">visibility</span>
-              View My Paper
-            </button>
+              </div>
+            </section>
           )}
         </div>
 
-        {/* Assign Reviewer Form */}
-        {showAssignReviewer && (isEditor() || isAdmin()) && (
-          <div className={styles.card}>
-            <h2 className={styles.sectionTitle}>Assign Reviewer</h2>
-            <div className={styles.form}>
-              <div className={styles.formGroup}>
-                <label htmlFor="reviewerEmail">Select or Enter Reviewer Email</label>
-                <div className={styles.reviewerInputContainer}>
-                  <input
-                    type="text"
-                    id="reviewerEmail"
-                    value={searchReviewers}
-                    onChange={(e) => {
-                      setSearchReviewers(e.target.value);
-                      setShowReviewerDropdown(true);
-                    }}
-                    onFocus={() => {
-                      if (!availableReviewers.length) {
-                        fetchAvailableReviewers();
-                      }
-                      setShowReviewerDropdown(true);
-                    }}
-                    placeholder="Search reviewers by name or email..."
-                    disabled={assigningReviewer}
-                    className={styles.reviewerInput}
-                  />
-                  {showReviewerDropdown && (
-                    <div className={styles.reviewerDropdown}>
-                      {loadingReviewers ? (
-                        <div className={styles.dropdownItem}>
-                          <span className="material-symbols-rounded">hourglass_empty</span>
-                          Loading reviewers...
-                        </div>
-                      ) : filteredReviewers.length > 0 ? (
-                        filteredReviewers.map((reviewer) => (
-                          <div
-                            key={reviewer.id}
-                            className={styles.dropdownItem}
-                            onClick={() => handleSelectReviewer(reviewer)}
-                          >
-                            <div className={styles.dropdownItemContent}>
-                              <p className={styles.dropdownItemName}>{reviewer.name}</p>
-                              <p className={styles.dropdownItemEmail}>{reviewer.email}</p>
-                              {reviewer.specialization && (
-                                <p className={styles.dropdownItemSpec}>{reviewer.specialization}</p>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className={styles.dropdownItem}>
-                          <span className="material-symbols-rounded">search_off</span>
-                          No reviewers found
-                        </div>
-                      )}
-                    </div>
-                  )}
+        {/* Right Column - Sidebar */}
+        <aside className={styles.sideColumn}>
+          {/* Activity Timeline */}
+          <div className={styles.timelineCard}>
+            <div className={styles.timelineHeader}>
+              <h2 className={styles.timelineTitle}>Activity Timeline</h2>
+            </div>
+            <div className={styles.timelineContent}>
+              <div className={styles.timelineList}>
+                {/* Submission Event */}
+                <div className={styles.timelineItem}>
+                  <div className={styles.timelineConnector} />
+                  <div className={`${styles.timelineIcon} ${styles.iconBlue}`}>
+                    <span className="material-symbols-rounded">publish</span>
+                  </div>
+                  <div className={styles.timelineInfo}>
+                    <p className={styles.timelineEvent}>Paper Submitted</p>
+                    <p className={styles.timelineDate}>{formatDateTime(paper.submittedDate)}</p>
+                  </div>
                 </div>
-                {reviewerEmail && (
-                  <p className={styles.selectedReviewer}>
-                    Selected: <strong>{reviewerEmail}</strong>
-                  </p>
+
+                {/* Review Assignment Events */}
+                {paper.reviews && paper.reviews.length > 0 && (
+                  <div className={styles.timelineItem}>
+                    <div className={styles.timelineConnector} />
+                    <div className={`${styles.timelineIcon} ${styles.iconSlate}`}>
+                      <span className="material-symbols-rounded">person_search</span>
+                    </div>
+                    <div className={styles.timelineInfo}>
+                      <p className={styles.timelineEvent}>Reviewer Assigned</p>
+                      <p className={styles.timelineDate}>
+                        {paper.reviews.length} reviewer{paper.reviews.length > 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
                 )}
-              </div>
 
-              <div className={styles.formGroup}>
-                <label htmlFor="dueDays">Review Due In (Days)</label>
-                <input
-                  type="number"
-                  id="dueDays"
-                  value={dueDays}
-                  onChange={(e) => setDueDays(parseInt(e.target.value) || 14)}
-                  min="1"
-                  max="90"
-                  disabled={assigningReviewer}
-                />
-              </div>
+                {/* Status-based Event */}
+                {paper.status === 'revision_requested' && (
+                  <div className={styles.timelineItem}>
+                    <div className={`${styles.timelineIcon} ${styles.iconAmber}`}>
+                      <span className="material-symbols-rounded">edit_note</span>
+                    </div>
+                    <div className={styles.timelineInfo}>
+                      <p className={styles.timelineEvent}>Revision Requested</p>
+                      <p className={styles.timelineDate}>Action Required</p>
+                    </div>
+                  </div>
+                )}
 
-              <div className={styles.formActions}>
-                <button
-                  className={`${styles.btn} ${styles.btnPrimary}`}
-                  onClick={handleAssignReviewer}
-                  disabled={assigningReviewer || !reviewerEmail}
-                >
-                  {assigningReviewer ? (
-                    <>
-                      <span className="material-symbols-rounded">hourglass_empty</span>
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-rounded">send</span>
-                      Send Invitation
-                    </>
-                  )}
-                </button>
-                <button
-                  className={`${styles.btn} ${styles.btnSecondary}`}
-                  onClick={() => {
-                    setShowAssignReviewer(false);
-                    setReviewerEmail('');
-                    setSearchReviewers('');
-                    setShowReviewerDropdown(false);
-                  }}
-                  disabled={assigningReviewer}
-                >
-                  Cancel
-                </button>
+                {paper.status === 'accepted' && (
+                  <div className={styles.timelineItem}>
+                    <div className={`${styles.timelineIcon} ${styles.iconGreen}`}>
+                      <span className="material-symbols-rounded">check_circle</span>
+                    </div>
+                    <div className={styles.timelineInfo}>
+                      <p className={styles.timelineEvent}>Paper Accepted</p>
+                      <p className={styles.timelineDate}>Congratulations!</p>
+                    </div>
+                  </div>
+                )}
+
+                {paper.status === 'rejected' && (
+                  <div className={styles.timelineItem}>
+                    <div className={`${styles.timelineIcon} ${styles.iconRed}`}>
+                      <span className="material-symbols-rounded">cancel</span>
+                    </div>
+                    <div className={styles.timelineInfo}>
+                      <p className={styles.timelineEvent}>Paper Rejected</p>
+                      <p className={styles.timelineDate}>See feedback for details</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        )}
+
+          {/* Alerts Card */}
+          <div className={styles.alertCard}>
+            <div className={styles.alertContent}>
+              <span className="material-symbols-rounded">notifications</span>
+              <p>No new alerts for this paper.</p>
+            </div>
+          </div>
+
+          {/* Help Card / Contact Author Card */}
+          <div className={styles.helpCard}>
+            <h3 className={styles.helpTitle}>
+              {(isAdmin() || isEditor()) ? 'Contact Author' : 'Need assistance?'}
+            </h3>
+            <p className={styles.helpText}>
+              {(isAdmin() || isEditor()) 
+                ? 'Send email correspondence to the author regarding this submission.'
+                : 'Our editorial board is here to assist you with any questions regarding the submission process or peer-review status.'}
+            </p>
+            <button 
+              className={styles.helpBtn}
+              onClick={() => {
+                if (isAdmin() || isEditor()) {
+                  setShowContactModal(true);
+                } else {
+                  // For authors, just show info or open mailto
+                  window.location.href = `mailto:info@aacsjournals.com?subject=Inquiry about Paper ID ${paper?.id}`;
+                }
+              }}
+            >
+              {(isAdmin() || isEditor()) ? 'Send Email to Author' : 'Contact Editorial Office'}
+            </button>
+          </div>
+
+          {/* Admin/Editor Actions */}
+          {(isAdmin() || isEditor()) && (
+            <div className={styles.authorActionsCard}>
+              <button 
+                className={styles.actionCardBtn}
+                onClick={() => {
+                  setShowCorrespondence(!showCorrespondence);
+                  if (!showCorrespondence && correspondence.length === 0) {
+                    fetchCorrespondence();
+                  }
+                }}
+              >
+                <span className="material-symbols-rounded">mail</span>
+                Correspondence History
+              </button>
+            </div>
+          )}
+
+          {/* Author Actions */}
+          {isAuthor() && (
+            <div className={styles.authorActionsCard}>
+              <button 
+                className={styles.actionCardBtn}
+                onClick={() => {
+                  setShowCorrespondence(!showCorrespondence);
+                  if (!showCorrespondence && correspondence.length === 0) {
+                    fetchCorrespondence();
+                  }
+                }}
+              >
+                <span className="material-symbols-rounded">mail</span>
+                View Notifications
+              </button>
+              <button 
+                className={styles.actionCardBtn}
+                onClick={() => {
+                  setShowRevisions(!showRevisions);
+                  if (!showRevisions && revisionHistory.length === 0) {
+                    fetchRevisionHistory();
+                  }
+                }}
+              >
+                <span className="material-symbols-rounded">history</span>
+                Version History
+              </button>
+            </div>
+          )}
+        </aside>
       </div>
+
+      {/* Correspondence Modal/Section */}
+      {showCorrespondence && (isAuthor() || isAdmin() || isEditor()) && (
+        <div className={styles.modalOverlay} onClick={() => setShowCorrespondence(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>{isAuthor() ? 'Email Notifications' : 'Correspondence History'}</h2>
+              <button onClick={() => setShowCorrespondence(false)}>
+                <span className="material-symbols-rounded">close</span>
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {loadingCorrespondence ? (
+                <div className={styles.loadingSection}>
+                  <span className="material-symbols-rounded">hourglass_empty</span>
+                  Loading...
+                </div>
+              ) : correspondence.length === 0 ? (
+                <div className={styles.emptySection}>
+                  <span className="material-symbols-rounded">inbox</span>
+                  <p>No {isAuthor() ? 'email notifications' : 'correspondence'} yet.</p>
+                </div>
+              ) : (
+                <div className={styles.correspondenceList}>
+                  {correspondence.map((email, idx) => (
+                    <div key={email.id || idx} className={styles.correspondenceItem}>
+                      <div className={styles.correspondenceHeader}>
+                        <span className={styles.emailType}>
+                          {email.email_type?.replace(/_/g, ' ').toUpperCase() || 
+                           (email.sender_role ? `Sent by ${email.sender_role}` : 'Email')}
+                        </span>
+                        <span className={styles.emailDate}>
+                          {new Date(email.created_at || email.sent_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className={styles.correspondenceBody}>
+                        <p className={styles.emailSubject}>{email.subject}</p>
+                        <span className={`${styles.emailStatus} ${styles[`status${email.delivery_status || 'sent'}`]}`}>
+                          {email.delivery_status === 'sent' || !email.delivery_status ? '✓ Delivered' : 
+                           email.delivery_status === 'failed' ? '✗ Failed' : '⋯ Pending'}
+                        </span>
+                        {(isAdmin() || isEditor()) && (
+                          <span className={styles.readStatus}>
+                            {email.is_read ? '👁 Read' : '○ Unread'}
+                          </span>
+                        )}
+                      </div>
+                      {/* Show message preview for admin/editor */}
+                      {(isAdmin() || isEditor()) && email.message && (
+                        <div className={styles.messagePreview}>
+                          {email.message.substring(0, 150)}...
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Revision History Modal */}
+      {showRevisions && isAuthor() && (
+        <div className={styles.modalOverlay} onClick={() => setShowRevisions(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>Version History</h2>
+              <button onClick={() => setShowRevisions(false)}>
+                <span className="material-symbols-rounded">close</span>
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {loadingRevisions ? (
+                <div className={styles.loadingSection}>
+                  <span className="material-symbols-rounded">hourglass_empty</span>
+                  Loading...
+                </div>
+              ) : revisionHistory.length === 0 ? (
+                <div className={styles.emptySection}>
+                  <span className="material-symbols-rounded">inventory_2</span>
+                  <p>No previous versions. This is the original submission.</p>
+                </div>
+              ) : (
+                <div className={styles.revisionList}>
+                  {revisionHistory.map((revision, idx) => (
+                    <div key={idx} className={styles.revisionItem}>
+                      <div className={styles.revisionVersion}>
+                        <span className={styles.versionBadge}>V{revision.version_number || idx + 1}</span>
+                        <span className={styles.revisionDate}>
+                          {new Date(revision.submitted_at || revision.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className={styles.revisionDetails}>
+                        {revision.revision_reason && (
+                          <p className={styles.revisionReason}>
+                            <strong>Reason:</strong> {revision.revision_reason}
+                          </p>
+                        )}
+                        {revision.change_summary && (
+                          <p className={styles.changeSummary}>
+                            <strong>Changes:</strong> {revision.change_summary}
+                          </p>
+                        )}
+                        {revision.file_name && (
+                          <p className={styles.revisionFile}>
+                            <span className="material-symbols-rounded">description</span>
+                            {revision.file_name}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Reviewer Modal */}
+      {showAssignReviewer && (isEditor() || isAdmin()) && (
+        <div className={styles.modalOverlay} onClick={() => {
+          setShowAssignReviewer(false);
+          setReviewerEmail('');
+          setSearchReviewers('');
+          setShowReviewerDropdown(false);
+        }}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>Assign Reviewer</h2>
+              <button onClick={() => {
+                setShowAssignReviewer(false);
+                setReviewerEmail('');
+                setSearchReviewers('');
+                setShowReviewerDropdown(false);
+              }}>
+                <span className="material-symbols-rounded">close</span>
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.assignReviewerInfo}>
+                <div className={styles.paperInfoRow}>
+                  <span className={styles.paperInfoLabel}>Paper:</span>
+                  <span className={styles.paperInfoValue}>{paper.title}</span>
+                </div>
+                <div className={styles.paperInfoRow}>
+                  <span className={styles.paperInfoLabel}>Status:</span>
+                  <StatusChips status={paper.status} />
+                </div>
+              </div>
+
+              {/* Show currently assigned reviewers */}
+              {paper.reviews && paper.reviews.length > 0 && (
+                <div className={styles.currentReviewers}>
+                  <h4 className={styles.currentReviewersTitle}>Currently Assigned Reviewers</h4>
+                  <div className={styles.currentReviewersList}>
+                    {paper.reviews.map((review, idx) => (
+                      <div key={review.id || idx} className={styles.currentReviewerItem}>
+                        <div className={styles.reviewerAvatarSmall}>
+                          {getInitials(review.reviewerName || `R${idx + 1}`)}
+                        </div>
+                        <div className={styles.currentReviewerInfo}>
+                          <p className={styles.currentReviewerName}>{review.reviewerName || `Reviewer #${idx + 1}`}</p>
+                          <p className={styles.currentReviewerStatus}>
+                            {review.status === 'completed' ? '✓ Review Completed' : 
+                             review.status === 'pending' ? '⋯ Review Pending' : 
+                             '○ Invited'}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div className={styles.form}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="reviewerEmail">Select or Enter Reviewer Email</label>
+                  <div className={styles.reviewerInputContainer}>
+                    <input
+                      type="text"
+                      id="reviewerEmail"
+                      value={searchReviewers}
+                      onChange={(e) => {
+                        setSearchReviewers(e.target.value);
+                        setShowReviewerDropdown(true);
+                      }}
+                      onFocus={() => {
+                        if (!availableReviewers.length) {
+                          fetchAvailableReviewers();
+                        }
+                        setShowReviewerDropdown(true);
+                      }}
+                      placeholder="Search reviewers by name or email..."
+                      disabled={assigningReviewer}
+                      className={styles.formInput}
+                    />
+                    {showReviewerDropdown && (
+                      <div className={styles.reviewerDropdown}>
+                        {loadingReviewers ? (
+                          <div className={styles.dropdownItem}>
+                            <span className="material-symbols-rounded">hourglass_empty</span>
+                            Loading reviewers...
+                          </div>
+                        ) : filteredReviewers.length > 0 ? (
+                          filteredReviewers.map((reviewer) => (
+                            <div
+                              key={reviewer.id}
+                              className={styles.dropdownItem}
+                              onClick={() => handleSelectReviewer(reviewer)}
+                            >
+                              <div className={styles.reviewerAvatarSmall}>
+                                {getInitials(reviewer.name)}
+                              </div>
+                              <div className={styles.dropdownItemContent}>
+                                <p className={styles.dropdownItemName}>{reviewer.name}</p>
+                                <p className={styles.dropdownItemEmail}>{reviewer.email}</p>
+                                {reviewer.specialization && (
+                                  <p className={styles.dropdownItemSpec}>{reviewer.specialization}</p>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className={styles.dropdownItem}>
+                            <span className="material-symbols-rounded">search_off</span>
+                            No reviewers found
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {reviewerEmail && (
+                    <div className={styles.selectedReviewerCard}>
+                      <div className={styles.selectedReviewerAvatar}>
+                        {getInitials(searchReviewers || reviewerEmail)}
+                      </div>
+                      <div className={styles.selectedReviewerInfo}>
+                        <p className={styles.selectedReviewerName}>{searchReviewers || 'Unknown'}</p>
+                        <p className={styles.selectedReviewerEmail}>{reviewerEmail}</p>
+                      </div>
+                      <button 
+                        className={styles.clearSelection}
+                        onClick={() => {
+                          setReviewerEmail('');
+                          setSearchReviewers('');
+                        }}
+                      >
+                        <span className="material-symbols-rounded">close</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="dueDays">Review Due In (Days)</label>
+                  <input
+                    type="number"
+                    id="dueDays"
+                    value={dueDays}
+                    onChange={(e) => setDueDays(parseInt(e.target.value) || 14)}
+                    min="1"
+                    max="90"
+                    disabled={assigningReviewer}
+                    className={styles.formInput}
+                  />
+                  <p className={styles.formHint}>
+                    Due date: {new Date(Date.now() + dueDays * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                </div>
+
+                <div className={styles.formActions}>
+                  <button
+                    className={styles.btnSecondary}
+                    onClick={() => {
+                      setShowAssignReviewer(false);
+                      setReviewerEmail('');
+                      setSearchReviewers('');
+                      setShowReviewerDropdown(false);
+                    }}
+                    disabled={assigningReviewer}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className={styles.btnPrimary}
+                    onClick={handleAssignReviewer}
+                    disabled={assigningReviewer || !reviewerEmail}
+                  >
+                    {assigningReviewer ? (
+                      <>
+                        <span className="material-symbols-rounded">hourglass_empty</span>
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-rounded">send</span>
+                        Send Invitation
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Editorial Modal (Admin/Editor) */}
+      {paper && (isAdmin() || isEditor()) && (
+        <ContactEditorialModal
+          isOpen={showContactModal}
+          onClose={handleContactModalClose}
+          paperId={paper.id}
+          paperTitle={paper.title}
+          authorName={paper.author?.name || paper.authorName || 'Author'}
+          authorEmail={paper.author?.email || paper.authorEmail || ''}
+          currentStatus={paper.status}
+          senderRole={isAdmin() ? 'admin' : 'editor'}
+        />
+      )}
     </div>
   );
 };
