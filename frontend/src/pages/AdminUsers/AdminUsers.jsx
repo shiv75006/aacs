@@ -1,16 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import acsApi from '../../api/apiService';
 import { useToast } from '../../hooks/useToast';
 import styles from './AdminUsers.module.css';
 
 const AdminUsers = () => {
   const { success: showSuccess, error: showError } = useToast();
-  const [users, setUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]); // All users from API
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [pagination, setPagination] = useState({ total: 0, skip: 0, limit: 20 });
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
   
   // Role management modal state
   const [showRoleModal, setShowRoleModal] = useState(false);
@@ -21,28 +22,72 @@ const AdminUsers = () => {
 
   const roles = ['admin', 'author', 'editor', 'reviewer'];
 
-  const fetchUsers = useCallback(async (skip = 0) => {
+  // Fetch all users once on mount
+  const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await acsApi.admin.listUsers(skip, pagination.limit, search, roleFilter);
-      setUsers(response.users || []);
-      setPagination({ total: response.total, skip: response.skip, limit: response.limit });
+      // Fetch all users with a high limit (or implement backend pagination later if needed)
+      const response = await acsApi.admin.listUsers(0, 1000, '', '');
+      setAllUsers(response.users || []);
       setError(null);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load users');
+      // Handle error - detail could be string or array of validation errors
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'string') {
+        setError(detail);
+      } else if (Array.isArray(detail)) {
+        setError(detail.map(e => e.msg || e.message).join(', ') || 'Failed to load users');
+      } else {
+        setError('Failed to load users');
+      }
     } finally {
       setLoading(false);
     }
-  }, [pagination.limit, search, roleFilter]);
+  };
 
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+  }, []);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    fetchUsers(0);
-  };
+  // Client-side filtering
+  const filteredUsers = useMemo(() => {
+    let result = [...allUsers];
+    
+    // Filter by search term (name or email)
+    if (search.trim()) {
+      const searchLower = search.toLowerCase().trim();
+      result = result.filter(user => 
+        (user.email?.toLowerCase().includes(searchLower)) ||
+        (user.fname?.toLowerCase().includes(searchLower)) ||
+        (user.lname?.toLowerCase().includes(searchLower)) ||
+        (`${user.fname} ${user.lname}`.toLowerCase().includes(searchLower))
+      );
+    }
+    
+    // Filter by role
+    if (roleFilter) {
+      result = result.filter(user => {
+        // Check if roleFilter is in all_roles array or matches primary role
+        const userAllRoles = user.all_roles || [user.role];
+        return userAllRoles.includes(roleFilter) || user.role === roleFilter;
+      });
+    }
+    
+    return result;
+  }, [allUsers, search, roleFilter]);
+
+  // Client-side pagination
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredUsers.slice(startIndex, startIndex + pageSize);
+  }, [filteredUsers, currentPage, pageSize]);
+
+  const totalPages = Math.ceil(filteredUsers.length / pageSize);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, roleFilter]);
 
   // Open role management modal
   const openRoleModal = async (user) => {
@@ -97,7 +142,8 @@ const AdminUsers = () => {
       showSuccess(`Roles updated for ${selectedUser.email}`);
       setShowRoleModal(false);
       setSelectedUser(null);
-      fetchUsers(pagination.skip);
+      // Refresh users list
+      fetchUsers();
     } catch (err) {
       showError(err.response?.data?.detail || 'Failed to update roles');
     } finally {
@@ -118,17 +164,19 @@ const AdminUsers = () => {
     try {
       await acsApi.admin.deleteUser(userId);
       showSuccess(`User ${email} deleted successfully`);
-      fetchUsers(pagination.skip);
+      // Refresh users list
+      fetchUsers();
     } catch (err) {
       showError(err.response?.data?.detail || 'Failed to delete user');
     }
   };
 
   const handlePageChange = (direction) => {
-    const newSkip = direction === 'next' 
-      ? pagination.skip + pagination.limit 
-      : Math.max(0, pagination.skip - pagination.limit);
-    fetchUsers(newSkip);
+    if (direction === 'next' && currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1);
+    } else if (direction === 'prev' && currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
   };
 
   // Get role badge color class
@@ -144,7 +192,7 @@ const AdminUsers = () => {
       </div>
 
       <div className={styles.filters}>
-        <form onSubmit={handleSearch} className={styles.searchForm}>
+        <div className={styles.searchForm}>
           <input
             type="text"
             placeholder="Search by name or email..."
@@ -152,8 +200,17 @@ const AdminUsers = () => {
             onChange={(e) => setSearch(e.target.value)}
             className={styles.searchInput}
           />
-          <button type="submit" className={styles.searchBtn}>Search</button>
-        </form>
+          {search && (
+            <button 
+              type="button" 
+              className={styles.clearBtn}
+              onClick={() => setSearch('')}
+              title="Clear search"
+            >
+              <span className="material-symbols-rounded">close</span>
+            </button>
+          )}
+        </div>
         
         <select 
           value={roleFilter} 
@@ -165,6 +222,12 @@ const AdminUsers = () => {
             <option key={role} value={role}>{role}</option>
           ))}
         </select>
+
+        {(search || roleFilter) && (
+          <span className={styles.filterInfo}>
+            Showing {filteredUsers.length} of {allUsers.length} users
+          </span>
+        )}
       </div>
 
       {loading ? (
@@ -186,24 +249,33 @@ const AdminUsers = () => {
                 </tr>
               </thead>
               <tbody>
-                {users.length === 0 ? (
+                {paginatedUsers.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className={styles.empty}>No users found</td>
+                    <td colSpan="6" className={styles.empty}>
+                      {search || roleFilter ? 'No users match your filters' : 'No users found'}
+                    </td>
                   </tr>
                 ) : (
-                  users.map(user => (
+                  paginatedUsers.map(user => (
                     <tr key={user.id}>
                       <td>{user.id}</td>
                       <td>{user.fname} {user.lname}</td>
                       <td>{user.email}</td>
                       <td>
-                        <span 
-                          className={`${styles.roleBadge} ${getRoleBadgeClass(user.role)}`}
+                        <div 
+                          className={styles.roleChips}
                           onClick={() => openRoleModal(user)}
                           title="Click to manage roles"
                         >
-                          {user.role}
-                        </span>
+                          {(user.all_roles && user.all_roles.length > 0 ? user.all_roles : [user.role]).map(role => (
+                            <span 
+                              key={role}
+                              className={`${styles.roleChip} ${getRoleBadgeClass(role)}`}
+                            >
+                              {role}
+                            </span>
+                          ))}
+                        </div>
                       </td>
                       <td>{user.added_on ? new Date(user.added_on).toLocaleDateString() : 'N/A'}</td>
                       <td>
@@ -230,18 +302,25 @@ const AdminUsers = () => {
           </div>
 
           <div className={styles.pagination}>
-            <span>Showing {pagination.skip + 1} - {Math.min(pagination.skip + pagination.limit, pagination.total)} of {pagination.total}</span>
+            <span>
+              {filteredUsers.length > 0 
+                ? `Showing ${(currentPage - 1) * pageSize + 1} - ${Math.min(currentPage * pageSize, filteredUsers.length)} of ${filteredUsers.length}`
+                : 'No results'}
+            </span>
             <div className={styles.pageButtons}>
               <button 
                 onClick={() => handlePageChange('prev')} 
-                disabled={pagination.skip === 0}
+                disabled={currentPage === 1}
                 className={styles.pageBtn}
               >
                 Previous
               </button>
+              <span className={styles.pageInfo}>
+                Page {currentPage} of {totalPages || 1}
+              </span>
               <button 
                 onClick={() => handlePageChange('next')} 
-                disabled={pagination.skip + pagination.limit >= pagination.total}
+                disabled={currentPage >= totalPages}
                 className={styles.pageBtn}
               >
                 Next

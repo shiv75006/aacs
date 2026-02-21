@@ -35,11 +35,13 @@
   gap: 8px;
   flex: 1;
   min-width: 280px;
+  position: relative;
 }
 
 .searchInput {
   flex: 1;
   padding: 10px 14px;
+  padding-right: 40px;
   border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 0.95rem;
@@ -49,6 +51,32 @@
   outline: none;
   border-color: #0066cc;
   box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+
+.clearBtn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.clearBtn:hover {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.clearBtn span {
+  font-size: 18px;
 }
 
 .searchBtn {
@@ -63,6 +91,16 @@
 
 .searchBtn:hover {
   background: #0052a3;
+}
+
+.filterInfo {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #6b7280;
+  padding: 8px 14px;
+  background: #f3f4f6;
+  border-radius: 6px;
 }
 
 .roleFilter {
@@ -140,22 +178,52 @@
   opacity: 0.8;
 }
 
-.roleBadge.admin {
+/* Role chips container for multiple roles */
+.roleChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.roleChips:hover .roleChip {
+  opacity: 0.85;
+}
+
+.roleChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.roleChip:hover {
+  transform: scale(1.05);
+}
+
+.roleBadge.admin,
+.roleChip.admin {
   background: #e3f2fd;
   color: #1565c0;
 }
 
-.roleBadge.author {
+.roleBadge.author,
+.roleChip.author {
   background: #e8f5e9;
   color: #2e7d32;
 }
 
-.roleBadge.editor {
+.roleBadge.editor,
+.roleChip.editor {
   background: #fff3e0;
   color: #ef6c00;
 }
 
-.roleBadge.reviewer {
+.roleBadge.reviewer,
+.roleChip.reviewer {
   background: #f3e5f5;
   color: #7b1fa2;
 }
@@ -222,6 +290,7 @@
 .pageButtons {
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 .pageBtn {
@@ -241,6 +310,12 @@
 .pageBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.pageInfo {
+  font-size: 0.85rem;
+  color: #6b7280;
+  padding: 0 8px;
 }
 
 @media (max-width: 768px) {

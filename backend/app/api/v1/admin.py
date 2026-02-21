@@ -54,7 +54,7 @@ async def get_dashboard_stats(
 async def list_users(
     request: Request,
     skip: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=2000),
     search: str = Query(None),
     role: str = Query(None),
     current_user: dict = Depends(get_current_user),
@@ -70,7 +70,7 @@ async def list_users(
         role: Filter by user role
         
     Returns:
-        List of users with pagination info
+        List of users with pagination info including all assigned roles
     """
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
@@ -90,11 +90,38 @@ async def list_users(
     total = query.count()
     users = query.offset(skip).limit(limit).all()
     
+    # Get all user IDs to fetch their roles in one query
+    user_ids = [user.id for user in users]
+    
+    # Fetch all roles for these users
+    user_roles = db.query(UserRole).filter(
+        UserRole.user_id.in_(user_ids),
+        UserRole.status == "approved"
+    ).all()
+    
+    # Create a mapping of user_id to list of roles
+    roles_map = {}
+    for ur in user_roles:
+        if ur.user_id not in roles_map:
+            roles_map[ur.user_id] = []
+        roles_map[ur.user_id].append(ur.role)
+    
+    # Build user data with all roles
+    users_data = []
+    for user in users:
+        user_data = user.to_dict()
+        # Get all roles from user_role table, or fall back to primary role
+        all_roles = roles_map.get(user.id, [])
+        if not all_roles and user.role:
+            all_roles = [user.role]
+        user_data["all_roles"] = all_roles
+        users_data.append(user_data)
+    
     return {
         "total": total,
         "skip": skip,
         "limit": limit,
-        "users": [user.to_dict() for user in users]
+        "users": users_data
     }
 
 
