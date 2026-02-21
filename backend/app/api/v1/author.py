@@ -307,6 +307,137 @@ async def mark_correspondence_as_read(
     }
 
 
+@router.post("/submissions/{paper_id}/contact-editorial")
+async def contact_editorial_office(
+    paper_id: int,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    subject: str = Form(...),
+    message: str = Form(...),
+    inquiry_type: str = Form(default="general")
+):
+    """
+    Allow author to send a message to the editorial office regarding their submission.
+    
+    Args:
+        paper_id: Paper ID
+        subject: Email subject
+        message: Email message content
+        inquiry_type: Type of inquiry (general, status, revision, technical)
+        
+    Returns:
+        Confirmation of correspondence sent
+    """
+    if not check_role(current_user.get("role"), "author"):
+        raise HTTPException(status_code=403, detail="Author access required")
+    
+    user_id = str(current_user.get("id"))
+    user_email = current_user.get("email", "")
+    user_name = f"{current_user.get('fname', '')} {current_user.get('lname', '')}".strip() or "Author"
+    
+    # Verify paper belongs to this author
+    paper = db.query(Paper).filter(
+        Paper.id == paper_id,
+        Paper.added_by == user_id
+    ).first()
+    
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found or access denied")
+    
+    # Get journal info to find editors
+    journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
+    journal_name = journal.fld_journal_name if journal else "AACS Journal"
+    
+    # Find editors for this journal (chief editors first)
+    editors = db.query(Editor).filter(
+        Editor.journal_id == paper.journal
+    ).order_by(
+        desc(Editor.role == 'Admin'),  # Admin/Chief editors first
+        Editor.id
+    ).all()
+    
+    # Get recipient emails - if editors exist, use them; otherwise use default
+    recipient_emails = []
+    recipient_names = []
+    
+    if editors:
+        for editor in editors[:3]:  # Max 3 recipients
+            if editor.editor_email:
+                recipient_emails.append(editor.editor_email)
+                recipient_names.append(editor.editor_name or "Editor")
+    
+    if not recipient_emails:
+        # Fallback to default editorial email
+        recipient_emails = ["info@aacsjournals.com"]
+        recipient_names = ["Editorial Office"]
+    
+    # Create correspondence record
+    correspondence = PaperCorrespondence(
+        paper_id=paper_id,
+        sender_id=int(user_id),
+        sender_role='author',
+        recipient_email=recipient_emails[0],
+        recipient_name=recipient_names[0],
+        subject=subject,
+        message=message,
+        category=inquiry_type,
+        is_read=False,
+        created_at=datetime.utcnow()
+    )
+    db.add(correspondence)
+    db.commit()
+    db.refresh(correspondence)
+    
+    # Send email in background
+    email_sent = False
+    try:
+        await create_and_send_correspondence(
+            db=db,
+            paper_id=paper_id,
+            recipient_email=recipient_emails[0],
+            recipient_name=recipient_names[0],
+            subject=f"[Author Inquiry - {paper.paper_code}] {subject}",
+            message=f"""
+Dear Editorial Team,
+
+You have received a message from an author regarding paper submission.
+
+Paper Code: {paper.paper_code}
+Paper Title: {paper.title}
+Inquiry Type: {inquiry_type.replace('_', ' ').title()}
+
+From: {user_name} ({user_email})
+
+---
+{message}
+---
+
+This message was sent through the AACS Journal Management System.
+To respond, please use the correspondence feature in the admin panel.
+
+Best regards,
+AACS Journal System
+""",
+            sender_id=int(user_id),
+            sender_role='author',
+            template_id=None,
+            send_email=True
+        )
+        email_sent = True
+    except Exception as e:
+        # Log error but don't fail - correspondence is already recorded
+        print(f"Failed to send email: {e}")
+    
+    return {
+        "success": True,
+        "message": "Your message has been sent to the editorial office",
+        "correspondence_id": correspondence.id,
+        "email_sent": email_sent,
+        "recipient": recipient_names[0]
+    }
+
+
 @router.get("/submissions/{paper_id}/unread-count")
 async def get_unread_correspondence_count(
     paper_id: int,

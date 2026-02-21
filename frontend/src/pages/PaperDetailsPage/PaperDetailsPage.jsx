@@ -8,6 +8,7 @@ import paperNormalizer from '../../services/paperNormalizer';
 import FileViewer from '../../components/FileViewer/FileViewer';
 import StatusChips from '../../components/StatusChips/StatusChips';
 import ContactEditorialModal from '../../components/ContactEditorialModal';
+import AuthorContactModal from '../../components/AuthorContactModal';
 import styles from './PaperDetailsPage.module.css';
 
 const PaperDetailsPage = () => {
@@ -42,6 +43,8 @@ const PaperDetailsPage = () => {
   const [showCorrespondence, setShowCorrespondence] = useState(false);
   // Contact Editorial Modal (for admin/editor)
   const [showContactModal, setShowContactModal] = useState(false);
+  // Author Contact Modal (for author to contact editorial)
+  const [showAuthorContactModal, setShowAuthorContactModal] = useState(false);
   // Revision history
   const [revisionHistory, setRevisionHistory] = useState([]);
   const [loadingRevisions, setLoadingRevisions] = useState(false);
@@ -796,8 +799,8 @@ const PaperDetailsPage = () => {
                 if (isAdmin() || isEditor()) {
                   setShowContactModal(true);
                 } else {
-                  // For authors, just show info or open mailto
-                  window.location.href = `mailto:info@aacsjournals.com?subject=Inquiry about Paper ID ${paper?.id}`;
+                  // For authors, show the contact modal
+                  setShowAuthorContactModal(true);
                 }
               }}
             >
@@ -1174,6 +1177,17 @@ const PaperDetailsPage = () => {
           authorEmail={paper.author?.email || paper.authorEmail || ''}
           currentStatus={paper.status}
           senderRole={isAdmin() ? 'admin' : 'editor'}
+        />
+      )}
+
+      {/* Author Contact Editorial Modal */}
+      {paper && isAuthor() && (
+        <AuthorContactModal
+          isOpen={showAuthorContactModal}
+          onClose={() => setShowAuthorContactModal(false)}
+          paperId={paper.id}
+          paperCode={paper.paperCode || paper.paper_code || `#${paper.id}`}
+          paperTitle={paper.title}
         />
       )}
     </div>

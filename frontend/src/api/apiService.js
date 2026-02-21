@@ -246,6 +246,14 @@ export const acsApi = {
       apiService.put(`/api/v1/author/submissions/${paperId}/correspondence/${correspondenceId}/read`),
     getUnreadCount: (paperId) =>
       apiService.get(`/api/v1/author/submissions/${paperId}/unread-count`),
+    // Contact Editorial Office
+    contactEditorial: (paperId, data) => {
+      const formData = new FormData();
+      formData.append('subject', data.subject);
+      formData.append('message', data.message);
+      formData.append('inquiry_type', data.inquiry_type || 'general');
+      return apiClient.post(`/api/v1/author/submissions/${paperId}/contact-editorial`, formData);
+    },
     // Get URLs for viewing files in browser
     getViewPaperUrl: (paperId) => `/api/v1/author/submissions/${paperId}/view`,
     getViewReviewReportUrl: (paperId, reviewId) => `/api/v1/author/submissions/${paperId}/reviews/${reviewId}/view-report`,
