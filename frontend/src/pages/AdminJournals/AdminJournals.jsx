@@ -47,6 +47,7 @@ const AdminJournals = () => {
     editor_email: '',
     editor_type: 'section_editor',
     editor_affiliation: '',
+    selected_user_id: ''
   });
   const [savingJournal, setSavingJournal] = useState(false);
   const [savingEditor, setSavingEditor] = useState(false);
@@ -208,21 +209,70 @@ const AdminJournals = () => {
   const handleManageEditors = async (journal) => {
     setSelectedJournal(journal);
     setShowEditorsModal(true);
+    setNewEditor({
+      editor_name: '',
+      editor_email: '',
+      editor_type: 'section_editor',
+      editor_affiliation: '',
+      selected_user_id: ''
+    });
+    
+    // Fetch both journal editors and available editors
+    setLoadingEditors(true);
     try {
-      const response = await acsApi.admin.getJournalEditors(journal.id);
+      const [editorsResponse, availableResponse] = await Promise.all([
+        acsApi.admin.getJournalEditors(journal.id),
+        acsApi.admin.listUsers(0, 500) // Fetch all users to select from
+      ]);
+      
       setJournalEditors({
-        chief_editor: response.chief_editor,
-        co_editor: response.co_editor,
-        section_editors: response.section_editors || []
+        chief_editor: editorsResponse.chief_editor,
+        co_editor: editorsResponse.co_editor,
+        section_editors: editorsResponse.section_editors || []
       });
+      
+      // Filter users who can be editors (exclude already assigned ones)
+      const assignedEmails = [
+        editorsResponse.chief_editor?.editor_email,
+        editorsResponse.co_editor?.editor_email,
+        ...(editorsResponse.section_editors || []).map(e => e.editor_email)
+      ].filter(Boolean);
+      
+      const eligibleUsers = (availableResponse.users || []).filter(
+        user => !assignedEmails.includes(user.email)
+      );
+      setAvailableEditors(eligibleUsers);
     } catch (err) {
       showError('Failed to load editors', 4000);
+    } finally {
+      setLoadingEditors(false);
+    }
+  };
+
+  const handleEditorSelect = (userId) => {
+    const selectedUser = availableEditors.find(u => u.id === parseInt(userId));
+    if (selectedUser) {
+      setNewEditor({
+        ...newEditor,
+        selected_user_id: userId,
+        editor_name: `${selectedUser.fname || ''} ${selectedUser.lname || ''}`.trim() || selectedUser.email,
+        editor_email: selectedUser.email,
+        editor_affiliation: selectedUser.affiliation || selectedUser.organisation || ''
+      });
+    } else {
+      setNewEditor({
+        ...newEditor,
+        selected_user_id: '',
+        editor_name: '',
+        editor_email: '',
+        editor_affiliation: ''
+      });
     }
   };
 
   const handleAddEditor = async () => {
-    if (!newEditor.editor_name || !newEditor.editor_email) {
-      showError('Editor name and email are required', 4000);
+    if (!newEditor.selected_user_id || !newEditor.editor_email) {
+      showError('Please select an editor from the dropdown', 4000);
       return;
     }
     
@@ -241,14 +291,31 @@ const AdminJournals = () => {
         editor_email: '',
         editor_type: 'section_editor',
         editor_affiliation: '',
+        selected_user_id: ''
       });
-      // Refresh editors
-      const response = await acsApi.admin.getJournalEditors(selectedJournal.id);
+      // Refresh editors and available users list
+      const [editorsResponse, availableResponse] = await Promise.all([
+        acsApi.admin.getJournalEditors(selectedJournal.id),
+        acsApi.admin.listUsers(0, 500)
+      ]);
+      
       setJournalEditors({
-        chief_editor: response.chief_editor,
-        co_editor: response.co_editor,
-        section_editors: response.section_editors || []
+        chief_editor: editorsResponse.chief_editor,
+        co_editor: editorsResponse.co_editor,
+        section_editors: editorsResponse.section_editors || []
       });
+      
+      // Update available editors (exclude newly assigned)
+      const assignedEmails = [
+        editorsResponse.chief_editor?.editor_email,
+        editorsResponse.co_editor?.editor_email,
+        ...(editorsResponse.section_editors || []).map(e => e.editor_email)
+      ].filter(Boolean);
+      
+      const eligibleUsers = (availableResponse.users || []).filter(
+        user => !assignedEmails.includes(user.email)
+      );
+      setAvailableEditors(eligibleUsers);
     } catch (err) {
       showError(err.response?.data?.detail || 'Failed to add editor', 5000);
     } finally {
@@ -267,13 +334,30 @@ const AdminJournals = () => {
         try {
           await acsApi.admin.deleteEditor(editorId);
           success(`Editor "${editorName}" removed successfully!`, 4000);
-          // Refresh editors
-          const response = await acsApi.admin.getJournalEditors(selectedJournal.id);
+          
+          // Refresh editors and available users list
+          const [editorsResponse, availableResponse] = await Promise.all([
+            acsApi.admin.getJournalEditors(selectedJournal.id),
+            acsApi.admin.listUsers(0, 500)
+          ]);
+          
           setJournalEditors({
-            chief_editor: response.chief_editor,
-            co_editor: response.co_editor,
-            section_editors: response.section_editors || []
+            chief_editor: editorsResponse.chief_editor,
+            co_editor: editorsResponse.co_editor,
+            section_editors: editorsResponse.section_editors || []
           });
+          
+          // Update available editors (add back removed editor)
+          const assignedEmails = [
+            editorsResponse.chief_editor?.editor_email,
+            editorsResponse.co_editor?.editor_email,
+            ...(editorsResponse.section_editors || []).map(e => e.editor_email)
+          ].filter(Boolean);
+          
+          const eligibleUsers = (availableResponse.users || []).filter(
+            user => !assignedEmails.includes(user.email)
+          );
+          setAvailableEditors(eligibleUsers);
         } catch (err) {
           showError(err.response?.data?.detail || 'Failed to remove editor', 5000);
         }
@@ -796,65 +880,96 @@ const AdminJournals = () => {
 
               {/* Add New Editor Form */}
               <div className={styles.addEditorForm}>
-                <h3>Add New Editor</h3>
-                <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label>Name *</label>
-                    <input
-                      type="text"
-                      value={newEditor.editor_name}
-                      onChange={(e) => setNewEditor({...newEditor, editor_name: e.target.value})}
-                      placeholder="Editor name"
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Email *</label>
-                    <input
-                      type="email"
-                      value={newEditor.editor_email}
-                      onChange={(e) => setNewEditor({...newEditor, editor_email: e.target.value})}
-                      placeholder="editor@example.com"
-                    />
-                  </div>
-                </div>
-                <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label>Editor Type</label>
-                    <select
-                      value={newEditor.editor_type}
-                      onChange={(e) => setNewEditor({...newEditor, editor_type: e.target.value})}
-                    >
-                      <option value="section_editor">Section Editor</option>
-                      <option value="co_editor" disabled={!!journalEditors.co_editor}>
-                        Co-Editor {journalEditors.co_editor ? '(Already assigned)' : ''}
-                      </option>
-                      <option value="chief_editor" disabled={!!journalEditors.chief_editor}>
-                        Chief Editor {journalEditors.chief_editor ? '(Already assigned)' : ''}
-                      </option>
-                    </select>
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Affiliation</label>
-                    <input
-                      type="text"
-                      value={newEditor.editor_affiliation}
-                      onChange={(e) => setNewEditor({...newEditor, editor_affiliation: e.target.value})}
-                      placeholder="University/Institution"
-                    />
-                  </div>
-                </div>
-                <button 
-                  className={styles.addEditorBtn}
-                  onClick={handleAddEditor}
-                  disabled={savingEditor}
-                >
+                <h3>
                   <span className="material-symbols-rounded">person_add</span>
-                  {savingEditor ? 'Adding...' : 'Add Editor'}
-                </button>
+                  Add New Editor
+                </h3>
+                
+                {loadingEditors ? (
+                  <div className={styles.loadingState}>
+                    <span className="material-symbols-rounded">hourglass_empty</span>
+                    Loading available users...
+                  </div>
+                ) : availableEditors.length === 0 ? (
+                  <div className={styles.emptyState}>
+                    <span className="material-symbols-rounded">info</span>
+                    No available users to assign as editors
+                  </div>
+                ) : (
+                  <>
+                    <div className={styles.formGroup}>
+                      <label>Select Editor *</label>
+                      <select
+                        value={newEditor.selected_user_id}
+                        onChange={(e) => handleEditorSelect(e.target.value)}
+                        className={styles.editorSelect}
+                      >
+                        <option value="">-- Select a user --</option>
+                        {availableEditors.map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {`${user.fname || ''} ${user.lname || ''}`.trim() || 'No Name'} ({user.email})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {newEditor.selected_user_id && (
+                      <div className={styles.selectedEditorPreview}>
+                        <div className={styles.previewHeader}>
+                          <span className="material-symbols-rounded">person</span>
+                          Selected Editor Details
+                        </div>
+                        <div className={styles.previewContent}>
+                          <div className={styles.previewRow}>
+                            <span className={styles.previewLabel}>Name:</span>
+                            <span className={styles.previewValue}>{newEditor.editor_name}</span>
+                          </div>
+                          <div className={styles.previewRow}>
+                            <span className={styles.previewLabel}>Email:</span>
+                            <span className={styles.previewValue}>{newEditor.editor_email}</span>
+                          </div>
+                          {newEditor.editor_affiliation && (
+                            <div className={styles.previewRow}>
+                              <span className={styles.previewLabel}>Affiliation:</span>
+                              <span className={styles.previewValue}>{newEditor.editor_affiliation}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className={styles.formGroup}>
+                      <label>Editor Type *</label>
+                      <select
+                        value={newEditor.editor_type}
+                        onChange={(e) => setNewEditor({...newEditor, editor_type: e.target.value})}
+                        className={styles.editorTypeSelect}
+                      >
+                        <option value="section_editor">Section Editor</option>
+                        <option value="co_editor" disabled={!!journalEditors.co_editor}>
+                          Co-Editor {journalEditors.co_editor ? '(Already assigned)' : ''}
+                        </option>
+                        <option value="chief_editor" disabled={!!journalEditors.chief_editor}>
+                          Chief Editor {journalEditors.chief_editor ? '(Already assigned)' : ''}
+                        </option>
+                      </select>
+                    </div>
+
+                    <button 
+                      className={styles.addEditorBtn}
+                      onClick={handleAddEditor}
+                      disabled={savingEditor || !newEditor.selected_user_id}
+                    >
+                      <span className="material-symbols-rounded">person_add</span>
+                      {savingEditor ? 'Adding...' : 'Add Editor to Journal'}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
             <div className={styles.modalFooter}>
               <button className={styles.closeModalBtn} onClick={() => setShowEditorsModal(false)}>
+                <span className="material-symbols-rounded">close</span>
                 Close
               </button>
             </div>
