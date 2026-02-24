@@ -1,5 +1,6 @@
 """FastAPI Application Factory"""
 import logging
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,15 +14,60 @@ from app.api.v1 import auth, journals, admin, author, editor, reviewer, articles
 from app.core.rate_limit import limiter, get_rate_limit_key
 from app.core.subdomain import SubdomainMiddleware
 from app.scheduler.tasks import start_scheduler, shutdown_scheduler
+from app.db.database import engine, Base, SessionLocal
+from app.db import models  # Import models to register them with Base
+from app.db.models import User
+from app.core.auth import hash_password
 
 logger = logging.getLogger(__name__)
 scheduler = None
+
+
+def create_admin_user():
+    """Create default admin user if it doesn't exist"""
+    db = SessionLocal()
+    try:
+        # Check if admin user exists
+        admin_email = os.environ.get("ADMIN_EMAIL", "admin@aacsjournals.com")
+        existing_admin = db.query(User).filter(User.email == admin_email).first()
+        
+        if not existing_admin:
+            admin_password = os.environ.get("ADMIN_PASSWORD", "Admin@123")
+            admin_user = User(
+                email=admin_email,
+                password=hash_password(admin_password),
+                role="Admin",
+                fname="Admin",
+                lname="User",
+            )
+            db.add(admin_user)
+            db.commit()
+            logger.info(f"Admin user created: {admin_email}")
+        else:
+            logger.info(f"Admin user already exists: {admin_email}")
+    except Exception as e:
+        logger.error(f"Failed to create admin user: {str(e)}")
+        db.rollback()
+    finally:
+        db.close()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage app startup and shutdown events"""
     global scheduler
+    
+    # Create database tables if they don't exist
+    logger.info("Creating database tables if needed...")
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables ready")
+        
+        # Create admin user
+        create_admin_user()
+    except Exception as e:
+        logger.error(f"Failed to create database tables: {str(e)}")
+    
     # Startup: Start the scheduler
     logger.info("Starting application with scheduler...")
     try:

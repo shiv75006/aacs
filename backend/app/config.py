@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     BASE_DOMAIN: str = "aacsjournals.com"
     
     # Allow all subdomains via regex pattern (handled in middleware)
-    CORS_ORIGIN_REGEX: str = r"https?://.*\.aacsjournals\.com"
+    CORS_ORIGIN_REGEX: str = r"https?://(.*\.aacsjournals\.com|.*\.up\.railway\.app|.*\.railway\.app|localhost:\d+)"
     
     # Crossref DOI Configuration
     CROSSREF_USERNAME: str = ""  # Your Crossref username
