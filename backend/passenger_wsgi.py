@@ -6,10 +6,11 @@ import sys
 import os
 
 # Add the application directory to the Python path
-sys.path.insert(0, os.path.dirname(__file__))
+application_path = os.path.dirname(__file__)
+sys.path.insert(0, application_path)
 
 # Import the FastAPI app
-from app.main import app
+from app.main import app as application
 
-# Passenger expects an 'application' callable
-application = app
+# For cPanel entry point "app"
+app = application
