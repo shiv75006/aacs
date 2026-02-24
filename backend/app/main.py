@@ -79,7 +79,7 @@ app.add_middleware(
 # Add trusted host middleware
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.aacsjournals.com"]
+    allowed_hosts=["localhost", "127.0.0.1", "*.aacsjournals.com", "*.railway.app", "*.up.railway.app"]
 )
 
 

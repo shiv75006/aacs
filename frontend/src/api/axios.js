@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8000', // FastAPI backend URL
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', // FastAPI backend URL
   timeout: 300000, // 5 minutes timeout for file uploads
   headers: {
     'Content-Type': 'application/json',
