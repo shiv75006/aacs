@@ -36,13 +36,14 @@ class Settings(BaseSettings):
         "https://aacsjournals.com",
         "https://www.aacsjournals.com",
         "https://dev.aacsjournals.com",
+        "https://aacs-woad.vercel.app",
     ]
     
     # Base domain for subdomain detection
     BASE_DOMAIN: str = "aacsjournals.com"
     
     # Allow all subdomains via regex pattern (handled in middleware)
-    CORS_ORIGIN_REGEX: str = r"https?://(.*\.aacsjournals\.com|.*\.up\.railway\.app|.*\.railway\.app|localhost:\d+)"
+    CORS_ORIGIN_REGEX: str = r"https?://(.*\.aacsjournals\.com|.*\.up\.railway\.app|.*\.railway\.app|.*\.vercel\.app|localhost:\d+)"
     
     # Crossref DOI Configuration
     CROSSREF_USERNAME: str = ""  # Your Crossref username
