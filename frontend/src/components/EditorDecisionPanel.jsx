@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import acsApi from '../api/apiService.js';
-import './EditorDecisionPanel.css';
+import styles from './EditorDecisionPanel.module.css';
 
 const DECISIONS = [
   { value: 'accepted', label: 'Accept', color: 'success', icon: '✓' },
@@ -128,26 +128,25 @@ export default function EditorDecisionPanel() {
 
   if (loading) {
     return (
-      <div className="editor-decision-panel">
-        <div className="loading">
-          <div className="spinner"></div>
-          <p>Loading paper reviews...</p>
+      <div className={styles.container}>
+        <div className={styles.loadingState}>
+          <span className="material-symbols-rounded">hourglass_empty</span>
+          <h3>Loading Paper Details</h3>
+          <p>Please wait while we fetch the paper and reviews...</p>
         </div>
       </div>
     );
   }
 
-  if (error && !success) {
+  if (error && !paperDetails) {
     return (
-      <div className="editor-decision-panel">
-        <div className="error-state">
-          <h2>Error</h2>
+      <div className={styles.container}>
+        <div className={styles.errorState}>
+          <span className="material-symbols-rounded">error</span>
+          <h3>Error Loading Paper</h3>
           <p>{error}</p>
-          <button onClick={loadPaperReviews} className="retry-btn">
-            Retry
-          </button>
-          <button onClick={() => navigate('/editor-dashboard')} className="back-btn">
-            Back to Dashboard
+          <button onClick={loadPaperReviews} className={styles.retryBtn}>
+            Try Again
           </button>
         </div>
       </div>
@@ -156,157 +155,209 @@ export default function EditorDecisionPanel() {
 
   if (success) {
     return (
-      <div className="editor-decision-panel">
-        <div className="success-state">
-          <div className="success-icon">✓</div>
-          <h2>Decision Recorded</h2>
+      <div className={styles.container}>
+        <div className={styles.successState}>
+          <span className="material-symbols-rounded">check_circle</span>
+          <h3>Decision Recorded Successfully</h3>
           <p>{successMessage}</p>
-          <p className="redirect-msg">Redirecting to dashboard...</p>
+          <p>Redirecting to dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="editor-decision-panel">
-      <div className="panel-header">
-        <h1>Editorial Decision Panel</h1>
-        <button onClick={() => navigate('/editor-dashboard')} className="close-btn">
-          ← Back
+    <div className={styles.container}>
+      {/* Header */}
+      <header className={styles.header}>
+        <div className={styles.headerContent}>
+          <h1>
+            <span className="material-symbols-rounded">gavel</span>
+            Editorial Decision Panel
+          </h1>
+        </div>
+        <button onClick={() => navigate('/editor-dashboard')} className={styles.backBtn}>
+          <span className="material-symbols-rounded">arrow_back</span>
+          Back
         </button>
-      </div>
+      </header>
 
-      {/* Paper Details */}
-      <div className="paper-section">
-        <div className="paper-header">
-          <h2>{paperDetails?.paper_name}</h2>
-          <p className="author">by {paperDetails?.author}</p>
-          <p className="meta">
-            Submitted: {paperDetails?.submitted_date ? new Date(paperDetails.submitted_date).toLocaleDateString() : 'Unknown'}
-            {' | '}
-            Status: <span className={`status-badge ${paperDetails?.status}`}>{paperDetails?.status}</span>
-          </p>
+      {/* Paper Details Card */}
+      <div className={styles.paperCard}>
+        <div className={styles.paperHeader}>
+          <h2 className={styles.paperTitle}>{paperDetails?.paper_name || 'Untitled Paper'}</h2>
+          <div className={styles.paperMeta}>
+            <div className={styles.metaItem}>
+              <span className="material-symbols-rounded">person</span>
+              {paperDetails?.author || 'Unknown Author'}
+            </div>
+            <div className={styles.metaItem}>
+              <span className="material-symbols-rounded">calendar_today</span>
+              {paperDetails?.submitted_date 
+                ? new Date(paperDetails.submitted_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+                : 'Unknown'}
+            </div>
+            <span className={`${styles.statusBadge} ${styles[paperDetails?.status] || ''}`}>
+              {paperDetails?.status?.replace(/_/g, ' ') || 'Unknown'}
+            </span>
+          </div>
         </div>
-        <div className="paper-body">
-          <p className="abstract">
-            <strong>Abstract:</strong> {paperDetails?.abstract}
-          </p>
-          {paperDetails?.keywords && (
-            <p className="keywords">
-              <strong>Keywords:</strong> {paperDetails.keywords}
-            </p>
-          )}
-        </div>
+
+        {paperDetails?.abstract && (
+          <div className={styles.abstractSection}>
+            <p className={styles.abstractLabel}>Abstract</p>
+            <p className={styles.abstractText}>{paperDetails.abstract}</p>
+          </div>
+        )}
+
+        {paperDetails?.keywords && (
+          <div className={styles.keywordsSection}>
+            <p className={styles.abstractLabel}>Keywords</p>
+            <div className={styles.keywordsList}>
+              {paperDetails.keywords.split(',').map((kw, idx) => (
+                <span key={idx} className={styles.keyword}>{kw.trim()}</span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Review Statistics */}
       {statistics && (
-        <div className="statistics-section">
-          <h3>Review Summary</h3>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-value">{statistics.total_reviews}</div>
-              <div className="stat-label">Total Reviews</div>
+        <section className={styles.statsSection}>
+          <h3 className={styles.sectionTitle}>
+            <span className="material-symbols-rounded">analytics</span>
+            Review Summary
+          </h3>
+          <div className={styles.statsGrid}>
+            <div className={styles.statCard}>
+              <div className={styles.statValue}>{statistics.total_reviews || 0}</div>
+              <div className={styles.statLabel}>Total Reviews</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-value">{statistics.average_rating.toFixed(1)}</div>
-              <div className="stat-label">Avg Rating</div>
+            <div className={styles.statCard}>
+              <div className={styles.statValue}>{statistics.average_rating?.toFixed(1) || '0.0'}</div>
+              <div className={styles.statLabel}>Avg Rating</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-value accent-success">{statistics.accept_count}</div>
-              <div className="stat-label">Accept</div>
+            <div className={styles.statCard}>
+              <div className={`${styles.statValue} ${styles.success}`}>{statistics.accept_count || 0}</div>
+              <div className={styles.statLabel}>Accept</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-value accent-warning">{statistics.minor_revisions_count}</div>
-              <div className="stat-label">Minor Revisions</div>
+            <div className={styles.statCard}>
+              <div className={`${styles.statValue} ${styles.warning}`}>{statistics.minor_revisions_count || 0}</div>
+              <div className={styles.statLabel}>Minor Rev.</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-value accent-orange">{statistics.major_revisions_count}</div>
-              <div className="stat-label">Major Revisions</div>
+            <div className={styles.statCard}>
+              <div className={`${styles.statValue} ${styles.orange}`}>{statistics.major_revisions_count || 0}</div>
+              <div className={styles.statLabel}>Major Rev.</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-value accent-danger">{statistics.reject_count}</div>
-              <div className="stat-label">Reject</div>
+            <div className={styles.statCard}>
+              <div className={`${styles.statValue} ${styles.danger}`}>{statistics.reject_count || 0}</div>
+              <div className={styles.statLabel}>Reject</div>
             </div>
           </div>
-        </div>
+        </section>
       )}
 
       {/* Reviews List */}
-      {reviews.length > 0 && (
-        <div className="reviews-section">
-          <h3>Reviewer Feedback</h3>
-          <div className="reviews-container">
+      {reviews && reviews.length > 0 && (
+        <section className={styles.reviewsSection}>
+          <h3 className={styles.sectionTitle}>
+            <span className="material-symbols-rounded">rate_review</span>
+            Reviewer Feedback ({reviews.length})
+          </h3>
+          <div className={styles.reviewsList}>
             {reviews.map((review, index) => (
-              <div key={review.review_id} className="review-card">
+              <div key={review.review_id || index} className={styles.reviewCard}>
                 <div
-                  className="review-header"
+                  className={styles.reviewHeader}
                   onClick={() => setExpandedReview(expandedReview === index ? null : index)}
                 >
-                  <div className="review-meta">
-                    <span className="reviewer-name">{review.reviewer_name || review.reviewer_email}</span>
-                    <span className="rating-badge">Rating: {review.rating}/5</span>
-                    <span className={`recommendation ${review.recommendation}`}>
-                      {review.recommendation?.replace(/_/g, ' ').toUpperCase()}
-                    </span>
+                  <div className={styles.reviewMeta}>
+                    <span className={styles.reviewerName}>{review.reviewer_name || review.reviewer_email || 'Reviewer'}</span>
+                    {review.rating && (
+                      <span className={styles.ratingBadge}>★ {review.rating}/5</span>
+                    )}
+                    {review.recommendation && (
+                      <span className={`${styles.recommendationBadge} ${styles[review.recommendation]}`}>
+                        {review.recommendation.replace(/_/g, ' ')}
+                      </span>
+                    )}
                   </div>
-                  <button className="expand-btn">
-                    {expandedReview === index ? '−' : '+'}
+                  <button className={styles.expandBtn}>
+                    <span className="material-symbols-rounded">
+                      {expandedReview === index ? 'expand_less' : 'expand_more'}
+                    </span>
                   </button>
                 </div>
 
                 {expandedReview === index && (
-                  <div className="review-body">
-                    <div className="comments">
-                      <strong>Reviewer Comments:</strong>
+                  <div className={styles.reviewBody}>
+                    <div className={styles.reviewComments}>
+                      <strong>Comments to Author</strong>
                       <p>{review.author_comments || 'No comments provided'}</p>
                     </div>
-                    <div className="submitted-info">
-                      Submitted: {new Date(review.submitted_date).toLocaleDateString()}
+                    {review.editor_comments && (
+                      <div className={styles.reviewComments}>
+                        <strong>Confidential Comments to Editor</strong>
+                        <p>{review.editor_comments}</p>
+                      </div>
+                    )}
+                    <div className={styles.reviewDate}>
+                      Submitted: {review.submitted_date 
+                        ? new Date(review.submitted_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+                        : 'Unknown'}
                     </div>
                   </div>
                 )}
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Decision Section */}
-      <div className="decision-section">
-        <h3>Make Editorial Decision</h3>
+      <div className={styles.decisionSection}>
+        <h3 className={styles.sectionTitle}>
+          <span className="material-symbols-rounded">how_to_vote</span>
+          Make Your Decision
+        </h3>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && (
+          <div className={styles.errorMessage}>
+            <span className="material-symbols-rounded">warning</span>
+            {error}
+          </div>
+        )}
 
         {/* Decision Selection */}
-        <div className="decision-buttons">
+        <div className={styles.decisionButtons}>
           {DECISIONS.map(decision => (
             <button
               key={decision.value}
-              className={`decision-btn ${decision.color} ${selectedDecision === decision.value ? 'selected' : ''}`}
+              className={`${styles.decisionBtn} ${styles[decision.color]} ${selectedDecision === decision.value ? styles.selected : ''}`}
               onClick={() => {
                 setSelectedDecision(decision.value);
                 setValidationErrors(prev => ({ ...prev, decision: null }));
               }}
               disabled={submitting}
             >
-              <span className="icon">{decision.icon}</span>
-              <span className="label">{decision.label}</span>
+              <span className={styles.decisionIcon}>{decision.icon}</span>
+              <span className={styles.decisionLabel}>{decision.label}</span>
             </button>
           ))}
         </div>
 
         {validationErrors.decision && (
-          <div className="validation-error">{validationErrors.decision}</div>
+          <div className={styles.validationError}>{validationErrors.decision}</div>
         )}
 
-        {/* Revision Type (if revision requested) */}
-        {selectedDecision === 'revision_requested' && (
-          <div className="revision-type-section">
+        {/* Revision Type (if correction selected) */}
+        {selectedDecision === 'correction' && (
+          <div className={styles.revisionTypeSection}>
             <label>Revision Type:</label>
-            <div className="revision-options">
+            <div className={styles.revisionOptions}>
               {REVISION_TYPES.map(type => (
-                <label key={type.value} className="radio-label">
+                <label key={type.value} className={styles.radioLabel}>
                   <input
                     type="radio"
                     name="revision_type"
@@ -320,52 +371,51 @@ export default function EditorDecisionPanel() {
               ))}
             </div>
             {validationErrors.revisionType && (
-              <div className="validation-error">{validationErrors.revisionType}</div>
+              <div className={styles.validationError}>{validationErrors.revisionType}</div>
             )}
           </div>
         )}
 
         {/* Editor Comments */}
-        <div className="comments-section">
-          <label htmlFor="editor-comments">
+        <div className={styles.commentsSection}>
+          <label>
             Editor Comments
-            <span className="required">*</span>
-            <span className="hint">(Minimum 50 characters)</span>
+            <span className={styles.required}>*</span>
+            <span className={styles.hint}>(Minimum 50 characters)</span>
           </label>
           {validationErrors.editorComments && (
-            <span className="validation-error">{validationErrors.editorComments}</span>
+            <div className={styles.validationError}>{validationErrors.editorComments}</div>
           )}
           <textarea
-            id="editor-comments"
+            className={styles.textarea}
             value={editorComments}
             onChange={(e) => {
               setEditorComments(e.target.value);
               setValidationErrors(prev => ({ ...prev, editorComments: null }));
             }}
-            placeholder="Provide detailed reasons for this decision. Include specific feedback based on the reviewer comments."
-            rows="6"
+            placeholder="Provide detailed feedback for the author. Include specific comments based on the reviewer recommendations and your own evaluation of the paper."
             disabled={submitting}
           />
-          <div className="char-count">
+          <div className={styles.charCount}>
             {editorComments.length} / 2000 characters
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="action-buttons">
+        <div className={styles.actionButtons}>
           <button
-            className="btn-submit"
-            onClick={handleSubmitDecision}
-            disabled={submitting || !selectedDecision}
-          >
-            {submitting ? 'Recording Decision...' : 'Record Decision'}
-          </button>
-          <button
-            className="btn-cancel"
+            className={styles.cancelBtn}
             onClick={() => navigate('/editor-dashboard')}
             disabled={submitting}
           >
             Cancel
+          </button>
+          <button
+            className={styles.submitBtn}
+            onClick={handleSubmitDecision}
+            disabled={submitting || !selectedDecision}
+          >
+            {submitting ? 'Recording Decision...' : 'Record Decision'}
           </button>
         </div>
       </div>

@@ -3,12 +3,14 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider, ToastContext } from './contexts/ToastContext';
 import { ModalProvider, ModalContext } from './contexts/ModalContext';
+import { JournalProvider, useJournalContext } from './contexts/JournalContext';
 import { ProtectedRoute } from './components/shared/ProtectedRoute';
 import ProtectedAdminRoute from './components/shared/ProtectedAdminRoute';
 import ProtectedAuthorRoute from './components/shared/ProtectedAuthorRoute';
 import ProtectedEditorRoute from './components/shared/ProtectedEditorRoute';
 import ProtectedReviewerRoute from './components/shared/ProtectedReviewerRoute';
 import Navbar from './components/Navbar';
+import JournalNavbar from './components/JournalNavbar';
 import ToastContainer from './components/toast/ToastContainer';
 import Modal from './components/modal/Modal';
 import { JournalsPage } from './pages/JournalsPage/JournalsPage';
@@ -18,6 +20,11 @@ import { SignupPage } from './pages/SignupPage/SignupPage';
 import { DashboardPage } from './pages/DashboardPage/DashboardPage';
 import { SubmitPage } from './pages/SubmitPage/SubmitPage';
 import InvitationPage from './pages/InvitationPage/InvitationPage';
+// Journal subdomain pages
+import JournalHomePage from './pages/JournalHomePage/JournalHomePage';
+import JournalAboutPage from './pages/JournalAboutPage/JournalAboutPage';
+import JournalArchivesPage from './pages/JournalArchivesPage/JournalArchivesPage';
+import JournalGuidelinesPage from './pages/JournalGuidelinesPage/JournalGuidelinesPage';
 // Admin layouts and pages
 import AdminLayout from './layouts/AdminLayout/AdminLayout.jsx';
 import AdminDashboard from './pages/AdminDashboard/AdminDashboard.jsx';
@@ -63,7 +70,9 @@ function App() {
       <AuthProvider>
         <ToastProvider>
           <ModalProvider>
-            <AppContent />
+            <JournalProvider>
+              <AppContent />
+            </JournalProvider>
           </ModalProvider>
         </ToastProvider>
       </AuthProvider>
@@ -74,6 +83,7 @@ function App() {
 function AppContent() {
   const { toasts, removeToast } = React.useContext(ToastContext);
   const { isOpen, title, message, confirmText, cancelText, type, onConfirm, onCancel, closeModal } = React.useContext(ModalContext);
+  const { isJournalSite, currentJournal, loading: journalLoading, error: journalError } = useJournalContext();
   const location = useLocation();
 
   // Determine if current route is a portal route (has its own Navbar)
@@ -90,6 +100,70 @@ function AppContent() {
     if (onCancel) onCancel();
     closeModal();
   };
+
+  // Show loading state while checking for journal subdomain
+  if (journalLoading) {
+    return (
+      <div className="App">
+        <div className="journal-loading-container">
+          <div className="spinner"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If on a journal subdomain, render journal-specific routes
+  if (isJournalSite && currentJournal) {
+    return (
+      <div className="App journal-site">
+        <JournalNavbar journal={currentJournal} />
+        <main className="app-main journal-main">
+          <Routes>
+            {/* Journal subdomain routes */}
+            <Route path="/" element={<JournalHomePage />} />
+            <Route path="/about" element={<JournalAboutPage />} />
+            <Route path="/archives" element={<JournalArchivesPage />} />
+            <Route path="/guidelines" element={<JournalGuidelinesPage />} />
+            <Route path="/submit" element={<ProtectedRoute><SubmitPage preselectedJournal={currentJournal} /></ProtectedRoute>} />
+            <Route path="/volume/:volumeNo/issue/:issueNo" element={<IssuePapersPage />} />
+            <Route path="/article/:id" element={<PublicPaperView />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            
+            {/* Redirect unknown paths to journal home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+        <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+        <Modal
+          isOpen={isOpen}
+          title={title}
+          message={message}
+          confirmText={confirmText}
+          cancelText={cancelText}
+          type={type}
+          onConfirm={handleModalConfirm}
+          onCancel={handleModalCancel}
+        />
+      </div>
+    );
+  }
+
+  // Show error if journal subdomain not found
+  if (isJournalSite && journalError) {
+    return (
+      <div className="App">
+        <div className="journal-error-container">
+          <h1>Journal Not Found</h1>
+          <p>{journalError}</p>
+          <a href="https://www.aacsjournals.com">Return to Main Site</a>
+        </div>
+      </div>
+    );
+  }
+
+  // Main site rendering (original routes)
 
   return (
     <div className="App">

@@ -28,8 +28,20 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
     
-    # CORS Configuration
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    # CORS Configuration - includes wildcard subdomains for production
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "https://aacsjournals.com",
+        "https://www.aacsjournals.com",
+    ]
+    
+    # Base domain for subdomain detection
+    BASE_DOMAIN: str = "aacsjournals.com"
+    
+    # Allow all subdomains via regex pattern (handled in middleware)
+    CORS_ORIGIN_REGEX: str = r"https?://.*\.aacsjournals\.com"
     
     # Crossref DOI Configuration
     CROSSREF_USERNAME: str = ""  # Your Crossref username

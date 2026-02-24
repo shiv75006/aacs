@@ -66,6 +66,55 @@ async def list_journals(
 
 
 @router.get(
+    "/by-subdomain/{subdomain}",
+    response_model=JournalResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get journal by subdomain",
+    description="Retrieve journal information using its short_form (subdomain identifier)"
+)
+async def get_journal_by_subdomain(subdomain: str, db: Session = Depends(get_db)):
+    """
+    Get a journal by its short_form (used as subdomain).
+    
+    - **subdomain**: The journal's short_form (e.g., 'ijest', 'ijrm')
+    
+    This endpoint is used when accessing journal-specific subdomains
+    like ijest.aacsjournals.com to identify which journal to display.
+    """
+    journal = db.query(Journal).filter(
+        Journal.short_form.ilike(subdomain)
+    ).first()
+    
+    if not journal:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Journal with subdomain '{subdomain}' not found"
+        )
+    
+    return JournalResponse(
+        id=journal.fld_id,
+        name=journal.fld_journal_name,
+        frequency=journal.freq,
+        issn_online=journal.issn_ol,
+        issn_print=journal.issn_prt,
+        chief_editor=journal.cheif_editor,
+        co_editor=journal.co_editor,
+        abstract_indexing=journal.abs_ind,
+        short_form=journal.short_form,
+        journal_image=journal.journal_image,
+        journal_logo=journal.journal_logo,
+        guidelines=journal.guidelines,
+        copyright=journal.copyright,
+        membership=journal.membership,
+        subscription=journal.subscription,
+        publication=journal.publication,
+        advertisement=journal.advertisement,
+        description=journal.description,
+        added_on=journal.added_on.isoformat() if journal.added_on else None
+    )
+
+
+@router.get(
     "/{journal_id}",
     response_model=JournalResponse,
     status_code=status.HTTP_200_OK,

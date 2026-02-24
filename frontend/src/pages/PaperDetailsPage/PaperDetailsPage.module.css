@@ -640,6 +640,18 @@
   color: #dc2626;
 }
 
+.iconPurple {
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  color: #9333ea;
+}
+
+.iconTeal {
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+  color: #0d9488;
+}
+
 .timelineInfo {
   flex: 1;
 }
@@ -660,6 +672,13 @@
   margin: 4px 0 0 0;
 }
 
+.timelineDescription {
+  font-size: 12px;
+  color: #64748b;
+  margin: 4px 0 0 0;
+  line-height: 1.4;
+}
+
 /* =====================================================
    Alert Card
    ===================================================== */
@@ -674,17 +693,116 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #94a3b8;
+  color: #22c55e;
+  padding: 8px 0;
 }
 
 .alertContent :global(.material-symbols-rounded) {
-  font-size: 18px;
+  font-size: 22px;
 }
 
 .alertContent p {
   font-size: 12px;
   font-weight: 500;
   margin: 0;
+}
+
+/* Alerts List Styles */
+.alertsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alertItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border-left: 4px solid #94a3b8;
+}
+
+.alertItem.alertInfo {
+  background: #eff6ff;
+  border-left-color: #3b82f6;
+}
+
+.alertItem.alertWarning {
+  background: #fffbeb;
+  border-left-color: #f59e0b;
+}
+
+.alertItem.alertSuccess {
+  background: #f0fdf4;
+  border-left-color: #22c55e;
+}
+
+.alertItem.alertError {
+  background: #fef2f2;
+  border-left-color: #ef4444;
+}
+
+.alertIcon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.alertItem.alertInfo .alertIcon {
+  color: #3b82f6;
+}
+
+.alertItem.alertWarning .alertIcon {
+  color: #f59e0b;
+}
+
+.alertItem.alertSuccess .alertIcon {
+  color: #22c55e;
+}
+
+.alertItem.alertError .alertIcon {
+  color: #ef4444;
+}
+
+.alertText {
+  flex: 1;
+  min-width: 0;
+}
+
+.alertText strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.alertText p {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.alertActionBtn {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #3b82f6;
+  background: #ffffff;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.alertActionBtn:hover {
+  background: #3b82f6;
+  color: #ffffff;
 }
 
 /* =====================================================
@@ -863,6 +981,7 @@
 /* Reviewer Dropdown */
 .reviewerInputContainer {
   position: relative;
+  z-index: 10;
 }
 
 .reviewerDropdown {
@@ -875,8 +994,8 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
   margin-top: 4px;
 }
 
@@ -947,7 +1066,7 @@
   width: 100%;
   max-width: 560px;
   max-height: 80vh;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
 }
@@ -984,7 +1103,9 @@
 
 .modalBody {
   padding: 24px;
-  overflow-y: auto;
+  overflow: visible;
+  flex: 1;
+  min-height: 0;
 }
 
 /* =====================================================

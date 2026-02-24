@@ -185,8 +185,8 @@ const EditorPublishing = () => {
                 <div className={styles.paperHeader}>
                   <div className={styles.paperMeta}>
                     <span className={styles.paperId}>#{paper.id}</span>
-                    {paper.paperCode && (
-                      <span className={styles.paperCode}>{paper.paperCode}</span>
+                    {(paper.paper_code || paper.paperCode) && (
+                      <span className={styles.paperCode}>{paper.paper_code || paper.paperCode}</span>
                     )}
                   </div>
                   <StatusChips status="accepted" />
@@ -199,15 +199,15 @@ const EditorPublishing = () => {
                 <div className={styles.paperInfo}>
                   <div className={styles.infoItem}>
                     <span className="material-symbols-rounded">person</span>
-                    <span>{paper.author?.name || paper.authorName || 'Unknown Author'}</span>
+                    <span>{typeof paper.author === 'string' ? paper.author : (paper.author?.name || paper.authorName || 'Unknown Author')}</span>
                   </div>
                   <div className={styles.infoItem}>
                     <span className="material-symbols-rounded">menu_book</span>
-                    <span>{paper.journal?.name || paper.journalName || 'Unknown Journal'}</span>
+                    <span>{typeof paper.journal === 'string' ? paper.journal : (paper.journal?.name || paper.journalName || 'Unknown Journal')}</span>
                   </div>
                   <div className={styles.infoItem}>
                     <span className="material-symbols-rounded">calendar_today</span>
-                    <span>Accepted: {new Date(paper.acceptedDate || paper.updatedAt || paper.updated_at).toLocaleDateString()}</span>
+                    <span>Submitted: {new Date(paper.submitted_date || paper.submittedDate || paper.acceptedDate || paper.updated_at).toLocaleDateString()}</span>
                   </div>
                 </div>
 

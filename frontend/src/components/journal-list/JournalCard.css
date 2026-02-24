@@ -130,7 +130,8 @@
   padding-top: 15px;
   border-top: 1px solid #eee;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .journal-card-btn {
@@ -138,24 +139,41 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px;
-  background: white;
-  color: #769FCD;
+  padding: 8px 14px;
   text-decoration: none;
-  font-weight: 400;
+  font-weight: 500;
   font-size: 14px;
-  border-radius: 1rem;
+  border-radius: 6px;
   transition: all 0.3s ease;
   cursor: pointer;
   font-family: 'Open Sans', sans-serif;
 }
 
-.journal-card-btn:hover {
+.journal-visit-btn {
   background: #769FCD;
   color: white;
+}
+
+.journal-visit-btn:hover {
+  background: #5a8ac2;
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(118, 159, 205, 0.2);
+  box-shadow: 0 5px 15px rgba(118, 159, 205, 0.3);
   text-decoration: none;
+  color: white;
+}
+
+.journal-details-btn {
+  background: white;
+  color: #769FCD;
+  border: 1px solid #769FCD;
+}
+
+.journal-details-btn:hover {
+  background: #f0f5fa;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(118, 159, 205, 0.15);
+  text-decoration: none;
+  color: #769FCD;
 }
 
 .journal-card-btn:active {

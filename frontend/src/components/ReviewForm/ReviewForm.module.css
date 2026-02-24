@@ -4,26 +4,25 @@
   height: 100%;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
 }
 
 .tabs {
   display: flex;
-  border-bottom: 2px solid #f0f0f0;
-  background: #fafafa;
+  border-bottom: 2px solid #e2e8f0;
+  background: linear-gradient(to bottom, #f9fafb, #f1f5f9);
+  flex-shrink: 0;
 }
 
 .tab {
   flex: 1;
-  padding: 16px 20px;
+  padding: 14px 16px;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  color: #666;
-  transition: all 0.3s ease;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -32,13 +31,13 @@
 }
 
 .tab:hover {
-  color: #1976d2;
-  background: rgba(25, 118, 210, 0.04);
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.05);
 }
 
 .tab.active {
-  color: #1976d2;
-  font-weight: 600;
+  color: #2563eb;
+  background: white;
 }
 
 .tab.active::after {
@@ -47,17 +46,17 @@
   bottom: -2px;
   left: 0;
   right: 0;
-  height: 2px;
-  background: #1976d2;
+  height: 3px;
+  background: #2563eb;
+  border-radius: 2px 2px 0 0;
 }
 
-.tab span {
+.tab .material-symbols-rounded {
   font-size: 20px;
 }
 
 .tabContent {
   flex: 1;
-  overflow-y: auto;
   padding: 24px;
 }
 
@@ -66,23 +65,23 @@
 }
 
 .tabContent::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #f1f5f9;
 }
 
 .tabContent::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
 .tabContent::-webkit-scrollbar-thumb:hover {
-  background: #999;
+  background: #94a3b8;
 }
 
 /* Ratings Tab */
 .ratingsTab {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
 }
 
 .ratingItem {
@@ -92,26 +91,27 @@
 }
 
 .ratingItem label {
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  color: #1e293b;
   font-size: 14px;
 }
 
 .ratingScale {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .ratingBtn {
-  width: 44px;
-  height: 44px;
-  border: 2px solid #ddd;
+  width: 48px;
+  height: 48px;
+  border: 2px solid #e2e8f0;
   background: white;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  color: #666;
+  font-size: 15px;
+  font-weight: 700;
+  color: #64748b;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -119,119 +119,132 @@
 }
 
 .ratingBtn:hover {
-  border-color: #1976d2;
-  color: #1976d2;
-  background: rgba(25, 118, 210, 0.04);
+  border-color: #2563eb;
+  color: #2563eb;
+  background: #eff6ff;
+  transform: translateY(-2px);
 }
 
 .ratingBtn.selected {
-  background: #1976d2;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: white;
-  border-color: #1976d2;
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .recommendationSection {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 12px;
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
 }
 
 .recommendationSection label {
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  color: #1e293b;
   font-size: 14px;
 }
 
 .select {
-  padding: 12px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
+  padding: 14px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
   font-size: 14px;
-  color: #333;
+  color: #1e293b;
   background: white;
   cursor: pointer;
   transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 18px;
+  padding-right: 44px;
 }
 
 .select:hover {
-  border-color: #1976d2;
+  border-color: #2563eb;
 }
 
 .select:focus {
   outline: none;
-  border-color: #1976d2;
-  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 
 /* Comments Tab */
 .commentsTab {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
 }
 
 .commentSection {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .commentSection label {
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  color: #1e293b;
   font-size: 14px;
 }
 
 .hint {
   font-size: 12px;
-  color: #999;
+  color: #94a3b8;
   margin: 0;
+  line-height: 1.4;
 }
 
 .textarea {
-  padding: 12px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
+  padding: 14px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
   font-size: 14px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color: #333;
+  color: #1e293b;
   resize: vertical;
+  min-height: 120px;
   transition: all 0.2s ease;
+  line-height: 1.6;
 }
 
 .textarea:hover {
-  border-color: #bbb;
+  border-color: #cbd5e1;
 }
 
 .textarea:focus {
   outline: none;
-  border-color: #1976d2;
-  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 
 .charCount {
   font-size: 12px;
-  color: #999;
+  color: #94a3b8;
   margin: 4px 0 0 0;
   text-align: right;
 }
 
 .totalChars {
-  padding: 12px;
-  background: #f0f7ff;
-  border-left: 4px solid #1976d2;
-  border-radius: 4px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-left: 4px solid #2563eb;
+  border-radius: 8px;
   font-size: 13px;
-  color: #1976d2;
-  font-weight: 500;
+  color: #1e40af;
+  font-weight: 600;
 }
 
 /* Report Tab */
 .reportTab {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .uploadSection {
@@ -241,126 +254,145 @@
 }
 
 .uploadLabel {
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  color: #1e293b;
   font-size: 14px;
   margin: 0;
 }
 
 .uploadHint {
   font-size: 12px;
-  color: #999;
+  color: #94a3b8;
   margin: 0;
+  line-height: 1.4;
 }
 
 .uploadArea {
-  border: 2px dashed #ddd;
+  border: 2px dashed #cbd5e1;
   border-radius: 12px;
-  padding: 40px 20px;
+  padding: 48px 24px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  background: #fafafa;
+  gap: 14px;
+  background: #f8fafc;
 }
 
 .uploadArea:hover {
-  border-color: #1976d2;
-  background: rgba(25, 118, 210, 0.04);
+  border-color: #2563eb;
+  background: #eff6ff;
 }
 
 .uploadArea.dragOver {
-  border-color: #1976d2;
-  background: rgba(25, 118, 210, 0.1);
+  border-color: #2563eb;
+  background: #dbeafe;
+  border-style: solid;
 }
 
-.uploadArea span {
-  font-size: 40px;
-  color: #1976d2;
+.uploadArea .material-symbols-rounded {
+  font-size: 48px;
+  color: #2563eb;
 }
 
 .uploadArea p {
   font-size: 14px;
-  color: #666;
+  color: #64748b;
   text-align: center;
   margin: 0;
+  line-height: 1.5;
 }
 
 .uploading {
   font-size: 14px;
-  color: #1976d2;
+  color: #2563eb;
   text-align: center;
+  font-weight: 500;
 }
 
 .uploadedFile {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: #e8f5e9;
-  border-radius: 8px;
-  border-left: 4px solid #4caf50;
+  gap: 14px;
+  padding: 16px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-radius: 10px;
+  border: 1px solid #10b981;
 }
 
-.uploadedFile span {
-  color: #4caf50;
-  font-size: 24px;
+.uploadedFile .material-symbols-rounded {
+  color: #10b981;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.fileInfo {
+  flex: 1;
+  min-width: 0;
 }
 
 .fileName {
   font-size: 14px;
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  color: #065f46;
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .fileVersion {
   font-size: 12px;
-  color: #999;
-  margin: 2px 0 0 0;
+  color: #047857;
+  margin: 4px 0 0 0;
 }
 
 .downloadBtn {
-  margin-left: auto;
-  background: #4caf50;
+  background: #10b981;
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 8px 12px;
+  border-radius: 8px;
+  padding: 10px 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
   transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.downloadBtn .material-symbols-rounded {
+  font-size: 20px;
 }
 
 .downloadBtn:hover {
-  background: #45a049;
-  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+  background: #059669;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  transform: translateY(-1px);
 }
 
 .downloadBtn:active {
-  transform: scale(0.95);
+  transform: scale(0.98);
 }
 
 /* Errors */
 .error {
   font-size: 12px;
-  color: #d32f2f;
+  color: #dc2626;
   margin: 4px 0 0 0;
+  font-weight: 500;
 }
 
 .errorBox {
-  padding: 12px;
-  background: #ffebee;
-  border-left: 4px solid #d32f2f;
-  border-radius: 4px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-left: 4px solid #dc2626;
+  border-radius: 8px;
   font-size: 13px;
-  color: #c62828;
+  color: #b91c1c;
   margin-top: 12px;
+  font-weight: 500;
 }
 
 /* Form Actions */
@@ -368,16 +400,17 @@
   display: flex;
   gap: 12px;
   padding: 20px 24px;
-  border-top: 2px solid #f0f0f0;
-  background: #fafafa;
+  border-top: 1px solid #e2e8f0;
+  background: linear-gradient(to bottom, #f9fafb, #f1f5f9);
+  flex-shrink: 0;
 }
 
 .saveDraftBtn,
 .submitBtn {
   flex: 1;
-  padding: 12px 20px;
+  padding: 14px 20px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -389,14 +422,15 @@
 }
 
 .saveDraftBtn {
-  background: #f5f5f5;
-  color: #333;
-  border: 2px solid #ddd;
+  background: white;
+  color: #475569;
+  border: 2px solid #e2e8f0;
 }
 
 .saveDraftBtn:hover:not(:disabled) {
-  background: #eeeeee;
-  border-color: #999;
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #1e293b;
 }
 
 .saveDraftBtn:disabled {
@@ -404,51 +438,88 @@
   cursor: not-allowed;
 }
 
+.saveDraftBtn .material-symbols-rounded,
+.submitBtn .material-symbols-rounded {
+  font-size: 18px;
+}
+
 .submitBtn {
-  background: #1976d2;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: white;
 }
 
 .submitBtn:hover:not(:disabled) {
-  background: #1565c0;
-  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+  transform: translateY(-1px);
 }
 
 .submitBtn:disabled {
-  background: #ccc;
-  color: #999;
+  background: #e2e8f0;
+  color: #94a3b8;
   opacity: 1;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .tabs {
+    overflow-x: auto;
+  }
+
+  .tab {
+    padding: 12px 14px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .tab .material-symbols-rounded {
+    font-size: 18px;
+  }
+
   .tabContent {
-    padding: 16px;
+    padding: 18px;
+  }
+
+  .ratingsTab,
+  .commentsTab {
+    gap: 22px;
   }
 
   .ratingBtn {
-    width: 40px;
-    height: 40px;
-    font-size: 12px;
+    width: 42px;
+    height: 42px;
+    font-size: 13px;
+  }
+
+  .recommendationSection {
+    padding-top: 16px;
+  }
+
+  .textarea {
+    min-height: 100px;
   }
 
   .formActions {
     flex-direction: column;
     padding: 16px;
+    gap: 10px;
   }
 
   .saveDraftBtn,
   .submitBtn {
     width: 100%;
+    padding: 12px 16px;
   }
 
   .uploadArea {
-    padding: 30px 16px;
+    padding: 32px 20px;
   }
 
-  .uploadArea span {
-    font-size: 32px;
+  .uploadArea .material-symbols-rounded {
+    font-size: 40px;
   }
 
   .uploadArea p {
@@ -458,34 +529,87 @@
 
 @media (max-width: 480px) {
   .tabs {
-    flex-wrap: wrap;
+    gap: 0;
   }
 
   .tab {
-    flex: 1 1 calc(33.333% - 8px);
-    padding: 12px;
-    font-size: 12px;
+    flex: 1;
+    min-width: 0;
+    padding: 10px 8px;
+    font-size: 11px;
+    gap: 4px;
   }
 
-  .tab span {
+  .tab .material-symbols-rounded {
     font-size: 16px;
   }
 
   .tabContent {
-    padding: 12px;
+    padding: 14px;
+  }
+
+  .ratingsTab,
+  .commentsTab {
+    gap: 18px;
+  }
+
+  .ratingItem label,
+  .commentSection label,
+  .recommendationSection label,
+  .uploadLabel {
+    font-size: 13px;
   }
 
   .ratingScale {
-    gap: 4px;
+    gap: 6px;
   }
 
   .ratingBtn {
-    width: 36px;
-    height: 36px;
-    font-size: 11px;
+    width: 38px;
+    height: 38px;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+
+  .select,
+  .textarea {
+    padding: 12px;
+    font-size: 13px;
   }
 
   .textarea {
+    min-height: 80px;
+  }
+
+  .formActions {
+    padding: 14px 12px;
+  }
+
+  .saveDraftBtn,
+  .submitBtn {
+    padding: 12px 14px;
     font-size: 13px;
+  }
+
+  .uploadArea {
+    padding: 28px 16px;
+    gap: 12px;
+  }
+
+  .uploadedFile {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .uploadedFile .material-symbols-rounded {
+    font-size: 24px;
+  }
+
+  .fileName {
+    font-size: 13px;
+  }
+
+  .fileVersion {
+    font-size: 11px;
   }
 }

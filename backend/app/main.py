@@ -11,6 +11,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.config import settings
 from app.api.v1 import auth, journals, admin, author, editor, reviewer, articles, roles, webhooks
 from app.core.rate_limit import limiter, get_rate_limit_key
+from app.core.subdomain import SubdomainMiddleware
 from app.scheduler.tasks import start_scheduler, shutdown_scheduler
 
 logger = logging.getLogger(__name__)
@@ -61,10 +62,14 @@ async def rate_limit_exception_handler(request, exc):
         }
     )
 
-# Add CORS middleware
+# Add subdomain detection middleware (must be before CORS)
+app.add_middleware(SubdomainMiddleware)
+
+# Add CORS middleware with regex pattern for subdomains
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=settings.CORS_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

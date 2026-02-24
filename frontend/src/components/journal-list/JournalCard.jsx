@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { getJournalUrl } from '../../utils/subdomain';
 import './JournalCard.css';
 
 const JournalCard = ({ journal }) => {
@@ -14,6 +15,9 @@ const JournalCard = ({ journal }) => {
     const decoded = new DOMParser().parseFromString(stripped, 'text/html').body.textContent || stripped;
     return decoded.trim();
   };
+
+  // Get the subdomain URL for this journal
+  const journalSubdomainUrl = getJournalUrl(journal.short_form);
 
   return (
     <div className="journal-card">
@@ -30,6 +34,9 @@ const JournalCard = ({ journal }) => {
         )}
         <div className="journal-card-title">
           <h3>{journal.name}</h3>
+          {journal.short_form && (
+            <span className="journal-short-form">({journal.short_form})</span>
+          )}
         </div>
       </div>
 
@@ -56,11 +63,17 @@ const JournalCard = ({ journal }) => {
       </div>
 
       <div className="journal-card-footer">
+        <a
+          href={journalSubdomainUrl}
+          className="journal-card-btn journal-visit-btn"
+        >
+          Visit Journal <span className="material-symbols-rounded">open_in_new</span>
+        </a>
         <Link
           to={`/journal/${journal.id}`}
-          className="journal-card-btn"
+          className="journal-card-btn journal-details-btn"
         >
-          View Details <span className="material-symbols-rounded">arrow_forward</span>
+          Details <span className="material-symbols-rounded">arrow_forward</span>
         </Link>
       </div>
     </div>

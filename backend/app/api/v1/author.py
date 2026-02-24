@@ -174,6 +174,25 @@ async def get_submission_detail(
     if paper.journal:
         journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
     
+    # Get reviewer assignments for timeline (anonymized for author)
+    assignments = db.query(OnlineReview).filter(
+        OnlineReview.paper_id == str(paper.id)
+    ).all()
+    
+    assigned_reviewers = []
+    for assignment in assignments:
+        # Get review submission if exists
+        review_submission = db.query(ReviewSubmission).filter(
+            ReviewSubmission.assignment_id == assignment.id
+        ).first()
+        
+        # For authors, we only show dates, not reviewer identities
+        assigned_reviewers.append({
+            "assigned_on": assignment.assigned_on.isoformat() if assignment.assigned_on else None,
+            "has_submitted": review_submission.status == "submitted" if review_submission else False,
+            "submitted_at": review_submission.submitted_at.isoformat() if review_submission and review_submission.submitted_at else None
+        })
+    
     return {
         "id": paper.id,
         "title": paper.title,
@@ -183,7 +202,15 @@ async def get_submission_detail(
         "submitted_date": paper.added_on.isoformat() if paper.added_on else None,
         "journal": journal.fld_journal_name if journal else "Unknown",
         "file": paper.file,
-        "reviews": reviews_list
+        "reviews": reviews_list,
+        "assigned_reviewers": assigned_reviewers,
+        "version_number": paper.version_number,
+        "revision_count": paper.revision_count,
+        "revision_deadline": paper.revision_deadline.isoformat() if paper.revision_deadline else None,
+        "revision_notes": paper.revision_notes,
+        "revision_requested_date": paper.revision_requested_date.isoformat() if paper.revision_requested_date else None,
+        "revision_type": paper.revision_type,
+        "editor_comments": paper.editor_comments
     }
 
 
@@ -934,18 +961,47 @@ async def resubmit_paper(
             uploaded_by=user_id
         )
         
-        # Update paper
+        # Update paper - change status to under_review so reviewers can re-review
+        old_version = paper.version_number
+        old_status = paper.status
         paper.version_number = new_version
         paper.revision_count += 1
         paper.file = filepath
-        paper.status = "resubmitted"
+        paper.status = "under_review"  # Changed from "resubmitted" to allow re-review
         
         db.add(version_record)
         db.add(paper)
+        
+        # Reset all assigned reviewers' status back to pending for re-review
+        assigned_reviews = db.query(OnlineReview).filter(
+            OnlineReview.paper_id == str(paper.id)
+        ).all()
+        
+        import logging
+        logging.info(f"Resubmit: Paper {paper_id} v{old_version} -> v{new_version}, status {old_status} -> under_review")
+        logging.info(f"Resubmit: Found {len(assigned_reviews)} assigned reviews to reset")
+        
+        reviewers_to_notify = []
+        for review in assigned_reviews:
+            old_review_status = review.review_status
+            review.review_status = "pending"  # Reset to pending for resubmitted version
+            review.submitted_on = None  # Clear previous submission date
+            review.date_submitted = None
+            db.add(review)
+            logging.info(f"Resubmit: Reset reviewer {review.reviewer_id} status: {old_review_status} -> pending")
+            
+            # Collect reviewer info for notifications
+            if review.reviewer_id:
+                reviewer = db.query(User).filter(User.id == int(review.reviewer_id)).first()
+                if reviewer and reviewer.email:
+                    reviewers_to_notify.append(reviewer)
+        
+        # Commit all database changes first
         db.commit()
         db.refresh(paper)
+        logging.info(f"Resubmit: Committed changes for paper {paper_id}, new status: {paper.status}")
         
-        # Send resubmission confirmation email to author and notify editor
+        # Send resubmission confirmation email to author, notify editor, and notify reviewers
         email_queued = False
         if background_tasks:
             author = db.query(User).filter(User.id == current_user.get("id")).first()
@@ -969,7 +1025,7 @@ async def resubmit_paper(
                             author_email=author.email,
                             author_name=author_name,
                             email_type="resubmitted",
-                            status_at_send="resubmitted",
+                            status_at_send="under_review",
                             version_number=paper.version_number
                         )
                     finally:
@@ -999,19 +1055,60 @@ async def resubmit_paper(
                                 author_email=editor.email,
                                 author_name=f"{editor.fname or ''} {editor.lname or ''}".strip() or "Editor",
                                 email_type="revision_received_editor",
-                                status_at_send="resubmitted",
+                                status_at_send="under_review",
                                 version_number=paper.version_number
                             )
                         finally:
                             email_db.close()
                     
                     background_tasks.add_task(send_editor_notification)
+                
+                # Notify all assigned reviewers about the resubmission
+                for reviewer in reviewers_to_notify:
+                    reviewer_name = f"{reviewer.fname or ''} {reviewer.lname or ''}".strip() or "Reviewer"
+                    reviewer_email = reviewer.email
+                    
+                    async def send_reviewer_notification(r_email=reviewer_email, r_name=reviewer_name):
+                        from app.db.database import SessionLocal
+                        from app.utils.email_service import EmailService
+                        email_db = SessionLocal()
+                        try:
+                            email_service = EmailService()
+                            await email_service.send_email(
+                                to=r_email,
+                                subject=f"Revised Paper Ready for Re-Review: {paper.title[:50]}",
+                                body=f"""
+                                <h2>Paper Revision Submitted</h2>
+                                <p>Dear {r_name},</p>
+                                <p>The author has submitted a revised version of the paper you previously reviewed.</p>
+                                <p><strong>Paper Details:</strong></p>
+                                <ul>
+                                    <li><strong>Title:</strong> {paper.title}</li>
+                                    <li><strong>Paper Code:</strong> {paper.paper_code}</li>
+                                    <li><strong>Version:</strong> {paper.version_number}</li>
+                                    <li><strong>Journal:</strong> {journal_name}</li>
+                                </ul>
+                                <p>Please log in to the system to review the revised manuscript.</p>
+                                <p>Thank you for your continued contribution to the peer review process.</p>
+                                <br>
+                                <p>Best regards,<br>AACS Editorial Team</p>
+                                """,
+                                is_html=True
+                            )
+                        except Exception as e:
+                            import logging
+                            logging.error(f"Failed to notify reviewer {r_email}: {str(e)}")
+                        finally:
+                            email_db.close()
+                    
+                    background_tasks.add_task(send_reviewer_notification)
         
         return {
-            "message": "Paper resubmitted successfully",
+            "message": "Paper resubmitted successfully. Reviewers have been notified for re-review.",
             "paper_id": paper.id,
             "version_number": paper.version_number,
             "status": paper.status,
+            "reviewers_notified": len(reviewers_to_notify),
             "email_notification_queued": email_queued
         }
     except Exception as e:

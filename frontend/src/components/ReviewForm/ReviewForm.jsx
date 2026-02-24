@@ -387,7 +387,7 @@ const ReviewForm = ({
               {uploadedFile && (
                 <div className={styles.uploadedFile}>
                   <span className="material-symbols-rounded">description</span>
-                  <div>
+                  <div className={styles.fileInfo}>
                     <p className={styles.fileName}>{uploadedFile.split('/').pop()}</p>
                     <p className={styles.fileVersion}>Version {fileVersion}</p>
                   </div>

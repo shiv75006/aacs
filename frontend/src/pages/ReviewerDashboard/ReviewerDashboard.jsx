@@ -166,10 +166,21 @@ export const ReviewerDashboard = () => {
             </div>
           ) : (
             recentAssignments.map((assignment) => (
-              <div key={assignment.id} className={styles.assignmentItem}>
+              <div key={assignment.id} className={`${styles.assignmentItem} ${assignment.is_resubmission && assignment.status === 'pending' ? styles.reReviewItem : ''}`}>
                 <div className={styles.assignmentContent}>
                   <div className={styles.assignmentInfo}>
-                    <h4 className={styles.assignmentTitle}>{assignment.paper_title}</h4>
+                    <h4 className={styles.assignmentTitle}>
+                      {assignment.paper_title}
+                      {assignment.paper_version > 1 && (
+                        <span className={styles.versionTag}>v{assignment.paper_version}</span>
+                      )}
+                    </h4>
+                    {assignment.is_resubmission && assignment.status === 'pending' && (
+                      <span className={styles.resubmitBadge}>
+                        <span className="material-symbols-rounded">replay</span>
+                        Re-review Required
+                      </span>
+                    )}
                     <p className={styles.assignmentDate}>
                       <span className="material-symbols-rounded">calendar_today</span>
                       Due: {new Date(assignment.due_date).toLocaleDateString()}
@@ -178,16 +189,16 @@ export const ReviewerDashboard = () => {
                 </div>
                 <div className={styles.assignmentActions}>
                   <span className={`${styles.statusBadge} ${styles[`status${getStatusColorClass(assignment.status)}`]}`}>
-                    {assignment.status}
+                    {assignment.is_resubmission && assignment.status === 'pending' ? 'Pending Re-review' : assignment.status}
                   </span>
                   <button
-                    className={styles.startReviewBtn}
+                    className={`${styles.startReviewBtn} ${assignment.is_resubmission && assignment.status === 'pending' ? styles.reReviewBtn : ''}`}
                     onClick={() => {
                       navigate(`/reviewer/assignments/${assignment.id}/review`);
                     }}
-                    title="Start Review"
+                    title={assignment.is_resubmission && assignment.status === 'pending' ? "Re-review Paper" : "Start Review"}
                   >
-                    <span className="material-symbols-rounded">chevron_right</span>
+                    <span className="material-symbols-rounded">{assignment.is_resubmission && assignment.status === 'pending' ? 'replay' : 'chevron_right'}</span>
                   </button>
                 </div>
               </div>

@@ -441,6 +441,9 @@ async def list_assignments(
             if review.assigned_on:
                 due_date = (review.assigned_on + timedelta(days=14)).isoformat()
             
+            # Check if this is a re-review (version > 1 and status is pending)
+            is_resubmission = paper.version_number > 1 if paper else False
+            
             assignments_list.append({
                 "id": review.id,
                 "paper_id": review.paper_id,
@@ -449,7 +452,10 @@ async def list_assignments(
                 "journal": journal.fld_journal_name if journal else "Unknown",
                 "assigned_date": review.assigned_on.isoformat() if review.assigned_on else None,
                 "due_date": due_date,
-                "status": review.review_status or "pending"
+                "status": review.review_status or "pending",
+                "paper_version": paper.version_number if paper else 1,
+                "is_resubmission": is_resubmission,
+                "paper_status": paper.status if paper else "unknown"
             })
         
         return {
@@ -565,6 +571,8 @@ async def get_review_detail(
         if not paper:
             raise HTTPException(status_code=404, detail="Paper not found")
         
+        current_version = paper.version_number or 1
+        
         # Get author info - added_by stores user ID, not email
         author = db.query(User).filter(User.id == int(paper.added_by)).first() if paper.added_by and paper.added_by.isdigit() else None
         
@@ -572,11 +580,22 @@ async def get_review_detail(
         journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first() if paper.journal else None
         journal_name = journal.fld_journal_name if journal else "Unknown Journal"
         
-        # Get existing review submission if any
+        # Get existing review submission for current paper version if any
         review_submission = db.query(ReviewSubmission).filter(
             ReviewSubmission.assignment_id == review_id,
-            ReviewSubmission.reviewer_id == reviewer_id
+            ReviewSubmission.reviewer_id == reviewer_id,
+            ReviewSubmission.paper_version == current_version
         ).order_by(desc(ReviewSubmission.updated_at)).first()
+        
+        # Check if this is a re-review (previous version was reviewed)
+        previous_review = None
+        if current_version > 1:
+            previous_review = db.query(ReviewSubmission).filter(
+                ReviewSubmission.assignment_id == review_id,
+                ReviewSubmission.reviewer_id == reviewer_id,
+                ReviewSubmission.paper_version == current_version - 1,
+                ReviewSubmission.status == "submitted"
+            ).first()
         
         return {
             "paper": {
@@ -591,14 +610,17 @@ async def get_review_detail(
                 },
                 "journal": journal_name,
                 "submitted_date": paper.added_on.isoformat() if paper.added_on else None,
-                "file": paper.file
+                "file": paper.file,
+                "version_number": current_version,
+                "is_resubmission": current_version > 1
             },
             "assignment": {
                 "id": assignment.id,
                 "due_date": (assignment.assigned_on + timedelta(days=14)).isoformat() if assignment.assigned_on else None,
                 "status": assignment.review_status or "pending"
             },
-            "review_submission": review_submission.to_dict() if review_submission else None
+            "review_submission": review_submission.to_dict() if review_submission else None,
+            "previous_review": previous_review.to_dict() if previous_review else None
         }
     except HTTPException:
         raise
@@ -704,18 +726,24 @@ async def save_review_draft(
         if not assignment:
             raise HTTPException(status_code=404, detail="Assignment not found")
         
-        # Check if review submission exists
+        # Get paper to check version for version-aware review submissions
+        paper = db.query(Paper).filter(Paper.id == assignment.paper_id).first()
+        current_version = paper.version_number if paper else 1
+        
+        # Check if review submission exists for current paper version
         review_submission = db.query(ReviewSubmission).filter(
             ReviewSubmission.assignment_id == review_id,
-            ReviewSubmission.reviewer_id == reviewer_id
+            ReviewSubmission.reviewer_id == reviewer_id,
+            ReviewSubmission.paper_version == current_version
         ).first()
         
         if not review_submission:
-            # Create new review submission
+            # Create new review submission for this version
             review_submission = ReviewSubmission(
                 paper_id=assignment.paper_id,
                 reviewer_id=reviewer_id,
                 assignment_id=review_id,
+                paper_version=current_version,
                 status="draft"
             )
         
@@ -814,17 +842,28 @@ async def submit_review_complete(
         if not assignment:
             raise HTTPException(status_code=404, detail="Assignment not found")
         
-        # Get or create review submission
+        # Get paper to check version
+        paper = db.query(Paper).filter(Paper.id == assignment.paper_id).first()
+        if not paper:
+            raise HTTPException(status_code=404, detail="Paper not found")
+        
+        current_version = paper.version_number or 1
+        
+        # Get or create review submission for the CURRENT paper version
+        # This allows re-reviews for resubmitted papers
         review_submission = db.query(ReviewSubmission).filter(
             ReviewSubmission.assignment_id == review_id,
-            ReviewSubmission.reviewer_id == reviewer_id
+            ReviewSubmission.reviewer_id == reviewer_id,
+            ReviewSubmission.paper_version == current_version
         ).first()
         
         if not review_submission:
+            # Create new review submission for this version
             review_submission = ReviewSubmission(
                 paper_id=assignment.paper_id,
                 reviewer_id=reviewer_id,
-                assignment_id=review_id
+                assignment_id=review_id,
+                paper_version=current_version
             )
         
         # Update all fields
@@ -842,13 +881,13 @@ async def submit_review_complete(
         # Update assignment status
         assignment.review_status = 'completed'
         assignment.date_submitted = datetime.utcnow()
+        assignment.submitted_on = datetime.utcnow()
         
         db.add(review_submission)
         db.add(assignment)
         
-        # Update paper status to 'reviewed' when a review is submitted
-        paper = db.query(Paper).filter(Paper.id == assignment.paper_id).first()
-        if paper and paper.status in ['submitted', 'under_review']:
+        # Update paper status to 'reviewed' when a review is submitted (paper already fetched above)
+        if paper.status in ['submitted', 'under_review']:
             paper.status = 'reviewed'
             db.add(paper)
         
@@ -857,69 +896,68 @@ async def submit_review_complete(
         db.refresh(assignment)
         
         # Send notifications to editor and author
-        if paper:
-            journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
-            reviewer_user = db.query(User).filter(User.id == int(reviewer_id)).first()
-            reviewer_name = f"{reviewer_user.fname or ''} {reviewer_user.lname or ''}".strip() if reviewer_user else "Reviewer"
-            recommendation = review_data.get('recommendation', 'N/A')
-            overall_rating = review_data.get('overall_rating', 'N/A')
+        journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
+        reviewer_user = db.query(User).filter(User.id == int(reviewer_id)).first()
+        reviewer_name = f"{reviewer_user.fname or ''} {reviewer_user.lname or ''}".strip() if reviewer_user else "Reviewer"
+        recommendation = review_data.get('recommendation', 'N/A')
+        overall_rating = review_data.get('overall_rating', 'N/A')
+        
+        # Notify editor
+        editor = None
+        if paper.journal:
+            editor_record = db.query(Editor).filter(Editor.journal_id == paper.journal).first()
+            if editor_record:
+                editor = db.query(User).filter(User.email == editor_record.email).first()
+        
+        if editor and editor.email:
+            async def send_editor_notification():
+                from app.db.database import SessionLocal
+                email_db = SessionLocal()
+                try:
+                    await create_and_send_correspondence(
+                        db=email_db,
+                        paper_id=paper.id,
+                        paper_code=paper.paper_code,
+                        paper_title=paper.title,
+                        journal_name=journal.fld_journal_name if journal else "AACS Journal",
+                        author_email=editor.email,
+                        author_name=f"{editor.fname or ''} {editor.lname or ''}".strip() or "Editor",
+                        email_type="review_submitted_editor",
+                        status_at_send=paper.status,
+                        reviewer_name=reviewer_name,
+                        recommendation=recommendation,
+                        overall_rating=str(overall_rating)
+                    )
+                finally:
+                    email_db.close()
             
-            # Notify editor
-            editor = None
-            if paper.journal:
-                editor_record = db.query(Editor).filter(Editor.journal_id == paper.journal).first()
-                if editor_record:
-                    editor = db.query(User).filter(User.email == editor_record.email).first()
+            background_tasks.add_task(send_editor_notification)
+        
+        # Notify author that review is complete (without showing review details)
+        author = None
+        if paper.added_by and paper.added_by.isdigit():
+            author = db.query(User).filter(User.id == int(paper.added_by)).first()
+        
+        if author and author.email:
+            async def send_author_notification():
+                from app.db.database import SessionLocal
+                email_db = SessionLocal()
+                try:
+                    await create_and_send_correspondence(
+                        db=email_db,
+                        paper_id=paper.id,
+                        paper_code=paper.paper_code,
+                        paper_title=paper.title,
+                        journal_name=journal.fld_journal_name if journal else "AACS Journal",
+                        author_email=author.email,
+                        author_name=f"{author.fname or ''} {author.lname or ''}".strip() or "Author",
+                        email_type="review_completed_author",
+                        status_at_send=paper.status
+                    )
+                finally:
+                    email_db.close()
             
-            if editor and editor.email:
-                async def send_editor_notification():
-                    from app.db.database import SessionLocal
-                    email_db = SessionLocal()
-                    try:
-                        await create_and_send_correspondence(
-                            db=email_db,
-                            paper_id=paper.id,
-                            paper_code=paper.paper_code,
-                            paper_title=paper.title,
-                            journal_name=journal.fld_journal_name if journal else "AACS Journal",
-                            author_email=editor.email,
-                            author_name=f"{editor.fname or ''} {editor.lname or ''}".strip() or "Editor",
-                            email_type="review_submitted_editor",
-                            status_at_send=paper.status,
-                            reviewer_name=reviewer_name,
-                            recommendation=recommendation,
-                            overall_rating=str(overall_rating)
-                        )
-                    finally:
-                        email_db.close()
-                
-                background_tasks.add_task(send_editor_notification)
-            
-            # Notify author that review is complete (without showing review details)
-            author = None
-            if paper.added_by and paper.added_by.isdigit():
-                author = db.query(User).filter(User.id == int(paper.added_by)).first()
-            
-            if author and author.email:
-                async def send_author_notification():
-                    from app.db.database import SessionLocal
-                    email_db = SessionLocal()
-                    try:
-                        await create_and_send_correspondence(
-                            db=email_db,
-                            paper_id=paper.id,
-                            paper_code=paper.paper_code,
-                            paper_title=paper.title,
-                            journal_name=journal.fld_journal_name if journal else "AACS Journal",
-                            author_email=author.email,
-                            author_name=f"{author.fname or ''} {author.lname or ''}".strip() or "Author",
-                            email_type="review_completed_author",
-                            status_at_send=paper.status
-                        )
-                    finally:
-                        email_db.close()
-                
-                background_tasks.add_task(send_author_notification)
+            background_tasks.add_task(send_author_notification)
         
         return {
             "message": "Review submitted successfully",

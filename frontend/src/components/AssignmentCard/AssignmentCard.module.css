@@ -159,6 +159,70 @@
   height: fit-content;
 }
 
+.startBtn:hover,
+.continueBtn:hover,
+.viewBtn:hover {
+  background: #2563eb;
+  color: white;
+}
+
+/* Re-review Card Highlight */
+.reReviewCard {
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+}
+
+.reReviewCard:hover {
+  border-color: #d97706;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.15);
+}
+
+/* Version Badge */
+.versionBadge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: #ede9fe;
+  color: #7c3aed;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Re-review Badge */
+.reReviewBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid #f59e0b;
+  white-space: nowrap;
+}
+
+.reReviewBadge .material-symbols-rounded {
+  font-size: 14px;
+}
+
+/* Re-review Button */
+.reReviewBtn {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border-color: #f59e0b;
+}
+
+.reReviewBtn:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  border-color: #d97706;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
 
 
 
@@ -198,6 +262,12 @@
     min-height: auto;
   }
 
+  .titleSection {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
   .cardContent {
     width: 100%;
   }
@@ -217,7 +287,18 @@
 
   .metaRight {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .reReviewBadge {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .versionBadge {
+    font-size: 10px;
+    padding: 2px 6px;
   }
 
   .startBtn,

@@ -50,9 +50,259 @@ const PaperDetailsPage = () => {
   const [loadingRevisions, setLoadingRevisions] = useState(false);
   const [showRevisions, setShowRevisions] = useState(false);
 
+  // Generate alerts based on paper status and data
+  const getAlerts = () => {
+    if (!paper) return [];
+    const alerts = [];
+    const now = new Date();
+
+    // Author-specific alerts
+    if (isAuthor()) {
+      // Revision requested alert
+      if (paper.status === 'correction' || paper.status === 'revision_requested') {
+        const deadline = paper.revision_deadline ? new Date(paper.revision_deadline) : null;
+        const daysLeft = deadline ? Math.ceil((deadline - now) / (1000 * 60 * 60 * 24)) : null;
+        
+        alerts.push({
+          type: 'warning',
+          icon: 'edit_note',
+          title: 'Revisions Requested',
+          message: deadline 
+            ? `Please submit your revisions by ${deadline.toLocaleDateString()}${daysLeft !== null ? ` (${daysLeft} days left)` : ''}`
+            : 'Please submit your revisions as soon as possible.',
+          action: () => setShowResubmitForm(true),
+          actionText: 'Submit Revision'
+        });
+      }
+
+      // Paper accepted alert
+      if (paper.status === 'accepted') {
+        alerts.push({
+          type: 'success',
+          icon: 'celebration',
+          title: 'Congratulations!',
+          message: 'Your paper has been accepted for publication.'
+        });
+      }
+
+      // Paper rejected alert
+      if (paper.status === 'rejected') {
+        alerts.push({
+          type: 'error',
+          icon: 'feedback',
+          title: 'Paper Not Accepted',
+          message: 'Please review the editor feedback for details.'
+        });
+      }
+
+      // Under review alert
+      if (paper.status === 'under_review') {
+        alerts.push({
+          type: 'info',
+          icon: 'rate_review',
+          title: 'Under Review',
+          message: 'Your paper is currently being reviewed by our experts.'
+        });
+      }
+
+      // Recently submitted alert
+      if (paper.status === 'submitted') {
+        alerts.push({
+          type: 'info',
+          icon: 'hourglass_top',
+          title: 'Submission Received',
+          message: 'Your paper is awaiting editorial review.'
+        });
+      }
+    }
+
+    // Editor/Admin-specific alerts
+    if (isEditor() || isAdmin()) {
+      // Paper needs decision
+      if (paper.status === 'under_review' && paper.reviews && paper.reviews.length > 0) {
+        const submittedReviews = paper.reviews.filter(r => r.status === 'submitted' || r.submitted_at);
+        if (submittedReviews.length > 0) {
+          alerts.push({
+            type: 'warning',
+            icon: 'gavel',
+            title: 'Decision Required',
+            message: `${submittedReviews.length} review(s) submitted. Ready for editorial decision.`,
+            action: () => navigate(`/editor/papers/${paper.id}/decision`),
+            actionText: 'Make Decision'
+          });
+        }
+      }
+
+      // Paper awaiting reviewer assignment
+      if (paper.status === 'submitted' || (paper.status === 'under_review' && (!paper.reviewers || paper.reviewers.length === 0))) {
+        alerts.push({
+          type: 'info',
+          icon: 'person_add',
+          title: 'Assign Reviewers',
+          message: 'This paper needs reviewers assigned.',
+          action: () => {
+            setShowAssignReviewer(true);
+            setShowReviewerDropdown(true);
+            if (!availableReviewers.length) fetchAvailableReviewers();
+          },
+          actionText: 'Assign Reviewer'
+        });
+      }
+    }
+
+    return alerts;
+  };
+
+  // Generate timeline events for paper activity
+  const getTimelineEvents = () => {
+    if (!paper) return [];
+    const events = [];
+
+    // 1. Paper Submission
+    if (paper.submittedDate) {
+      events.push({
+        id: 'submitted',
+        type: 'submitted',
+        icon: 'publish',
+        iconColor: 'iconBlue',
+        title: 'Paper Submitted',
+        description: 'Initial manuscript submitted',
+        date: new Date(paper.submittedDate),
+        showToAll: true
+      });
+    }
+
+    // 2. Reviewer Assignments - from assignedReviewers
+    const reviewers = paper.assignedReviewers || [];
+    reviewers.forEach((reviewer, idx) => {
+      if (reviewer.assigned_on) {
+        events.push({
+          id: `assigned-${reviewer.reviewer_id || idx}`,
+          type: 'reviewer_assigned',
+          icon: 'person_add',
+          iconColor: 'iconSlate',
+          title: 'Reviewer Assigned',
+          description: (isEditor() || isAdmin()) 
+            ? `${reviewer.reviewer_name || 'Reviewer'} assigned to review`
+            : 'A reviewer has been assigned',
+          date: new Date(reviewer.assigned_on),
+          showToAll: false, // Hide specific names from authors
+          reviewerId: reviewer.reviewer_id,
+          reviewerName: reviewer.reviewer_name
+        });
+      }
+    });
+
+    // 3. Reviews Submitted - from assignedReviewers with submitted_at
+    reviewers.forEach((reviewer, idx) => {
+      if (reviewer.submitted_at && reviewer.has_submitted) {
+        events.push({
+          id: `reviewed-${reviewer.reviewer_id || idx}`,
+          type: 'review_submitted',
+          icon: 'rate_review',
+          iconColor: 'iconPurple',
+          title: 'Review Submitted',
+          description: (isEditor() || isAdmin())
+            ? `${reviewer.reviewer_name || 'Reviewer'} submitted their review`
+            : 'A review has been submitted',
+          date: new Date(reviewer.submitted_at),
+          showToAll: false,
+          reviewerId: reviewer.reviewer_id,
+          reviewerName: reviewer.reviewer_name
+        });
+      }
+    });
+
+    // 4. Revision Requested - from paper.revisionRequestedDate
+    if (paper.revisionRequestedDate) {
+      const revisionTypeLabel = paper.revisionType 
+        ? `${paper.revisionType.charAt(0).toUpperCase() + paper.revisionType.slice(1)} revision` 
+        : 'Revision';
+      events.push({
+        id: 'revision-requested',
+        type: 'revision_requested',
+        icon: 'edit_note',
+        iconColor: 'iconAmber',
+        title: `${revisionTypeLabel} Requested`,
+        description: paper.editorComments 
+          ? paper.editorComments.substring(0, 80) + (paper.editorComments.length > 80 ? '...' : '')
+          : 'Please address the reviewer feedback',
+        date: new Date(paper.revisionRequestedDate),
+        showToAll: true
+      });
+    }
+
+    // 5. Resubmissions - from revisionHistory (versions > 1)
+    if (revisionHistory && revisionHistory.length > 0) {
+      revisionHistory.forEach((version) => {
+        if (version.version_number > 1 && version.uploaded_on) {
+          events.push({
+            id: `resubmit-v${version.version_number}`,
+            type: 'resubmitted',
+            icon: 'upload_file',
+            iconColor: 'iconTeal',
+            title: `Version ${version.version_number} Submitted`,
+            description: version.change_summary || 'Revised manuscript submitted',
+            date: new Date(version.uploaded_on),
+            showToAll: true,
+            versionNumber: version.version_number
+          });
+        }
+      });
+    }
+
+    // 6. Final Decision - based on status
+    if (paper.status === 'accepted') {
+      events.push({
+        id: 'accepted',
+        type: 'accepted',
+        icon: 'check_circle',
+        iconColor: 'iconGreen',
+        title: 'Paper Accepted',
+        description: 'Your paper has been accepted for publication',
+        date: paper._raw?.accepted_on ? new Date(paper._raw.accepted_on) : new Date(),
+        showToAll: true
+      });
+    } else if (paper.status === 'rejected') {
+      events.push({
+        id: 'rejected',
+        type: 'rejected',
+        icon: 'cancel',
+        iconColor: 'iconRed',
+        title: 'Paper Rejected',
+        description: 'See feedback for details',
+        date: new Date(), // No specific date available, use current
+        showToAll: true
+      });
+    } else if (paper.status === 'published') {
+      events.push({
+        id: 'published',
+        type: 'published',
+        icon: 'language',
+        iconColor: 'iconGreen',
+        title: 'Paper Published',
+        description: 'Your paper is now publicly available',
+        date: new Date(),
+        showToAll: true
+      });
+    }
+
+    // Sort events by date (oldest first for timeline)
+    events.sort((a, b) => a.date - b.date);
+
+    return events;
+  };
+
   useEffect(() => {
     fetchPaperDetails();
   }, [id]);
+
+  // Auto-fetch revision history for timeline when paper loads
+  useEffect(() => {
+    if (paper?.id && isAuthor()) {
+      fetchRevisionHistory();
+    }
+  }, [paper?.id]);
 
   useEffect(() => {
     // Filter reviewers when search term changes
@@ -70,12 +320,23 @@ const PaperDetailsPage = () => {
   const fetchAvailableReviewers = async () => {
     try {
       setLoadingReviewers(true);
+      setShowReviewerDropdown(true); // Show dropdown immediately while loading
       // Use appropriate API based on role
       const response = isAdmin() 
         ? await acsApi.admin.listReviewers(0, 100)
         : await acsApi.editor.listReviewers(0, 100);
-      setAvailableReviewers(response.reviewers || []);
-      setFilteredReviewers(response.reviewers || []);
+      
+      console.log('Reviewers API response:', response);
+      
+      // Handle both response formats - direct array or wrapped in object
+      const reviewersList = Array.isArray(response) ? response : (response?.reviewers || []);
+      
+      setAvailableReviewers(reviewersList);
+      setFilteredReviewers(reviewersList);
+      
+      if (reviewersList.length === 0) {
+        console.warn('No reviewers found in database');
+      }
     } catch (err) {
       console.error('Failed to fetch reviewers:', err);
       showError('Failed to load available reviewers', 3000);
@@ -122,7 +383,7 @@ const PaperDetailsPage = () => {
     try {
       setLoadingRevisions(true);
       const response = await acsApi.author.getRevisionHistory(paper.id);
-      setRevisionHistory(response.revisions || []);
+      setRevisionHistory(response.versions || []);
     } catch (err) {
       console.error('Failed to fetch revision history:', err);
     } finally {
@@ -407,9 +668,17 @@ const PaperDetailsPage = () => {
                 </button>
               )}
               
+              {(isEditor() || isAdmin()) && !['accepted', 'rejected', 'published'].includes(paper.status) && (
+                <button className={styles.btnPrimary} onClick={() => navigate(`/editor/papers/${paper.id}/decision`)}>
+                  <span className="material-symbols-rounded">gavel</span>
+                  Make Decision
+                </button>
+              )}
+              
               {(isEditor() || isAdmin()) && (
                 <button className={styles.btnDark} onClick={() => {
                   setShowAssignReviewer(true);
+                  setShowReviewerDropdown(true); // Always show dropdown when modal opens
                   if (!availableReviewers.length) {
                     fetchAvailableReviewers();
                   }
@@ -707,67 +976,34 @@ const PaperDetailsPage = () => {
             </div>
             <div className={styles.timelineContent}>
               <div className={styles.timelineList}>
-                {/* Submission Event */}
-                <div className={styles.timelineItem}>
-                  <div className={styles.timelineConnector} />
-                  <div className={`${styles.timelineIcon} ${styles.iconBlue}`}>
-                    <span className="material-symbols-rounded">publish</span>
-                  </div>
-                  <div className={styles.timelineInfo}>
-                    <p className={styles.timelineEvent}>Paper Submitted</p>
-                    <p className={styles.timelineDate}>{formatDateTime(paper.submittedDate)}</p>
-                  </div>
-                </div>
-
-                {/* Review Assignment Events */}
-                {paper.reviews && paper.reviews.length > 0 && (
+                {getTimelineEvents().length > 0 ? (
+                  getTimelineEvents().map((event, idx) => (
+                    <div key={event.id} className={styles.timelineItem}>
+                      {idx < getTimelineEvents().length - 1 && (
+                        <div className={styles.timelineConnector} />
+                      )}
+                      <div className={`${styles.timelineIcon} ${styles[event.iconColor]}`}>
+                        <span className="material-symbols-rounded">{event.icon}</span>
+                      </div>
+                      <div className={styles.timelineInfo}>
+                        <p className={styles.timelineEvent}>{event.title}</p>
+                        <p className={styles.timelineDate}>
+                          {event.date ? formatDateTime(event.date) : event.description}
+                        </p>
+                        {event.description && event.date && (
+                          <p className={styles.timelineDescription}>{event.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
                   <div className={styles.timelineItem}>
-                    <div className={styles.timelineConnector} />
                     <div className={`${styles.timelineIcon} ${styles.iconSlate}`}>
-                      <span className="material-symbols-rounded">person_search</span>
+                      <span className="material-symbols-rounded">schedule</span>
                     </div>
                     <div className={styles.timelineInfo}>
-                      <p className={styles.timelineEvent}>Reviewer Assigned</p>
-                      <p className={styles.timelineDate}>
-                        {paper.reviews.length} reviewer{paper.reviews.length > 1 ? 's' : ''}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Status-based Event */}
-                {paper.status === 'revision_requested' && (
-                  <div className={styles.timelineItem}>
-                    <div className={`${styles.timelineIcon} ${styles.iconAmber}`}>
-                      <span className="material-symbols-rounded">edit_note</span>
-                    </div>
-                    <div className={styles.timelineInfo}>
-                      <p className={styles.timelineEvent}>Revision Requested</p>
-                      <p className={styles.timelineDate}>Action Required</p>
-                    </div>
-                  </div>
-                )}
-
-                {paper.status === 'accepted' && (
-                  <div className={styles.timelineItem}>
-                    <div className={`${styles.timelineIcon} ${styles.iconGreen}`}>
-                      <span className="material-symbols-rounded">check_circle</span>
-                    </div>
-                    <div className={styles.timelineInfo}>
-                      <p className={styles.timelineEvent}>Paper Accepted</p>
-                      <p className={styles.timelineDate}>Congratulations!</p>
-                    </div>
-                  </div>
-                )}
-
-                {paper.status === 'rejected' && (
-                  <div className={styles.timelineItem}>
-                    <div className={`${styles.timelineIcon} ${styles.iconRed}`}>
-                      <span className="material-symbols-rounded">cancel</span>
-                    </div>
-                    <div className={styles.timelineInfo}>
-                      <p className={styles.timelineEvent}>Paper Rejected</p>
-                      <p className={styles.timelineDate}>See feedback for details</p>
+                      <p className={styles.timelineEvent}>No activity yet</p>
+                      <p className={styles.timelineDate}>Events will appear here</p>
                     </div>
                   </div>
                 )}
@@ -777,10 +1013,29 @@ const PaperDetailsPage = () => {
 
           {/* Alerts Card */}
           <div className={styles.alertCard}>
-            <div className={styles.alertContent}>
-              <span className="material-symbols-rounded">notifications</span>
-              <p>No new alerts for this paper.</p>
-            </div>
+            {getAlerts().length > 0 ? (
+              <div className={styles.alertsList}>
+                {getAlerts().map((alert, idx) => (
+                  <div key={idx} className={`${styles.alertItem} ${styles[`alert${alert.type.charAt(0).toUpperCase() + alert.type.slice(1)}`]}`}>
+                    <span className={`material-symbols-rounded ${styles.alertIcon}`}>{alert.icon}</span>
+                    <div className={styles.alertText}>
+                      <strong>{alert.title}</strong>
+                      <p>{alert.message}</p>
+                    </div>
+                    {alert.action && (
+                      <button className={styles.alertActionBtn} onClick={alert.action}>
+                        {alert.actionText}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className={styles.alertContent}>
+                <span className="material-symbols-rounded">check_circle</span>
+                <p>All caught up! No pending actions.</p>
+              </div>
+            )}
           </div>
 
           {/* Help Card / Contact Author Card */}
@@ -851,7 +1106,7 @@ const PaperDetailsPage = () => {
                 }}
               >
                 <span className="material-symbols-rounded">history</span>
-                Version History
+                Submission History
               </button>
             </div>
           )}
@@ -924,7 +1179,7 @@ const PaperDetailsPage = () => {
         <div className={styles.modalOverlay} onClick={() => setShowRevisions(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h2>Version History</h2>
+              <h2>Submission History</h2>
               <button onClick={() => setShowRevisions(false)}>
                 <span className="material-symbols-rounded">close</span>
               </button>
@@ -947,7 +1202,7 @@ const PaperDetailsPage = () => {
                       <div className={styles.revisionVersion}>
                         <span className={styles.versionBadge}>V{revision.version_number || idx + 1}</span>
                         <span className={styles.revisionDate}>
-                          {new Date(revision.submitted_at || revision.created_at).toLocaleString()}
+                          {revision.uploaded_on ? new Date(revision.uploaded_on).toLocaleString() : 'Unknown'}
                         </span>
                       </div>
                       <div className={styles.revisionDetails}>
@@ -961,10 +1216,10 @@ const PaperDetailsPage = () => {
                             <strong>Changes:</strong> {revision.change_summary}
                           </p>
                         )}
-                        {revision.file_name && (
+                        {revision.file_size && (
                           <p className={styles.revisionFile}>
                             <span className="material-symbols-rounded">description</span>
-                            {revision.file_name}
+                            {(revision.file_size / 1024).toFixed(1)} KB
                           </p>
                         )}
                       </div>

@@ -153,8 +153,51 @@ const ReviewPage = () => {
         <div className={styles.headerContent}>
           <h1>Paper Review</h1>
           <p>{reviewDetail?.paper?.title}</p>
+          {reviewDetail?.paper?.version_number > 1 && (
+            <span className={styles.versionBadge}>
+              <span className="material-symbols-rounded">history</span>
+              Version {reviewDetail?.paper?.version_number}
+            </span>
+          )}
         </div>
       </div>
+
+      {/* Re-review Notice */}
+      {reviewDetail?.paper?.is_resubmission && (
+        <div className={styles.resubmissionNotice}>
+          <span className="material-symbols-rounded">replay</span>
+          <div className={styles.noticeContent}>
+            <strong>Re-review Required</strong>
+            <p>This paper has been revised by the author. Please review the updated manuscript and submit your assessment.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Previous Review Summary (if available) */}
+      {reviewDetail?.previous_review && (
+        <div className={styles.previousReviewCard}>
+          <div className={styles.previousReviewHeader}>
+            <span className="material-symbols-rounded">history_edu</span>
+            <span>Your Previous Review (v{(reviewDetail?.paper?.version_number || 2) - 1})</span>
+          </div>
+          <div className={styles.previousReviewContent}>
+            <div className={styles.previousRating}>
+              <span className={styles.ratingLabel}>Overall Rating:</span>
+              <span className={styles.ratingValue}>{reviewDetail.previous_review.overall_rating}/5</span>
+            </div>
+            <div className={styles.previousRec}>
+              <span className={styles.ratingLabel}>Recommendation:</span>
+              <span className={styles.ratingValue}>{reviewDetail.previous_review.recommendation?.replace(/_/g, ' ')}</span>
+            </div>
+            {reviewDetail.previous_review.author_comments && (
+              <div className={styles.previousComments}>
+                <span className={styles.ratingLabel}>Your Comments:</span>
+                <p>{reviewDetail.previous_review.author_comments.substring(0, 200)}...</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className={styles.reviewLayout}>
         {/* Left side: Paper Viewer */}
@@ -169,6 +212,7 @@ const ReviewPage = () => {
             paper={reviewDetail?.paper}
             assignment={reviewDetail?.assignment}
             initialSubmission={reviewDetail?.review_submission}
+            previousReview={reviewDetail?.previous_review}
             onSaveDraft={handleSaveDraft}
             onSubmit={handleSubmitReview}
             onUploadReport={handleUploadReport}

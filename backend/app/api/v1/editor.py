@@ -1,12 +1,12 @@
 """Editor API endpoints"""
 from fastapi import APIRouter, Depends, status, HTTPException, Query, Request, Body, BackgroundTasks
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, or_, exists, and_
 from datetime import datetime, timedelta
 import uuid
 import secrets
 from app.db.database import get_db
-from app.db.models import User, Paper, OnlineReview, Editor, ReviewerInvitation, Journal, ReviewSubmission, PaperPublished
+from app.db.models import User, Paper, OnlineReview, Editor, ReviewerInvitation, Journal, ReviewSubmission, PaperPublished, UserRole
 from app.core.security import get_current_user
 from app.core.rate_limit import limiter
 from app.utils.auth_helpers import check_role, role_matches, get_editor_journal_ids, editor_has_journal_access
@@ -329,53 +329,110 @@ async def get_paper_queue(
             author = db.query(User).filter(User.id == int(paper.added_by)).first()
         
         # Get review status for the paper
-        # Note: OnlineReview.paper_id is stored as VARCHAR in the database
-        total_assignments = db.query(func.count(OnlineReview.id)).filter(
+        # Count total invitations sent (from ReviewerInvitation table)
+        total_invitations = db.query(func.count(ReviewerInvitation.id)).filter(
+            ReviewerInvitation.paper_id == paper.id
+        ).scalar() or 0
+        
+        # Count accepted invitations
+        accepted_invitations = db.query(func.count(ReviewerInvitation.id)).filter(
+            ReviewerInvitation.paper_id == paper.id,
+            ReviewerInvitation.status == "accepted"
+        ).scalar() or 0
+        
+        # Also check OnlineReview for legacy assignments (before invitation system)
+        legacy_assignments = db.query(func.count(OnlineReview.id)).filter(
             OnlineReview.paper_id == str(paper.id)
         ).scalar() or 0
+        
+        # Total assignments is invitations + any legacy assignments not linked to invitations
+        total_assignments = max(total_invitations, legacy_assignments)
         
         completed_reviews = db.query(func.count(ReviewSubmission.id)).filter(
             ReviewSubmission.paper_id == paper.id,
             ReviewSubmission.status == "submitted"
         ).scalar() or 0
         
-        # Determine review status
-        if total_assignments == 0:
+        # Determine review status based on invitations
+        if total_invitations == 0 and legacy_assignments == 0:
             review_status = "not_assigned"
+        elif accepted_invitations == 0 and legacy_assignments == 0:
+            review_status = "invited"  # Invitations sent but none accepted yet
         elif completed_reviews == 0:
-            review_status = "pending"
-        elif completed_reviews < total_assignments:
-            review_status = "partial"
+            review_status = "pending"  # Assigned but no reviews submitted
+        elif completed_reviews < accepted_invitations or completed_reviews < legacy_assignments:
+            review_status = "partial"  # Some reviews submitted
         else:
-            review_status = "reviewed"
+            review_status = "reviewed"  # All reviews complete
         
-        # Get assigned reviewers with their details
-        assignments = db.query(OnlineReview).filter(
-            OnlineReview.paper_id == str(paper.id)
+        # Get assigned reviewers from ReviewerInvitation table (primary)
+        invitations = db.query(ReviewerInvitation).filter(
+            ReviewerInvitation.paper_id == paper.id
         ).all()
         
         assigned_reviewers = []
-        for assignment in assignments:
+        for invitation in invitations:
             reviewer = None
-            if assignment.reviewer_id:
-                reviewer = db.query(User).filter(User.id == assignment.reviewer_id).first()
+            if invitation.reviewer_id:
+                reviewer = db.query(User).filter(User.id == invitation.reviewer_id).first()
             
             # Get review submission if exists
-            review_submission = db.query(ReviewSubmission).filter(
-                ReviewSubmission.assignment_id == assignment.id
-            ).first()
+            review_submission = None
+            if invitation.reviewer_id:
+                review_submission = db.query(ReviewSubmission).filter(
+                    ReviewSubmission.paper_id == paper.id,
+                    ReviewSubmission.reviewer_id == str(invitation.reviewer_id)
+                ).first()
+            
+            # Get OnlineReview assignment if exists
+            online_review = None
+            if invitation.reviewer_id:
+                online_review = db.query(OnlineReview).filter(
+                    OnlineReview.paper_id == str(paper.id),
+                    OnlineReview.reviewer_id == str(invitation.reviewer_id)
+                ).first()
             
             assigned_reviewers.append({
-                "assignment_id": assignment.id,
-                "reviewer_id": assignment.reviewer_id,
-                "reviewer_name": f"{reviewer.fname} {reviewer.lname or ''}".strip() if reviewer else "Unknown",
-                "reviewer_email": reviewer.email if reviewer else None,
-                "assigned_on": assignment.assigned_on.isoformat() if assignment.assigned_on else None,
-                "due_date": assignment.due_date.isoformat() if assignment.due_date else None,
-                "review_status": assignment.review_status,
+                "invitation_id": invitation.id,
+                "assignment_id": online_review.id if online_review else None,
+                "reviewer_id": invitation.reviewer_id,
+                "reviewer_name": invitation.reviewer_name or (f"{reviewer.fname} {reviewer.lname or ''}".strip() if reviewer else "Unknown"),
+                "reviewer_email": invitation.reviewer_email,
+                "assigned_on": invitation.invited_on.isoformat() if invitation.invited_on else None,
+                "due_date": invitation.token_expiry.isoformat() if invitation.token_expiry else None,
+                "invitation_status": invitation.status,  # pending, accepted, declined, expired
+                "review_status": online_review.review_status if online_review else ("invited" if invitation.status == "pending" else invitation.status),
                 "has_submitted": review_submission.status == "submitted" if review_submission else False,
                 "submitted_at": review_submission.submitted_at.isoformat() if review_submission and review_submission.submitted_at else None
             })
+        
+        # Also include legacy OnlineReview assignments not linked to invitations
+        legacy_reviews = db.query(OnlineReview).filter(
+            OnlineReview.paper_id == str(paper.id)
+        ).all()
+        
+        # Add legacy assignments that don't have corresponding invitations
+        existing_reviewer_ids = {inv.reviewer_id for inv in invitations if inv.reviewer_id}
+        for assignment in legacy_reviews:
+            if assignment.reviewer_id and int(assignment.reviewer_id) not in existing_reviewer_ids:
+                reviewer = db.query(User).filter(User.id == int(assignment.reviewer_id)).first() if assignment.reviewer_id else None
+                review_submission = db.query(ReviewSubmission).filter(
+                    ReviewSubmission.assignment_id == assignment.id
+                ).first()
+                
+                assigned_reviewers.append({
+                    "invitation_id": None,
+                    "assignment_id": assignment.id,
+                    "reviewer_id": assignment.reviewer_id,
+                    "reviewer_name": f"{reviewer.fname} {reviewer.lname or ''}".strip() if reviewer else "Unknown",
+                    "reviewer_email": reviewer.email if reviewer else None,
+                    "assigned_on": assignment.assigned_on.isoformat() if assignment.assigned_on else None,
+                    "due_date": assignment.due_date.isoformat() if assignment.due_date else None,
+                    "invitation_status": "accepted",  # Legacy assignments are considered accepted
+                    "review_status": assignment.review_status,
+                    "has_submitted": review_submission.status == "submitted" if review_submission else False,
+                    "submitted_at": review_submission.submitted_at.isoformat() if review_submission and review_submission.submitted_at else None
+                })
         
         papers_list.append({
             "id": paper.id,
@@ -391,7 +448,9 @@ async def get_paper_queue(
             "status": paper.status,
             "file": paper.file,
             "review_status": review_status,
-            "total_reviewers": total_assignments,
+            "total_invitations": total_invitations,
+            "accepted_invitations": accepted_invitations,
+            "total_reviewers": len(assigned_reviewers),
             "completed_reviews": completed_reviews,
             "assigned_reviewers": assigned_reviewers,
             "version_number": paper.version_number,
@@ -557,6 +616,9 @@ async def get_paper_detail(
         "revision_count": paper.revision_count,
         "revision_deadline": paper.revision_deadline.isoformat() if paper.revision_deadline else None,
         "revision_notes": paper.revision_notes,
+        "revision_requested_date": paper.revision_requested_date.isoformat() if paper.revision_requested_date else None,
+        "revision_type": paper.revision_type,
+        "editor_comments": paper.editor_comments,
         "research_area": paper.research_area,
         "message_to_editor": paper.message_to_editor
     }
@@ -615,13 +677,24 @@ async def invite_reviewer(
             }
         )
     
-    # Validate reviewer has reviewer role
-    if "reviewer" not in (reviewer.role or "").lower():
+    # Validate reviewer has reviewer role (check both legacy role and UserRole table)
+    has_reviewer_role = "reviewer" in (reviewer.role or "").lower()
+    
+    # Also check UserRole table for approved reviewer role
+    if not has_reviewer_role:
+        user_role_entry = db.query(UserRole).filter(
+            UserRole.user_id == reviewer.id,
+            UserRole.role == "reviewer",
+            UserRole.status == "approved"
+        ).first()
+        has_reviewer_role = user_role_entry is not None
+    
+    if not has_reviewer_role:
         raise HTTPException(
             status_code=400,
             detail={
                 "error": "Invalid user role",
-                "message": f"User {reviewer_email} has role '{reviewer.role}', not 'reviewer'",
+                "message": f"User {reviewer_email} does not have an approved 'reviewer' role",
                 "reviewer_email": reviewer_email,
                 "reviewer_role": reviewer.role,
                 "fix": "Assign the 'reviewer' role to this user in the admin panel"
@@ -928,6 +1001,169 @@ async def update_paper_status(
     }
 
 
+# ============================================================================
+# EDITOR DECISION ENDPOINTS
+# ============================================================================
+
+@router.post("/papers/{paper_id}/decision")
+@limiter.limit("50/minute")
+async def make_paper_decision(
+    request: Request,
+    paper_id: int,
+    decision: str = Body(..., embed=False),
+    editor_comments: str = Body(..., embed=False),
+    revision_type: str = Body(None, embed=False),
+    background_tasks: BackgroundTasks = None,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Make a decision on a paper (accept, request revisions, or reject).
+    Sends notification email to author asynchronously.
+    
+    Args:
+        paper_id: Paper ID
+        decision: Decision type (accepted, correction, rejected)
+        editor_comments: Editor's comments to author (required, 50-2000 chars)
+        revision_type: For corrections - 'minor' or 'major' (optional)
+        
+    Returns:
+        Decision result with paper details
+    """
+    if not check_role(current_user.get("role"), "editor"):
+        raise HTTPException(status_code=403, detail="Editor access required")
+    
+    # Validate decision
+    allowed_decisions = ["accepted", "correction", "rejected"]
+    if decision not in allowed_decisions:
+        raise HTTPException(status_code=400, detail=f"Invalid decision. Allowed: {allowed_decisions}")
+    
+    # Validate editor comments
+    if not editor_comments or len(editor_comments.strip()) < 50:
+        raise HTTPException(status_code=400, detail="Editor comments must be at least 50 characters")
+    if len(editor_comments) > 2000:
+        raise HTTPException(status_code=400, detail="Editor comments must not exceed 2000 characters")
+    
+    # Validate revision type for corrections
+    if decision == "correction":
+        if revision_type and revision_type not in ["minor", "major"]:
+            raise HTTPException(status_code=400, detail="Invalid revision type. Allowed: minor, major")
+    
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    old_status = paper.status
+    paper.status = decision
+    paper.editor_comments = editor_comments.strip()
+    
+    # Set revision fields if requesting corrections
+    if decision == "correction":
+        paper.revision_requested_date = datetime.utcnow()
+        # Set default revision deadline (14 days for minor, 30 days for major)
+        if revision_type == "major":
+            paper.revision_deadline = datetime.utcnow() + timedelta(days=30)
+        else:
+            paper.revision_deadline = datetime.utcnow() + timedelta(days=14)
+        paper.revision_notes = editor_comments.strip()
+        paper.revision_type = revision_type or "minor"
+    
+    db.commit()
+    db.refresh(paper)
+    
+    # Prepare email notification
+    email_sent = False
+    email_type = STATUS_EMAIL_TYPE_MAP.get(decision)
+    
+    if email_type and background_tasks:
+        # Get author info
+        author = None
+        if paper.added_by and paper.added_by.isdigit():
+            author = db.query(User).filter(User.id == int(paper.added_by)).first()
+        
+        # Get journal info
+        journal = None
+        if paper.journal:
+            journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
+        
+        if author and author.email:
+            author_name = f"{author.fname or ''} {author.lname or ''}".strip() or "Author"
+            journal_name = journal.fld_journal_name if journal else "AACS Journal"
+            
+            # Schedule background email task
+            background_tasks.add_task(
+                send_status_email_background,
+                None,
+                paper.id,
+                paper.paper_code,
+                paper.title,
+                journal_name,
+                author.email,
+                author_name,
+                email_type,
+                decision,
+                editor_comments.strip(),
+                paper.revision_deadline.strftime('%B %d, %Y') if paper.revision_deadline else None
+            )
+            email_sent = True
+    
+    return {
+        "success": True,
+        "paper_id": paper.id,
+        "title": paper.title,
+        "decision": decision,
+        "previous_status": old_status,
+        "editor_comments": paper.editor_comments,
+        "revision_type": revision_type if decision == "correction" else None,
+        "revision_deadline": paper.revision_deadline.isoformat() if paper.revision_deadline else None,
+        "updated_at": datetime.utcnow().isoformat(),
+        "email_notification_queued": email_sent
+    }
+
+
+@router.get("/papers/{paper_id}/decision")
+@limiter.limit("100/minute")
+async def get_paper_decision(
+    request: Request,
+    paper_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get the current decision/status details for a paper.
+    
+    Returns:
+        Paper status, revision details, and editor comments
+    """
+    if not check_role(current_user.get("role"), "editor"):
+        raise HTTPException(status_code=403, detail="Editor access required")
+    
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    # Get author info
+    author = None
+    if paper.added_by and paper.added_by.isdigit():
+        author = db.query(User).filter(User.id == int(paper.added_by)).first()
+    
+    return {
+        "paper_id": paper.id,
+        "title": paper.title,
+        "status": paper.status,
+        "editor_comments": getattr(paper, 'editor_comments', None),
+        "revision_type": getattr(paper, 'revision_type', None),
+        "revision_notes": paper.revision_notes if hasattr(paper, 'revision_notes') else None,
+        "revision_deadline": paper.revision_deadline.isoformat() if paper.revision_deadline else None,
+        "revision_requested_date": paper.revision_requested_date.isoformat() if paper.revision_requested_date else None,
+        "author": {
+            "id": author.id if author else None,
+            "name": f"{author.fname or ''} {author.lname or ''}".strip() if author else None,
+            "email": author.email if author else None
+        } if author else None
+    }
+
+
 @router.get("/papers/{paper_id}/reviews")
 @limiter.limit("100/minute")
 async def get_paper_reviews(
@@ -937,31 +1173,102 @@ async def get_paper_reviews(
     db: Session = Depends(get_db)
 ):
     """
-    Get all reviews for a paper.
+    Get paper details with all reviews for editor decision panel.
     
     Args:
         paper_id: Paper ID
         
     Returns:
-        List of reviews with reviewer details
+        Paper details, reviews with reviewer info, and statistics
     """
     if not check_role(current_user.get("role"), "editor"):
         raise HTTPException(status_code=403, detail="Editor access required")
     
-    reviews = db.query(OnlineReview).filter(
-        OnlineReview.paper_id == str(paper_id)
+    # Get paper details
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    # Get author info
+    author_name = paper.author or "Unknown"
+    if paper.added_by and paper.added_by.isdigit():
+        author_user = db.query(User).filter(User.id == int(paper.added_by)).first()
+        if author_user:
+            author_name = f"{author_user.fname or ''} {author_user.lname or ''}".strip() or author_user.email
+    
+    # Get review submissions with detailed information
+    review_submissions = db.query(ReviewSubmission).filter(
+        ReviewSubmission.paper_id == paper_id
     ).all()
     
     reviews_list = []
-    for review in reviews:
+    total_rating = 0
+    rating_count = 0
+    accept_count = 0
+    minor_count = 0
+    major_count = 0
+    reject_count = 0
+    
+    for review in review_submissions:
+        # Get reviewer info
+        reviewer = db.query(User).filter(User.id == review.reviewer_id).first()
+        reviewer_name = "Anonymous Reviewer"
+        reviewer_email = None
+        if reviewer:
+            reviewer_name = f"{reviewer.fname or ''} {reviewer.lname or ''}".strip() or reviewer.email
+            reviewer_email = reviewer.email
+        
+        # Parse rating (use overall_rating field)
+        rating = review.overall_rating if review.overall_rating else 0
+        if rating:
+            total_rating += rating
+            rating_count += 1
+        
+        # Count recommendations
+        recommendation = review.recommendation or ""
+        if recommendation == "accept":
+            accept_count += 1
+        elif recommendation == "minor_revision":
+            minor_count += 1
+        elif recommendation == "major_revision":
+            major_count += 1
+        elif recommendation == "reject":
+            reject_count += 1
+        
         reviews_list.append({
-            "id": review.id,
-            "paper_id": review.paper_id,
+            "review_id": review.id,
             "reviewer_id": review.reviewer_id,
-            "assigned_on": review.assigned_on.isoformat() if review.assigned_on else None
+            "reviewer_name": reviewer_name,
+            "reviewer_email": reviewer_email,
+            "rating": rating,
+            "recommendation": recommendation,
+            "author_comments": review.author_comments,
+            "editor_comments": review.confidential_comments,
+            "submitted_date": review.submitted_at.isoformat() if review.submitted_at else None
         })
     
-    return reviews_list
+    # Calculate statistics
+    statistics = {
+        "total_reviews": len(reviews_list),
+        "average_rating": total_rating / rating_count if rating_count > 0 else 0,
+        "accept_count": accept_count,
+        "minor_revisions_count": minor_count,
+        "major_revisions_count": major_count,
+        "reject_count": reject_count
+    }
+    
+    return {
+        "paper_id": paper.id,
+        "paper_name": paper.title,
+        "paper_code": paper.paper_code,
+        "author": author_name,
+        "abstract": paper.abstract,
+        "keywords": paper.keyword,
+        "status": paper.status,
+        "submitted_date": paper.added_on.isoformat() if paper.added_on else None,
+        "reviews": reviews_list,
+        "statistics": statistics
+    }
 
 
 @router.get("/reviewers")
@@ -988,7 +1295,23 @@ async def list_available_reviewers(
     if not check_role(current_user.get("role"), ["editor", "admin"]):
         raise HTTPException(status_code=403, detail="Editor or Admin access required")
     
-    query = db.query(User).filter(User.role.ilike("%reviewer%"))
+    # Check for users who have reviewer role either in:
+    # 1. User.role column (legacy - contains "reviewer" anywhere in the string)
+    # 2. UserRole table (new multi-role system with status="approved")
+    has_reviewer_in_user_role = exists().where(
+        and_(
+            UserRole.user_id == User.id,
+            UserRole.role == "reviewer",
+            UserRole.status == "approved"
+        )
+    )
+    
+    query = db.query(User).filter(
+        or_(
+            User.role.ilike("%reviewer%"),
+            has_reviewer_in_user_role
+        )
+    ).distinct()
     
     if search:
         query = query.filter(
@@ -1004,7 +1327,7 @@ async def list_available_reviewers(
     for reviewer in reviewers:
         reviewers_list.append({
             "id": reviewer.id,
-            "name": f"{reviewer.fname} {reviewer.lname or ''}",
+            "name": f"{reviewer.fname} {reviewer.lname or ''}".strip(),
             "email": reviewer.email,
             "specialization": reviewer.specialization,
             "affiliation": reviewer.affiliation
@@ -1496,3 +1819,26 @@ async def get_accepted_papers(
         "limit": limit,
         "papers": papers_list
     }
+
+
+@router.get("/ready-to-publish")
+@limiter.limit("100/minute")
+async def get_ready_to_publish(
+    request: Request,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    journal_id: int = Query(None, description="Filter by specific journal"),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Alias for get_accepted_papers - returns papers ready for publishing.
+    """
+    return await get_accepted_papers(
+        request=request,
+        skip=skip,
+        limit=limit,
+        journal_id=journal_id,
+        current_user=current_user,
+        db=db
+    )

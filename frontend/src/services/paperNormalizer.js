@@ -11,55 +11,82 @@ export const paperNormalizer = {
   normalizePaper: (rawData) => {
     if (!rawData) return null;
 
+    // Handle reviewer API response format (nested paper object)
+    // { review_id, paper: {...}, assignment: {...} }
+    let data = rawData;
+    let reviewerAssignment = null;
+    if (rawData.paper && rawData.review_id !== undefined) {
+      // This is a reviewer response format - flatten it
+      data = {
+        ...rawData.paper,
+        review_id: rawData.review_id,
+        assignment: rawData.assignment
+      };
+      // Create an assigned_reviewers entry for the current reviewer's assignment
+      if (rawData.assignment) {
+        reviewerAssignment = {
+          assigned_on: rawData.assignment.assigned_date,
+          review_status: rawData.assignment.status,
+          has_submitted: rawData.assignment.status === 'submitted' || rawData.assignment.status === 'completed',
+          submitted_at: rawData.assignment.submitted_date || null
+        };
+      }
+    }
+
     // Handle journal - can be string, object, or nested
-    let journalId = rawData.journal_id;
-    let journalName = rawData.journal_name || 'Unknown Journal';
-    if (rawData.journal) {
-      if (typeof rawData.journal === 'object') {
-        journalId = journalId || rawData.journal.id;
-        journalName = rawData.journal.name || journalName;
+    let journalId = data.journal_id;
+    let journalName = data.journal_name || 'Unknown Journal';
+    if (data.journal) {
+      if (typeof data.journal === 'object') {
+        journalId = journalId || data.journal.id;
+        journalName = data.journal.name || journalName;
       } else {
-        journalName = rawData.journal;
+        journalName = data.journal;
       }
     }
 
     // Handle author - can be string, object, or nested
-    let authorId = rawData.author_id || rawData.added_by;
-    let authorName = rawData.author_name || '';
-    let authorEmail = rawData.author_email || '';
+    let authorId = data.author_id || data.added_by;
+    let authorName = data.author_name || '';
+    let authorEmail = data.author_email || '';
     let authorAffiliation = '';
-    if (rawData.author) {
-      if (typeof rawData.author === 'object') {
-        authorId = authorId || rawData.author.id;
-        authorName = rawData.author.name || authorName;
-        authorEmail = rawData.author.email || authorEmail;
-        authorAffiliation = rawData.author.affiliation || '';
+    if (data.author) {
+      if (typeof data.author === 'object') {
+        authorId = authorId || data.author.id;
+        authorName = data.author.name || authorName;
+        authorEmail = data.author.email || authorEmail;
+        authorAffiliation = data.author.affiliation || '';
       } else {
-        authorName = rawData.author;
+        authorName = data.author;
       }
     }
 
     // Handle co-authors - can be array of strings or array of objects
     let coAuthors = [];
-    if (Array.isArray(rawData.co_authors)) {
-      coAuthors = rawData.co_authors.map(ca => {
+    if (Array.isArray(data.co_authors)) {
+      coAuthors = data.co_authors.map(ca => {
         if (typeof ca === 'object') {
           return `${ca.first_name || ''} ${ca.middle_name || ''} ${ca.last_name || ''}`.trim() || ca.email || 'Unknown';
         }
         return ca;
       });
-    } else if (typeof rawData.co_authors === 'string') {
-      coAuthors = rawData.co_authors.split(',').filter(a => a.trim());
+    } else if (typeof data.co_authors === 'string') {
+      coAuthors = data.co_authors.split(',').filter(a => a.trim());
     }
 
+    // Determine assigned reviewers - use reviewer's own assignment if available
+    const assignedReviewers = reviewerAssignment 
+      ? [reviewerAssignment] 
+      : (data.assigned_reviewers || []);
+
     return {
-      id: rawData.id || rawData.paper_id,
-      title: rawData.title || rawData.name || 'Untitled',
-      abstract: rawData.abstract || '',
-      keywords: Array.isArray(rawData.keywords)
-        ? rawData.keywords
-        : (rawData.keywords || '').split(',').filter(k => k.trim()),
-      paperCode: rawData.code || rawData.paper_code || '',
+      id: data.id || data.paper_id,
+      title: data.title || data.name || 'Untitled',
+      abstract: data.abstract || '',
+      keywords: Array.isArray(data.keywords)
+        ? data.keywords
+        : (data.keywords || '').split(',').filter(k => k.trim()),
+      paperCode: data.code || data.paper_code || '',
       journal: {
         id: journalId,
         name: journalName
@@ -71,39 +98,46 @@ export const paperNormalizer = {
         affiliation: authorAffiliation
       },
       coAuthors: coAuthors,
-      status: rawData.status || 'unknown',
-      submittedDate: rawData.submitted_date || rawData.added_on || new Date().toISOString(),
-      filePath: rawData.file_path || rawData.file || '',
-      fileName: rawData.file_name || extractFileName(rawData.file_path || rawData.file || ''),
-      fileSize: rawData.file_size,
-      volume: rawData.volume,
-      issue: rawData.issue,
-      pageNumber: rawData.page_number || rawData.page,
+      status: data.status || 'unknown',
+      submittedDate: data.submitted_date || data.added_on || new Date().toISOString(),
+      filePath: data.file_path || data.file || data.file_url || '',
+      fileName: data.file_name || extractFileName(data.file_path || data.file || data.file_url || ''),
+      fileSize: data.file_size,
+      volume: data.volume,
+      issue: data.issue,
+      pageNumber: data.page_number || data.page,
       
       // Review-related fields (from OnlineReview model)
-      reviews: rawData.reviews ? rawData.reviews.map(r => paperNormalizer.normalizeReview(r)) : [],
+      reviews: data.reviews ? data.reviews.map(r => paperNormalizer.normalizeReview(r)) : [],
       
       // Assigned reviewers with full details
-      assignedReviewers: rawData.assigned_reviewers || [],
-      reviewStatus: rawData.review_status || 'not_assigned',
-      totalReviewers: rawData.total_reviewers || 0,
-      completedReviews: rawData.completed_reviews || 0,
+      assignedReviewers: assignedReviewers,
+      reviewStatus: data.review_status || 'not_assigned',
+      totalReviewers: data.total_reviewers || 0,
+      completedReviews: data.completed_reviews || 0,
       
       // Decision-related fields
-      decision: rawData.decision ? paperNormalizer.normalizeDecision(rawData.decision) : null,
+      decision: data.decision ? paperNormalizer.normalizeDecision(data.decision) : null,
       
       // Additional metadata
-      mailStatus: rawData.mail_status || rawData.mailstatus,
-      createdAt: rawData.created_at,
-      updatedAt: rawData.updated_at,
+      mailStatus: data.mail_status || data.mailstatus,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
       
       // Version info
-      versionNumber: rawData.version_number,
-      revisionCount: rawData.revision_count,
-      revisionDeadline: rawData.revision_deadline,
-      revisionNotes: rawData.revision_notes,
-      researchArea: rawData.research_area,
-      messageToEditor: rawData.message_to_editor,
+      versionNumber: data.version_number,
+      revisionCount: data.revision_count,
+      revisionDeadline: data.revision_deadline,
+      revisionNotes: data.revision_notes,
+      revisionRequestedDate: data.revision_requested_date,
+      revisionType: data.revision_type,
+      editorComments: data.editor_comments,
+      researchArea: data.research_area,
+      messageToEditor: data.message_to_editor,
+      
+      // Reviewer-specific fields
+      reviewId: data.review_id,
+      assignment: data.assignment,
       
       // Original data for fallback
       _raw: rawData

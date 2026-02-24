@@ -25,11 +25,26 @@ const AssignmentCard = ({ assignment, onStartReview }) => {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
+  // Determine if this is a re-review (paper has been resubmitted and needs re-review)
+  const isReReview = assignment.is_resubmission && assignment.status === 'pending';
+  const paperVersion = assignment.paper_version || 1;
+
   return (
-    <div className={styles.assignmentCard}>
+    <div className={`${styles.assignmentCard} ${isReReview ? styles.reReviewCard : ''}`}>
       <div className={styles.cardContent}>
         <div className={styles.titleSection}>
-          <h3 className={styles.paperTitle}>{assignment.paper_title || 'Untitled Paper'}</h3>
+          <h3 className={styles.paperTitle}>
+            {assignment.paper_title || 'Untitled Paper'}
+            {paperVersion > 1 && (
+              <span className={styles.versionBadge}>v{paperVersion}</span>
+            )}
+          </h3>
+          {isReReview && (
+            <span className={styles.reReviewBadge}>
+              <span className="material-symbols-rounded">replay</span>
+              Re-review Required
+            </span>
+          )}
         </div>
 
         <div className={styles.metaSection}>
@@ -38,11 +53,15 @@ const AssignmentCard = ({ assignment, onStartReview }) => {
               <span className="material-symbols-rounded">calendar_today</span>
               Due: {new Date(assignment.due_date).toLocaleDateString()}
             </span>
+            <span className={styles.metaItem}>
+              <span className="material-symbols-rounded">person</span>
+              {assignment.author || 'Unknown Author'}
+            </span>
           </div>
 
           <div className={styles.metaRight}>
             <span className={`${styles.statusBadge} ${styles[`status${getStatusClass(assignment.status)}`]}`}>
-              {assignment.status || 'Pending'}
+              {isReReview ? 'Pending Re-review' : (assignment.status || 'Pending')}
             </span>
             <span className={`${styles.urgencyBadge} ${styles[getUrgencyClass(daysRemaining)]}`}>
               {daysRemaining > 0 ? `${daysRemaining}d left` : 'Overdue'}
@@ -53,12 +72,12 @@ const AssignmentCard = ({ assignment, onStartReview }) => {
 
       {assignment.status === 'pending' && (
         <button
-          className={styles.startBtn}
+          className={`${styles.startBtn} ${isReReview ? styles.reReviewBtn : ''}`}
           onClick={() => navigate(`/reviewer/assignments/${assignment.id}/review`)}
-          title="Start Review"
+          title={isReReview ? "Re-review Paper" : "Start Review"}
         >
-          <span>Start Review</span>
-          <span className="material-symbols-rounded">arrow_forward</span>
+          <span>{isReReview ? 'Re-review' : 'Start Review'}</span>
+          <span className="material-symbols-rounded">{isReReview ? 'replay' : 'arrow_forward'}</span>
         </button>
       )}
 
@@ -73,7 +92,7 @@ const AssignmentCard = ({ assignment, onStartReview }) => {
         </button>
       )}
 
-      {assignment.status === 'completed' && (
+      {(assignment.status === 'completed' || assignment.status === 'submitted') && (
         <button
           className={styles.viewBtn}
           onClick={() => navigate(`/reviewer/assignments/${assignment.id}`)}

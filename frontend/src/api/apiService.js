@@ -80,6 +80,8 @@ export const acsApi = {
     listJournals: (skip = 0, limit = 3) => 
       apiService.get(`/api/v1/journals/?skip=${skip}&limit=${limit}`),
     getDetail: (id) => apiService.get(`/api/v1/journals/${id}`),
+    getDetails: (id) => apiService.get(`/api/v1/journals/${id}/details`),
+    getBySubdomain: (subdomain) => apiService.get(`/api/v1/journals/by-subdomain/${subdomain}`),
     getVolumes: (journalId) => apiService.get(`/api/v1/journals/${journalId}/volumes`),
     getVolumeIssues: (journalId, volumeId) => apiService.get(`/api/v1/journals/${journalId}/volumes/${volumeId}/issues`),
     getAllIssues: (journalId) => apiService.get(`/api/v1/journals/${journalId}/issues`),

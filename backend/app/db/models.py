@@ -160,6 +160,8 @@ class Paper(Base):
     revision_deadline = Column(DateTime, nullable=True)
     revision_notes = Column(Text, nullable=True)
     revision_requested_date = Column(DateTime, nullable=True)
+    revision_type = Column(String(20), nullable=True)  # 'minor' or 'major'
+    editor_comments = Column(Text, nullable=True)  # Editor's decision comments
     # New paper metadata fields
     research_area = Column(String(200), nullable=True)
     message_to_editor = Column(Text, nullable=True)
@@ -462,6 +464,9 @@ class ReviewSubmission(Base):
     # Link to online_review assignment
     assignment_id = Column(Integer, nullable=True, index=True)
     
+    # Paper version being reviewed (for resubmissions)
+    paper_version = Column(Integer, nullable=False, default=1)
+    
     # Review ratings (1-5 scale)
     technical_quality = Column(Integer, nullable=True)  # 1-5
     clarity = Column(Integer, nullable=True)  # 1-5
@@ -493,6 +498,7 @@ class ReviewSubmission(Base):
             "paper_id": self.paper_id,
             "reviewer_id": self.reviewer_id,
             "assignment_id": self.assignment_id,
+            "paper_version": self.paper_version,
             "technical_quality": self.technical_quality,
             "clarity": self.clarity,
             "originality": self.originality,
