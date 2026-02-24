@@ -115,7 +115,7 @@ async def signup(request: Request, data: SignupRequest, db: Session = Depends(ge
         specialization=data.specialization,
         contact=data.contact,
         address=data.address,
-        role="User"  # Default role for new users (must match ENUM values: Author, Editor, BoardMember, User)
+        role="Author"  # Default role for new users
     )
     
     db.add(new_user)

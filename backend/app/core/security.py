@@ -56,7 +56,7 @@ async def get_current_user(
     return {
         "id": user.id,
         "email": user.email,
-        "role": user.role,
+        "role": user.role.lower() if user.role else None,  # Normalize to lowercase for consistent checks
         "fname": user.fname,
         "lname": user.lname
     }
@@ -127,7 +127,7 @@ async def get_current_user_from_token_or_query(
     return {
         "id": user.id,
         "email": user.email,
-        "role": user.role,
+        "role": user.role.lower() if user.role else None,  # Normalize to lowercase
         "fname": user.fname,
         "lname": user.lname
     }
