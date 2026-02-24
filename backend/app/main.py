@@ -42,11 +42,11 @@ def create_admin_user():
             )
             db.add(admin_user)
             db.commit()
-            logger.info(f"Admin user created: {admin_email}")
+            print(f"Admin user created: {admin_email}")
         else:
-            logger.info(f"Admin user already exists: {admin_email}")
+            print(f"Admin user already exists: {admin_email}")
     except Exception as e:
-        logger.error(f"Failed to create admin user: {str(e)}")
+        print(f"Failed to create admin user: {str(e)}")
         db.rollback()
     finally:
         db.close()
@@ -58,27 +58,34 @@ async def lifespan(app: FastAPI):
     global scheduler
     
     # Create database tables if they don't exist
-    logger.info("Creating database tables if needed...")
+    print("Creating database tables if needed...")
     try:
+        # Import all models to ensure they're registered with Base
+        from app.db import models as db_models
+        tables = list(Base.metadata.tables.keys())
+        print(f"Registered tables: {tables}")
+        
         Base.metadata.create_all(bind=engine)
-        logger.info("Database tables ready")
+        print("Database tables created successfully")
         
         # Create admin user
         create_admin_user()
     except Exception as e:
-        logger.error(f"Failed to create database tables: {str(e)}")
+        print(f"Failed to create database tables: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
     
     # Startup: Start the scheduler
-    logger.info("Starting application with scheduler...")
+    print("Starting application with scheduler...")
     try:
         scheduler = start_scheduler()
     except Exception as e:
-        logger.error(f"Failed to initialize scheduler: {str(e)}")
+        print(f"Failed to initialize scheduler: {str(e)}")
     
     yield
     
     # Shutdown: Stop the scheduler
-    logger.info("Shutting down application...")
+    print("Shutting down application...")
     shutdown_scheduler(scheduler)
 
 
