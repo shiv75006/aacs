@@ -35,6 +35,7 @@ class Settings(BaseSettings):
         "http://localhost:5174",
         "https://aacsjournals.com",
         "https://www.aacsjournals.com",
+        "https://dev.aacsjournals.com",
     ]
     
     # Base domain for subdomain detection

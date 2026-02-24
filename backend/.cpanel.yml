@@ -1,7 +1,8 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home2/aacsjour/repositories/aacs 
+    - export DEPLOYPATH=/home2/aacsjour/dev.aacsjournals.com
     - /bin/mkdir -p $DEPLOYPATH
-    - /bin/cp -R * $DEPLOYPATH
-    - cd $DEPLOYPATH && pip install -r requirements.txt --user
+    - /bin/cp -R backend/* $DEPLOYPATH/
+    - /bin/cp -R backend/.htaccess $DEPLOYPATH/
+    - cd $DEPLOYPATH && /home2/aacsjour/virtualenv/dev/3.11/bin/pip install -r requirements.txt
