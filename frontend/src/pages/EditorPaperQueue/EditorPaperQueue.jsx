@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import acsApi from '../../api/apiService';
 import PaperCard from '../../components/PaperCard/PaperCard';
 import StatusFilterBar from '../../components/StatusFilterBar/StatusFilterBar';
-import Pagination from '../../components/Pagination/Pagination';
+import Pagination from '../../components/pagination/Pagination';
 import { useListWithFilters } from '../../hooks/useListWithFilters';
 import { useToast } from '../../hooks/useToast';
 import styles from './EditorPaperQueue.module.css';

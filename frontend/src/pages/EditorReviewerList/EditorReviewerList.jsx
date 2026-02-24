@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import acsApi from '../../api/apiService';
 import ReviewerCard from '../../components/ReviewerCard/ReviewerCard';
-import Pagination from '../../components/Pagination/Pagination';
+import Pagination from '../../components/pagination/Pagination';
 import { useListWithFilters } from '../../hooks/useListWithFilters';
 import { useToast } from '../../hooks/useToast';
 import { useModal } from '../../hooks/useModal';

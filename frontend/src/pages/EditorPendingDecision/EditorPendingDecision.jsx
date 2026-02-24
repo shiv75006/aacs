@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import acsApi from '../../api/apiService';
 import PaperCard from '../../components/PaperCard/PaperCard';
-import Pagination from '../../components/Pagination/Pagination';
+import Pagination from '../../components/pagination/Pagination';
 import { usePagination } from '../../hooks/usePagination';
 import { useToast } from '../../hooks/useToast';
 import styles from './EditorPendingDecision.module.css';

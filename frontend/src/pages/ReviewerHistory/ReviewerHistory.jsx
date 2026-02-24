@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import acsApi from '../../api/apiService';
-import Pagination from '../../components/Pagination/Pagination';
+import Pagination from '../../components/pagination/Pagination';
 import { useListWithFilters } from '../../hooks/useListWithFilters';
 import styles from './ReviewerHistory.module.css';
 
