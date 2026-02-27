@@ -1,14 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useRole } from '../../hooks/useRole';
-import { useAuth } from '../../hooks/useAuth';
-import RequestAccessModal from '../../components/RequestAccessModal';
 import acsApi from '../../api/apiService.js';
 import styles from './EditorDashboard.module.css';
 
 export const EditorDashboard = () => {
-  const { user } = useRole();
-  const { availableRoles } = useAuth();
-  const [showRequestModal, setShowRequestModal] = useState(false);
   const [stats, setStats] = useState({
     total_papers: 0,
     pending_review: 0,
@@ -290,23 +284,6 @@ export const EditorDashboard = () => {
           </div>
         </div>
       </div>
-
-      {/* Request Access Section */}
-      <div className={styles.requestAccessSection}>
-        <button 
-          className={styles.requestAccessBtn}
-          onClick={() => setShowRequestModal(true)}
-        >
-          <span className="material-symbols-rounded">add_moderator</span>
-          Request Additional Role Access
-        </button>
-      </div>
-
-      {/* Request Access Modal */}
-      <RequestAccessModal
-        isOpen={showRequestModal}
-        onClose={() => setShowRequestModal(false)}
-      />
     </div>
   );
 };

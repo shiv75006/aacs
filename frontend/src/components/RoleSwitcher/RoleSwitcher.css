@@ -157,3 +157,39 @@
     transform: rotate(360deg);
   }
 }
+
+.dropdown-divider {
+  height: 1px;
+  background: #ddd;
+  margin: 8px 0;
+}
+
+.dropdown-footer {
+  padding: 8px;
+}
+
+.request-access-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 1px dashed #41644A;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #0D4715;
+  transition: all 0.15s ease;
+}
+
+.request-access-btn:hover {
+  background: #F5F5F5;
+  border-style: solid;
+}
+
+.request-access-btn span.material-symbols-rounded {
+  color: #0D4715;
+  font-size: 20px;
+}

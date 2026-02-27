@@ -57,6 +57,11 @@ const RoleSwitcher = () => {
 
   const approvedRoles = roles.filter(r => r.status === 'approved');
   const currentRoleConfig = ROLE_CONFIG[activeRole?.toLowerCase()] || ROLE_CONFIG.author;
+  
+  // Check if user has all available roles
+  const allRoleKeys = Object.keys(ROLE_CONFIG);
+  const approvedRoleNames = approvedRoles.map(r => r.role?.toLowerCase());
+  const hasAllRoles = allRoleKeys.every(role => approvedRoleNames.includes(role));
 
   const handleRoleSwitch = async (newRole) => {
     if (newRole === activeRole?.toLowerCase() || switching) return;
@@ -131,19 +136,23 @@ const RoleSwitcher = () => {
               );
             })}
           </div>
-          <div className="dropdown-divider"></div>
-          <div className="dropdown-footer">
-            <button 
-              className="request-access-btn"
-              onClick={() => {
-                setIsOpen(false);
-                setShowRequestModal(true);
-              }}
-            >
-              <span className="material-symbols-rounded">add_moderator</span>
-              <span>Request Additional Access</span>
-            </button>
-          </div>
+          {!hasAllRoles && (
+            <>
+              <div className="dropdown-divider"></div>
+              <div className="dropdown-footer">
+                <button 
+                  className="request-access-btn"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setShowRequestModal(true);
+                  }}
+                >
+                  <span className="material-symbols-rounded">add_moderator</span>
+                  <span>Request Additional Access</span>
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 

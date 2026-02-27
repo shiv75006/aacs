@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import RequestAccessModal from '../../components/RequestAccessModal';
 import acsApi from '../../api/apiService.js';
 import styles from './ReviewerDashboard.module.css';
 
 export const ReviewerDashboard = () => {
-  const { user, isAuthenticated, availableRoles } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [showRequestModal, setShowRequestModal] = useState(false);
   const [stats, setStats] = useState({
     total_assignments: 0,
     pending_reviews: 0,
@@ -206,23 +204,6 @@ export const ReviewerDashboard = () => {
           )}
         </div>
       </div>
-
-      {/* Request Access Section */}
-      <div className={styles.requestAccessSection}>
-        <button 
-          className={styles.requestAccessBtn}
-          onClick={() => setShowRequestModal(true)}
-        >
-          <span className="material-symbols-rounded">add_moderator</span>
-          Request Additional Role Access
-        </button>
-      </div>
-
-      {/* Request Access Modal */}
-      <RequestAccessModal
-        isOpen={showRequestModal}
-        onClose={() => setShowRequestModal(false)}
-      />
     </div>
   );
 };
