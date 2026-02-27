@@ -1,10 +1,12 @@
 /**
  * JournalArchivesPage Styles
  */
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&family=Open+Sans:wght@400;600;700&display=swap');
 
 .journal-archives-page {
   min-height: 100vh;
   background: #f8fafc;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .archives-loading,
@@ -19,7 +21,7 @@
 
 /* Page Header */
 .archives-page-header {
-  background: linear-gradient(135deg, #0d4016 0%, #0d4016 100%);
+  background: linear-gradient(135deg, #0D4715 0%, #41644A 100%);
   color: #fff;
   padding: 3rem 1.5rem;
 }
@@ -30,13 +32,14 @@
 }
 
 .archives-page-header h1 {
-  font-size: 2.25rem;
+  font-family: 'Crimson Pro', serif;
+  font-size: 2.75rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
 }
 
 .archives-page-header p {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   opacity: 0.9;
 }
 
@@ -66,12 +69,14 @@
 }
 
 .no-archives h3 {
-  font-size: 1.25rem;
-  color: #1a365d;
+  font-family: 'Crimson Pro', serif;
+  font-size: 1.5rem;
+  color: #333333;
   margin-bottom: 0.5rem;
 }
 
 .no-archives p {
+  font-size: 1rem;
   color: #64748b;
 }
 
@@ -117,18 +122,19 @@
 }
 
 .volume-title {
-  font-size: 1.1rem;
+  font-family: 'Crimson Pro', serif;
+  font-size: 1.25rem;
   font-weight: 600;
-  color: #1a365d;
+  color: #333333;
 }
 
 .volume-year {
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #64748b;
 }
 
 .volume-issue-count {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #94a3b8;
   padding: 0.25rem 0.75rem;
   background: #f1f5f9;
@@ -163,7 +169,7 @@
   width: 20px;
   height: 20px;
   border: 2px solid #e2e8f0;
-  border-top-color: #0d4016;
+  border-top-color: #0D4715;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -198,8 +204,8 @@
 }
 
 .issue-card:hover {
-  border-color: #0d4016;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+  border-color: #0D4715;
+  box-shadow: 0 4px 12px rgba(13, 71, 21, 0.15);
   transform: translateY(-2px);
 }
 
@@ -209,7 +215,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0d4016 0%, #0d4016 100%);
+  background: linear-gradient(135deg, #0D4715 0%, #41644A 100%);
   border-radius: 6px;
   margin-bottom: 1rem;
 }
@@ -224,20 +230,21 @@
 }
 
 .issue-info h4 {
-  font-size: 1rem;
+  font-family: 'Crimson Pro', serif;
+  font-size: 1.125rem;
   font-weight: 600;
-  color: #1a365d;
+  color: #333333;
   margin-bottom: 0.25rem;
 }
 
 .issue-month {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #64748b;
   margin-bottom: 0.25rem;
 }
 
 .issue-papers {
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   color: #94a3b8;
 }
 
@@ -248,7 +255,7 @@
   }
 
   .archives-page-header h1 {
-    font-size: 1.75rem;
+    font-size: 2rem;
   }
 
   .volume-header {
