@@ -1,15 +1,15 @@
 /* Landing Page - Modern Design with Tailwind */
 
 :root {
-  --primary: #D92D20;
-  --secondary: #0E4DA4;
+  --primary: #FFFFFF;
+  --secondary: #0D4715;
   --background-light: #F9FAFB;
   --background-dark: #111827;
 }
 
 .landing-page-wrapper {
-  --primary: #D92D20;
-  --secondary: #0E4DA4;
+  --primary: #FFFFFF;
+  --secondary: #0D4715;
   --background-light: #F9FAFB;
   --background-dark: #111827;
 }
@@ -23,19 +23,19 @@
 }
 
 .bg-primary\/10 {
-  background-color: rgba(217, 45, 32, 0.1);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .text-primary {
-  color: #D92D20;
+  color: #0D4715;
 }
 
 .bg-secondary\/10 {
-  background-color: rgba(14, 77, 164, 0.1);
+  background-color: rgba(13, 71, 21, 0.1);
 }
 
 .text-secondary {
-  color: #0E4DA4;
+  color: #0D4715;
 }
 
 .text-slate-900 {

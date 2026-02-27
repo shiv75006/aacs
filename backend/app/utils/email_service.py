@@ -11,12 +11,12 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # SMTP Configuration
-SMTP_SERVER = "mail.aacsjournals.com"
+SMTP_SERVER = "mail.breakthroughpublishers.com"
 SMTP_PORT = 587
-SMTP_USERNAME = "info@aacsjournals.com"
+SMTP_USERNAME = "info@breakthroughpublishers.com"
 SMTP_PASSWORD = "Aacs@2020"
-EMAIL_FROM = "info@aacsjournals.com"
-EMAIL_FROM_NAME = "AACS Journal Management System"
+EMAIL_FROM = "info@breakthroughpublishers.com"
+EMAIL_FROM_NAME = "Breakthrough Publishers Journal Management System"
 
 
 class EmailService:
@@ -137,10 +137,10 @@ class EmailService:
                     
                     <p>You can track your submission status by logging into your author portal.</p>
                     
-                    <p>If you have any questions, please don't hesitate to contact us at info@aacsjournals.com.</p>
+                    <p>If you have any questions, please don't hesitate to contact us at info@breakthroughpublishers.com.</p>
                     
                     <p>Best regards,<br/>
-                    The AACS Editorial Team</p>
+                    The Breakthrough Publishers Editorial Team</p>
                 </div>
             </body>
         </html>
@@ -162,7 +162,7 @@ class EmailService:
         Our editorial team will review your paper and you will receive updates on its status shortly.
         
         Best regards,
-        The AACS Editorial Team
+        The Breakthrough Publishers Editorial Team
         """
         
         return EmailService._send_email(
@@ -234,7 +234,7 @@ class EmailService:
                     <p>Thank you for your continued support of our journal.</p>
                     
                     <p>Best regards,<br/>
-                    The AACS Editorial Team</p>
+                    The Breakthrough Publishers Editorial Team</p>
                 </div>
             </body>
         </html>
@@ -327,7 +327,7 @@ class EmailService:
                     <p>If you have any questions regarding this decision, please feel free to contact us.</p>
                     
                     <p>Best regards,<br/>
-                    The AACS Editorial Team</p>
+                    The Breakthrough Publishers Editorial Team</p>
                 </div>
             </body>
         </html>
@@ -389,7 +389,7 @@ class EmailService:
                     <p>Thank you for your valuable contribution.</p>
                     
                     <p>Best regards,<br/>
-                    The AACS Editorial Team</p>
+                    The Breakthrough Publishers Editorial Team</p>
                 </div>
             </body>
         </html>

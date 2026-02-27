@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import logo from '../../assets/aacs_logo_new.png';
 import './Footer.css';
 
 const Footer = () => {
@@ -10,7 +9,7 @@ const Footer = () => {
         <div className="footer-content">
           {/* Branding Column */}
           <div className="footer-branding">
-            <img src={logo} alt="AACS Logo" className="footer-logo" />
+            <span className="footer-logo-text">Breakthrough Publishers</span>
             <p className="footer-description">
               Dedicated to the global advancement of combinatorial sciences through rigorous peer-reviewed research and scholarly excellence.
             </p>
@@ -33,7 +32,7 @@ const Footer = () => {
             <ul className="footer-links">
               <li className="footer-contact-item">
                 <span className="material-icons">email</span>
-                <span>editorial@aacsjournals.org</span>
+                <span>editorial@breakthroughpublishers.org</span>
               </li>
               <li className="footer-contact-item">
                 <span className="material-icons">location_on</span>
@@ -49,7 +48,7 @@ const Footer = () => {
 
         {/* Bottom Section */}
         <div className="footer-bottom">
-          <p>© 2024 AACS. All rights reserved.</p>
+          <p>© 2024 Breakthrough Publishers. All rights reserved.</p>
           <div className="footer-bottom-links">
             <a href="#privacy" className="footer-bottom-link">Privacy Policy</a>
             <a href="#terms" className="footer-bottom-link">Terms of Service</a>

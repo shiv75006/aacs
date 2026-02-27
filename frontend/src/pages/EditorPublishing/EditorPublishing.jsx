@@ -342,7 +342,7 @@ const EditorPublishing = () => {
                     id="doi_suffix"
                     value={publishData.doi_suffix}
                     onChange={(e) => setPublishData({...publishData, doi_suffix: e.target.value})}
-                    placeholder="e.g., aacs-2024-001"
+                    placeholder="e.g., bp-2024-001"
                     disabled={publishing}
                   />
                   <p className={styles.hint}>Final DOI: 10.xxxxx/{publishData.doi_suffix || 'your-suffix'}</p>

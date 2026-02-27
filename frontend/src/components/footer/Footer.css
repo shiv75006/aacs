@@ -44,6 +44,13 @@
   margin-bottom: 0.5rem;
 }
 
+.footer-logo-text {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0D4715;
+  margin-bottom: 0.5rem;
+}
+
 .footer-description {
   max-width: 24rem;
   margin-left: 19px;

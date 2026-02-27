@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { RoleSwitcher } from '../RoleSwitcher';
-import logo from '../../assets/aacs_logo_new.png';
 import styles from './Navbar.module.css';
 
 /**
@@ -64,7 +63,7 @@ const Navbar = ({ sections = [], portalName = "Portal" }) => {
           {/* Left: Logo */}
           <div className={styles.headerLeft}>
             <Link className={styles.brand} to="/">
-              <img src={logo} alt="AACS Logo" className={styles.logo} />
+              <span className={styles.logoText}>Breakthrough Publishers</span>
             </Link>
             {sections.length > 0 && (
               <span className={styles.portalBadge}>{portalName}</span>

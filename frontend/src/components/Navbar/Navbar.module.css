@@ -12,9 +12,9 @@
 :root {
   --header-height: 60px;
   --sidebar-width: 56px;
-  --primary: #0066cc;
-  --primary-hover: #0052a3;
-  --primary-light: #e6f0ff;
+  --primary: #0D4715;
+  --primary-hover: #41644A;
+  --primary-light: #E8F5E9;
   --text-primary: #0f172a;
   --text-secondary: #64748b;
   --border-color: #e2e8f0;
@@ -57,6 +57,13 @@
   display: flex;
   align-items: center;
   text-decoration: none;
+}
+
+.logoText {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0D4715;
+  white-space: nowrap;
 }
 
 .logo {

@@ -226,7 +226,7 @@ const ReviewerGuidelines = () => {
                 <h3>Need Help?</h3>
                 <p>If you have questions about a paper or need technical assistance, please contact the managing editor:</p>
                 <p className={styles.contact}>
-                  <strong>Email:</strong> editor@aacsjournals.com<br />
+                  <strong>Email:</strong> editor@breakthroughpublishers.com<br />
                   <strong>Response time:</strong> Within 24 hours
                 </p>
               </div>

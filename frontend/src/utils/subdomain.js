@@ -2,14 +2,14 @@
  * Subdomain Detection Utilities
  * 
  * Handles detection and management of journal-specific subdomains
- * for the AACS Journals platform.
+ * for the Breakthrough Publishers platform.
  * 
- * Production URLs: ijest.aacsjournals.com, ijrm.aacsjournals.com, etc.
+ * Production URLs: ijest.breakthroughpublishers.com, ijrm.breakthroughpublishers.com, etc.
  * Development: localhost:5173?journal=ijest or ijest.localhost:5173
  */
 
 // Base domain for production
-const BASE_DOMAIN = 'aacsjournals.com';
+const BASE_DOMAIN = 'breakthroughpublishers.com';
 
 // Subdomains that are reserved and not journal-specific
 const EXCLUDED_SUBDOMAINS = ['www', 'api', 'admin', 'static', 'mail', 'smtp', 'ftp'];
@@ -20,10 +20,10 @@ const EXCLUDED_SUBDOMAINS = ['www', 'api', 'admin', 'static', 'mail', 'smtp', 'f
  * @returns {string|null} The subdomain/journal identifier or null if on main site
  * 
  * @example
- * // On ijest.aacsjournals.com
+ * // On ijest.breakthroughpublishers.com
  * getSubdomain() // returns 'ijest'
  * 
- * // On www.aacsjournals.com or aacsjournals.com
+ * // On www.breakthroughpublishers.com or breakthroughpublishers.com
  * getSubdomain() // returns null
  * 
  * // On localhost:5173?journal=ijest (dev mode)
@@ -89,7 +89,7 @@ export const isJournalSubdomain = () => {
  * 
  * @example
  * getJournalUrl('ijest')
- * // Production: 'https://ijest.aacsjournals.com'
+ * // Production: 'https://ijest.breakthroughpublishers.com'
  * // Development: 'http://localhost:5173?journal=ijest'
  */
 export const getJournalUrl = (shortForm) => {

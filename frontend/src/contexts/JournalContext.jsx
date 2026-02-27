@@ -2,7 +2,7 @@
  * Journal Context Provider
  * 
  * Provides journal context based on subdomain detection.
- * When accessing the site via a journal subdomain (e.g., ijest.aacsjournals.com),
+ * When accessing the site via a journal subdomain (e.g., ijest.breakthroughpublishers.com),
  * this context provides the journal data to all child components.
  */
 

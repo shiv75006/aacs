@@ -57,7 +57,7 @@ def generate_doi(
     prefix: str = None
 ) -> str:
     """
-    Generate a DOI following AACS pattern.
+    Generate a DOI following Breakthrough Publishers pattern.
     
     Pattern: {prefix}/{journal_short}.{year}.{volume}{issue}{paper_num}
     
@@ -305,7 +305,7 @@ class CrossrefService:
         
         resource = ET.SubElement(doi_data, "resource")
         # Generate the DOI resolution URL
-        resource.text = paper_data.get("url", f"https://aacsjournals.com/article/{doi}")
+        resource.text = paper_data.get("url", f"https://breakthroughpublishers.com/article/{doi}")
         
         # Convert to pretty-printed XML string
         xml_string = ET.tostring(root, encoding="unicode")
@@ -508,7 +508,7 @@ async def register_paper_doi(
         pub_date = datetime.fromisoformat(pub_date.replace('Z', '+00:00'))
     
     doi = generate_doi(
-        journal_short=journal_data.get("short_form", "AACS"),
+        journal_short=journal_data.get("short_form", "BP"),
         year=pub_date.year,
         volume=journal_data.get("volume", "1"),
         issue=journal_data.get("issue", "1"),

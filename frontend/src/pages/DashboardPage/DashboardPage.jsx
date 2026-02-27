@@ -46,7 +46,7 @@ export const DashboardPage = () => {
         setAnnouncements([
           {
             id: 1,
-            title: 'AACS Journal Rankings Updated',
+            title: 'Breakthrough Publishers Journal Rankings Updated',
             date: '2024-02-12',
             type: 'Update',
             typeColor: 'blue',
@@ -197,7 +197,7 @@ export const DashboardPage = () => {
                               {article.date ? new Date(article.date).toLocaleDateString() : 'Unpublished'}
                             </span>
                             <span className="article-dot"></span>
-                            <span className="article-author">{stripHtmlTags(article.author) || 'AACS'}</span>
+                            <span className="article-author">{stripHtmlTags(article.author) || 'Breakthrough Publishers'}</span>
                           </div>
                         </div>
                       ))

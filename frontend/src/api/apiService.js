@@ -62,7 +62,7 @@ export const apiService = {
   }
 };
 
-// Example specific API functions for AACS system
+// Example specific API functions for Breakthrough Publishers system
 export const acsApi = {
   // Authentication
   login: (credentials) => apiService.post('auth/login/', credentials),

@@ -12,15 +12,15 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # SMTP Configuration (same as existing service)
-SMTP_SERVER = "mail.aacsjournals.com"
+SMTP_SERVER = "mail.breakthroughpublishers.com"
 SMTP_PORT = 587
-SMTP_USERNAME = "info@aacsjournals.com"
+SMTP_USERNAME = "info@breakthroughpublishers.com"
 SMTP_PASSWORD = "Aacs@2020"
-EMAIL_FROM = "info@aacsjournals.com"
-EMAIL_FROM_NAME = "AACS Journal Management System"
+EMAIL_FROM = "info@breakthroughpublishers.com"
+EMAIL_FROM_NAME = "Breakthrough Publishers Journal Management System"
 
 # Base URL for webhooks (configure based on environment)
-WEBHOOK_BASE_URL = "https://api.aacsjournals.com/api/v1/webhooks"
+WEBHOOK_BASE_URL = "https://api.breakthroughpublishers.com/api/v1/webhooks"
 
 
 # Email templates for each status type
@@ -388,14 +388,14 @@ def generate_email_html(
                 
                 {message_content}
                 
-                <p>If you have any questions, please don't hesitate to contact us at info@aacsjournals.com.</p>
+                <p>If you have any questions, please don't hesitate to contact us at info@breakthroughpublishers.com.</p>
                 
                 <p>Best regards,<br/>
-                The AACS Editorial Team</p>
+                The Breakthrough Publishers Editorial Team</p>
                 
                 <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
                 <p style="font-size: 12px; color: #999; text-align: center;">
-                    This is an automated message from the AACS Journal Management System.<br/>
+                    This is an automated message from the Breakthrough Publishers Journal Management System.<br/>
                     Please do not reply directly to this email.
                 </p>
             </div>
@@ -410,7 +410,7 @@ def generate_subject(template_type: str, **kwargs) -> str:
     """Generate email subject from template"""
     template = EMAIL_TEMPLATES.get(template_type)
     if not template:
-        return f"AACS Journal Notification - {kwargs.get('paper_title', 'Your Paper')}"
+        return f"Breakthrough Publishers Journal Notification - {kwargs.get('paper_title', 'Your Paper')}"
     
     try:
         return template["subject"].format(**kwargs)
@@ -755,15 +755,15 @@ def send_simple_email(
         <body>
             <div class="container">
                 <div class="header">
-                    <h2 style="margin: 0;">AACS Journal Management System</h2>
+                    <h2 style="margin: 0;">Breakthrough Publishers Journal Management System</h2>
                 </div>
                 <div class="content">
                     <p>Dear {recipient_name},</p>
                     {message.replace(chr(10), '<br>')}
                 </div>
                 <div class="footer">
-                    <p>This is an automated message from AACS Journal Management System.</p>
-                    <p>© {datetime.utcnow().year} AACS Journals. All rights reserved.</p>
+                    <p>This is an automated message from Breakthrough Publishers Journal Management System.</p>
+                    <p>© {datetime.utcnow().year} Breakthrough Publishers. All rights reserved.</p>
                 </div>
             </div>
         </body>
@@ -847,14 +847,14 @@ def send_simple_email(
         <body>
             <div class="container">
                 <div class="header">
-                    <h2>AACS Journal Management System</h2>
+                    <h2>Breakthrough Publishers Journal Management System</h2>
                 </div>
                 <div class="content">
                     <p>Dear {recipient_name},</p>
                     {message.replace(chr(10), '<br>')}
                 </div>
                 <div class="footer">
-                    <p>© AACS Journals | <a href="https://aacsjournals.com">aacsjournals.com</a></p>
+                    <p>© Breakthrough Publishers | <a href="https://breakthroughpublishers.com">breakthroughpublishers.com</a></p>
                 </div>
             </div>
         </body>

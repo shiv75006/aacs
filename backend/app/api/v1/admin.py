@@ -1970,7 +1970,7 @@ async def send_paper_correspondence(
     
     # Get journal info
     journal = db.query(Journal).filter(Journal.fld_id == paper.journal_id).first()
-    journal_name = journal.fld_name if journal else "AACS Journal"
+    journal_name = journal.fld_name if journal else "Breakthrough Publishers Journal"
     
     # Prepare subject and message
     final_subject = subject

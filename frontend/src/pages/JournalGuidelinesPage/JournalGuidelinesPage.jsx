@@ -201,7 +201,7 @@ const JournalGuidelinesPage = () => {
               <p>If you have questions about the submission process or guidelines, please contact:</p>
               <p className="contact-email">
                 <span className="material-symbols-rounded">mail</span>
-                info@aacsjournals.com
+                info@breakthroughpublishers.com
               </p>
             </div>
           </section>

@@ -33,11 +33,11 @@ html {
 
 /* Root Variables */
 :root {
-  --primary-color: #769FCD;
-  --primary-dark: #5B8BC5;
-  --secondary-color: #2845D6;
-  --tertiary-color: #F68048;
-  --accent-color: #769FCD;
+  --primary-color: #FFFFFF;
+  --primary-dark: #F5F5F5;
+  --secondary-color: #0D4715;
+  --tertiary-color: #41644A;
+  --accent-color: #0D4715;
   --green-color: #0D4715;
   --text-light: #f1f1f1;
   --text-dark: #333333;

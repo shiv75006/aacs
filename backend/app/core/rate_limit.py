@@ -1,4 +1,4 @@
-"""Rate limiting configuration for AACS API"""
+"""Rate limiting configuration for Breakthrough Publishers API"""
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address

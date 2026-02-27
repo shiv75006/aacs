@@ -157,7 +157,7 @@ function AppContent() {
         <div className="journal-error-container">
           <h1>Journal Not Found</h1>
           <p>{journalError}</p>
-          <a href="https://www.aacsjournals.com">Return to Main Site</a>
+          <a href="https://www.breakthroughpublishers.com">Return to Main Site</a>
         </div>
       </div>
     );

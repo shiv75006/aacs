@@ -37,6 +37,13 @@
   display: block;
 }
 
+.logoText {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0D4715;
+  white-space: nowrap;
+}
+
 .navList {
   display: flex;
   align-items: center;

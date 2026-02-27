@@ -62,7 +62,7 @@ const ContactEditorialModal = ({
         paper_title: paperTitle,
         paper_id: paperId,
         current_status: currentStatus,
-        journal_name: 'AACS Journal',
+        journal_name: 'Breakthrough Publishers Journal',
         sender_name: senderRole === 'admin' ? 'Administrator' : 'Editor'
       };
       
@@ -108,7 +108,7 @@ const ContactEditorialModal = ({
         paper_title: paperTitle,
         paper_id: paperId,
         current_status: currentStatus,
-        journal_name: 'AACS Journal',
+        journal_name: 'Breakthrough Publishers Journal',
         sender_name: senderRole === 'admin' ? 'Administrator' : 'Editor'
       };
       

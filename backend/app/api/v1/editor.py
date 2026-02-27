@@ -724,7 +724,7 @@ async def invite_reviewer(
     reviewer_name = f"{reviewer.fname} {reviewer.lname or ''}".strip()
     paper_title = paper.title or "Untitled Paper"
     paper_abstract = paper.abstract or "No abstract provided"
-    journal_name = paper.journal or "AACS Journal"
+    journal_name = paper.journal or "Breakthrough Publishers Journal"
     
     # Calculate due date
     due_date = (datetime.utcnow() + timedelta(days=due_days)).strftime("%B %d, %Y")
@@ -972,7 +972,7 @@ async def update_paper_status(
         
         if author and author.email:
             author_name = f"{author.fname or ''} {author.lname or ''}".strip() or "Author"
-            journal_name = journal.fld_journal_name if journal else "AACS Journal"
+            journal_name = journal.fld_journal_name if journal else "Breakthrough Publishers Journal"
             
             # Schedule background email task
             background_tasks.add_task(
@@ -1088,7 +1088,7 @@ async def make_paper_decision(
         
         if author and author.email:
             author_name = f"{author.fname or ''} {author.lname or ''}".strip() or "Author"
-            journal_name = journal.fld_journal_name if journal else "AACS Journal"
+            journal_name = journal.fld_journal_name if journal else "Breakthrough Publishers Journal"
             
             # Schedule background email task
             background_tasks.add_task(

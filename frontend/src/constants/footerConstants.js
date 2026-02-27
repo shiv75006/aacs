@@ -1,7 +1,7 @@
 export const FOOTER_CONSTANTS = {
   CURRENT_YEAR: new Date().getFullYear(),
   COPYRIGHT_TEXT: 'Copyright © 2020',
-  COMPANY_NAME: 'AACS',
+  COMPANY_NAME: 'Breakthrough Publishers',
   RIGHTS_TEXT: 'All rights reserved',
   COMPANY_LINK: '#'
 };

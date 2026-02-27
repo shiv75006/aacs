@@ -15,8 +15,8 @@ const AdminSettings = () => {
   
   // Settings state
   const [settings, setSettings] = useState({
-    siteName: 'AACS Journal System',
-    adminEmail: 'admin@aacs.org',
+    siteName: 'Breakthrough Publishers Journal System',
+    adminEmail: 'admin@breakthroughpublishers.org',
     emailNotifications: true,
     autoAssignReviewers: false,
     reviewDeadlineDays: 14,

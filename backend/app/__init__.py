@@ -1,1 +1,1 @@
-"""AACS Backend API Application Package"""
+"""Breakthrough Publishers Backend API Application Package"""

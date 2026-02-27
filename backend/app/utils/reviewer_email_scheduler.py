@@ -71,7 +71,7 @@ class ReviewerEmailScheduler:
             hours_remaining = int(time_remaining.total_seconds() / 3600)
             
             # Build email content
-            invitation_link = f"https://aacsjournals.com/reviewer/assignments/{review.id}/review"
+            invitation_link = f"https://breakthroughpublishers.com/reviewer/assignments/{review.id}/review"
             
             subject = f"[REMINDER] Review Due in 48 Hours - {paper.title}"
             
@@ -99,12 +99,12 @@ class ReviewerEmailScheduler:
                         </a>
                         
                         <p style="margin-top: 30px; color: #666; font-size: 12px;">
-                            If you have any questions about the review or need to request an extension, please contact the editor at editor@aacsjournals.com.
+                            If you have any questions about the review or need to request an extension, please contact the editor at editor@breakthroughpublishers.com.
                         </p>
                         
                         <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
                         <p style="color: #999; font-size: 11px; margin: 0;">
-                            AACS Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
+                            Breakthrough Publishers Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
                         </p>
                     </div>
                 </body>
@@ -124,10 +124,10 @@ TIME REMAINING: {hours_remaining} hours
 Please log into the reviewer portal to submit your review:
 {invitation_link}
 
-If you have any questions or need to request an extension, contact the editor at editor@aacsjournals.com.
+If you have any questions or need to request an extension, contact the editor at editor@breakthroughpublishers.com.
 
 ---
-AACS Journal Management System
+Breakthrough Publishers Journal Management System
             """
             
             # Send email
@@ -208,7 +208,7 @@ AACS Journal Management System
     @staticmethod
     def _build_new_assignment_email(reviewer_name: str, paper_title: str, journal_name: str) -> str:
         """Build HTML email for new assignment notification"""
-        assignment_link = "https://aacsjournals.com/reviewer/assignments"
+        assignment_link = "https://breakthroughpublishers.com/reviewer/assignments"
         
         return f"""
         <html>
@@ -237,7 +237,7 @@ AACS Journal Management System
                     
                     <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
                     <p style="color: #999; font-size: 11px; margin: 0;">
-                        AACS Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
+                        Breakthrough Publishers Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
                     </p>
                 </div>
             </body>
@@ -247,7 +247,7 @@ AACS Journal Management System
     @staticmethod
     def _build_submission_confirmed_email(reviewer_name: str, paper_title: str, journal_name: str) -> str:
         """Build HTML email for submission confirmation"""
-        history_link = "https://aacsjournals.com/reviewer/history"
+        history_link = "https://breakthroughpublishers.com/reviewer/history"
         
         return f"""
         <html>
@@ -277,7 +277,7 @@ AACS Journal Management System
                     
                     <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
                     <p style="color: #999; font-size: 11px; margin: 0;">
-                        AACS Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
+                        Breakthrough Publishers Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
                     </p>
                 </div>
             </body>
@@ -306,7 +306,7 @@ AACS Journal Management System
                     
                     <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
                     <p style="color: #999; font-size: 11px; margin: 0;">
-                        AACS Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
+                        Breakthrough Publishers Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
                     </p>
                 </div>
             </body>

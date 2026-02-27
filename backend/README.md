@@ -1,6 +1,6 @@
-# AACS Backend API
+# Breakthrough Publishers Backend API
 
-FastAPI-based REST API backend for the Academic Article Collaboration System (AACS).
+FastAPI-based REST API backend for the Breakthrough Publishers Journal Management System.
 
 ## Features
 
@@ -207,8 +207,8 @@ curl -X GET "http://localhost:8000/api/v1/auth/me" \
 
 ### Connection Details
 
-The backend connects to the existing AACS MySQL database:
-- **Database**: aacsjour_aacs
+The backend connects to the MySQL database:
+- **Database**: aacsjour_aacs (legacy name)
 - **Tables**: User, Journal, Paper, Author, Editor, etc.
 - **ORM**: SQLAlchemy with connection pooling
 - **Health Check**: Pre-ping enabled for stale connection handling
@@ -276,7 +276,7 @@ JWT_EXPIRATION_HOURS=24
 REFRESH_TOKEN_EXPIRATION_DAYS=7
 
 # API
-API_TITLE=AACS Backend API
+API_TITLE=Breakthrough Publishers API
 API_VERSION=1.0.0
 ENVIRONMENT=development
 DEBUG=False
@@ -405,7 +405,7 @@ Follow these guidelines:
 
 ## License
 
-Copyright © 2026 AACS. All rights reserved.
+Copyright © 2026 Breakthrough Publishers. All rights reserved.
 
 ## Support
 

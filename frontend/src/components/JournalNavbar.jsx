@@ -104,7 +104,7 @@ const JournalNavbar = ({ journal }) => {
             rel="noopener noreferrer"
           >
             <span className="material-symbols-rounded">home</span>
-            AACS Journals
+            Breakthrough Publishers
           </a>
         </div>
       </div>

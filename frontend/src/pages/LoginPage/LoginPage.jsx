@@ -62,8 +62,8 @@ export const LoginPage = () => {
 
         <div className="auth-side-image">
           <div className="auth-side-content">
-            <h2>AACS</h2>
-            <p>Academic Article Collaboration System</p>
+            <h2>Breakthrough Publishers</h2>
+            <p>Academic Publishing Excellence</p>
           </div>
         </div>
       </div>
