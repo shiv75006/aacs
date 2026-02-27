@@ -60,32 +60,31 @@ const AuthorSubmissions = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1>My Submissions</h1>
-        <p>View and manage all your paper submissions</p>
-        <Link to="/submit" className={styles.submitBtn}>
-          <span className="material-symbols-rounded">add_circle</span>
-          Submit New Paper
-        </Link>
-      </div>
-
-      {/* Filter Section */}
-      <div className={styles.filterSection}>
-        <div className={styles.filterGroup}>
-          <label>Filter by Status:</label>
-          <select
-            value={filters.status || ''}
-            onChange={(e) => handleStatusFilter(e.target.value)}
-            className={styles.filterSelect}
-            disabled={loading}
-          >
-            <option value="">All Statuses</option>
-            <option value="pending">Pending Review</option>
-            <option value="under_review">Under Review</option>
-            <option value="accepted">Accepted</option>
-            <option value="rejected">Rejected</option>
-          </select>
+        <div className={styles.headerContent}>
+          <h1>My Submissions</h1>
+          <p>View and manage all your paper submissions</p>
+        </div>
+        {/* Filter Section */}
+        <div className={styles.filterSection}>
+          <div className={styles.filterGroup}>
+            <label>Filter by Status:</label>
+            <select
+              value={filters.status || ''}
+              onChange={(e) => handleStatusFilter(e.target.value)}
+              className={styles.filterSelect}
+              disabled={loading}
+            >
+              <option value="">All Statuses</option>
+              <option value="pending">Pending Review</option>
+              <option value="under_review">Under Review</option>
+              <option value="accepted">Accepted</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
         </div>
       </div>
+
+      
 
       {/* Loading State */}
       {loading && (

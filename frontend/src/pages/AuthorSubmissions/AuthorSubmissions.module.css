@@ -1,11 +1,37 @@
 /* AuthorSubmissions Styles */
+
+:root {
+  --header-height: 60px;
+  --sidebar-width: 56px;
+  --primary: #0D4715;
+  --primary-hover: #41644A;
+  --primary-light: #E8F5E9;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
+  --bg-white: #ffffff;
+  --bg-light: #f8fafc;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --transition: all 0.2s ease;
+}
+
 .container {
   max-width: 100%;
   font-family: 'Inter', sans-serif;
 }
 
 .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
   margin-bottom: 32px;
+}
+
+.headerContent {
+  flex: 1;
 }
 
 .header h1 {
@@ -18,34 +44,9 @@
 .header p {
   font-size: 14px;
   color: #64748b;
-  margin: 0 0 16px 0;
+  margin: 0;
 }
 
-.submitBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: #2563eb;
-  color: white;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.2s ease;
-  border: none;
-  cursor: pointer;
-}
-
-.submitBtn:hover {
-  background: #1d4ed8;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-}
-
-.submitBtn span {
-  font-size: 20px;
-}
 
 /* Stats Grid */
 .statsGrid {
@@ -98,11 +99,8 @@
 
 /* Filter Section */
 .filterSection {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
+  padding: 0;
+  margin: 0;
 }
 
 .filterGroup {
@@ -118,7 +116,7 @@
 }
 
 .filterSelect {
-  padding: 10px 12px;
+  padding: 4px 20px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   font-size: 14px;

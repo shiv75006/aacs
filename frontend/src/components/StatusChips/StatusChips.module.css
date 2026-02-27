@@ -9,14 +9,14 @@
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 10px;
+  gap: 2px;
+  padding: 2px 12px;
+  border-radius: 32px;
+  font-size: 8px;
   font-weight: 700;
   white-space: nowrap;
   transition: all 0.2s ease;
-  letter-spacing: 0.1em;
+  margin-top: 4px;
 }
 
 .label {

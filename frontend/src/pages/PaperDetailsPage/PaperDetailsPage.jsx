@@ -288,7 +288,14 @@ const PaperDetailsPage = () => {
     }
 
     // Sort events by date (oldest first for timeline)
-    events.sort((a, b) => a.date - b.date);
+    // Paper Submitted should always be first regardless of timestamp
+    events.sort((a, b) => {
+      // Paper Submitted always comes first
+      if (a.type === 'submitted') return -1;
+      if (b.type === 'submitted') return 1;
+      // Then sort by date (oldest first)
+      return a.date - b.date;
+    });
 
     return events;
   };
@@ -650,8 +657,8 @@ const PaperDetailsPage = () => {
           {/* Title Section */}
           <div className={styles.headerMain}>
             <div className={styles.headerLeft}>
+              <h1 className={styles.pageTitle}>{paper.title}</h1>  
               <StatusChips status={paper.status} />
-              <h1 className={styles.pageTitle}>{paper.title}</h1>
             </div>
             
             {/* Action Buttons */}

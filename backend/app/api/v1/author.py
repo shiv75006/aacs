@@ -193,6 +193,31 @@ async def get_submission_detail(
             "submitted_at": review_submission.submitted_at.isoformat() if review_submission and review_submission.submitted_at else None
         })
     
+    # Get author (primary author) info
+    author_info = None
+    if paper.added_by and paper.added_by.isdigit():
+        author = db.query(User).filter(User.id == int(paper.added_by)).first()
+        if author:
+            author_info = {
+                "id": author.id,
+                "name": f"{author.fname or ''} {author.lname or ''}".strip() or "Unknown",
+                "email": author.email
+            }
+    
+    # Get co-authors
+    co_authors_list = []
+    co_authors = db.query(PaperCoAuthor).filter(PaperCoAuthor.paper_id == paper.id).all()
+    for ca in co_authors:
+        co_authors_list.append({
+            "id": ca.id,
+            "first_name": ca.first_name,
+            "middle_name": ca.middle_name,
+            "last_name": ca.last_name,
+            "email": ca.email,
+            "affiliation": ca.affiliation,
+            "is_corresponding": ca.is_corresponding
+        })
+    
     return {
         "id": paper.id,
         "title": paper.title,
@@ -210,7 +235,9 @@ async def get_submission_detail(
         "revision_notes": paper.revision_notes,
         "revision_requested_date": paper.revision_requested_date.isoformat() if paper.revision_requested_date else None,
         "revision_type": paper.revision_type,
-        "editor_comments": paper.editor_comments
+        "editor_comments": paper.editor_comments,
+        "author": author_info,
+        "co_authors": co_authors_list
     }
 
 
