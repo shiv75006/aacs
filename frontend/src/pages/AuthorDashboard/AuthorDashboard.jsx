@@ -61,15 +61,6 @@ export const AuthorDashboard = () => {
     return 'Slate';
   };
 
-  const getStatusIcon = (status) => {
-    const statusLower = status?.toLowerCase() || '';
-    if (statusLower.includes('submit')) return 'article';
-    if (statusLower.includes('review')) return 'history_edu';
-    if (statusLower.includes('accept') || statusLower.includes('publish')) return 'check_circle';
-    if (statusLower.includes('reject')) return 'cancel';
-    return 'description';
-  };
-
   if (loading) {
     return (
       <div className={styles.dashboardLoading}>
@@ -145,43 +136,46 @@ export const AuthorDashboard = () => {
         </div>
       </div>
 
+      {/* Section Heading */}
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>My Recent Submissions</h2>
+        <Link to="/author/submissions" className={styles.viewAllLink}>View All</Link>
+      </div>
+
       {/* Main Content Grid */}
       <div className={styles.dashboardGrid}>
         {/* Recent Submissions */}
         <div className={`${styles.dashboardCard} ${styles.submissionsCard}`}>
-          <div className={styles.cardHeader}>
-            <h3>My Recent Submissions</h3>
-            <Link to="/author/submissions" className={styles.viewAllLink}>View All</Link>
-          </div>
-          <div className={styles.submissionsList}>
+          <div className={styles.tableWrapper}>
             {recentSubmissions.length > 0 ? (
-              recentSubmissions.map((paper, index) => (
-                <div key={paper.id || index} className={styles.submissionItem}>
-                  <div className={styles.submissionContent}>
-                    <div className={`${styles.submissionIcon} ${styles[`submissionIcon${getStatusColorClass(paper.status)}`]}`}>
-                      <span className="material-symbols-rounded">{getStatusIcon(paper.status)}</span>
-                    </div>
-                    <div className={styles.submissionDetails}>
-                      <h4>{paper.title || paper.name || 'Untitled Paper'}</h4>
-                      <div className={styles.submissionMeta}>
+              <table className={styles.submissionsTable}>
+                <thead>
+                  <tr>
+                    <th>Paper Title</th>
+                    <th>Journal</th>
+                    <th>Status</th>
+                    <th>Paper ID</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentSubmissions.map((paper, index) => (
+                    <tr key={paper.id || index}>
+                      <td className={styles.titleCell}>
+                        <span className={styles.paperTitle}>{paper.title || paper.name || 'Untitled Paper'}</span>
+                      </td>
+                      <td className={styles.journalCell}>
+                        {paper.journal_name || (typeof paper.journal === 'object' ? paper.journal?.name : paper.journal) || 'No Journal'}
+                      </td>
+                      <td>
                         <span className={`${styles.statusBadge} ${styles[`statusBadge${getStatusColorClass(paper.status)}`]}`}>
                           {paper.status || 'Unknown'}
                         </span>
-                        <span className={styles.paperInfo}>
-                          ID: {paper.id} • 
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '4px' }}>
-                            <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>newspaper</span>
-                            {paper.journal_name || (typeof paper.journal === 'object' ? paper.journal?.name : paper.journal) || 'No Journal'}
-                          </span>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <button className={styles.moreBtn}>
-                    <span className="material-symbols-rounded">more_vert</span>
-                  </button>
-                </div>
-              ))
+                      </td>
+                      <td className={styles.idCell}>#{paper.id}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             ) : (
               <div className={styles.noData}>
                 <span className="material-symbols-rounded">inbox</span>
