@@ -29,8 +29,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid #e2e8f0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-bottom: 1px solid #ddd;
+  background: #0D4715;
   color: white;
 }
 
@@ -123,8 +123,8 @@
 .formGroup select:focus,
 .formGroup textarea:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+  border-color: #0D4715;
+  box-shadow: 0 0 0 3px rgba(13, 71, 21, 0.15);
 }
 
 .formGroup select {
@@ -139,8 +139,8 @@
 }
 
 .placeholdersSection {
-  background: #fefce8;
-  border: 1px solid #fef08a;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 20px;
@@ -149,7 +149,7 @@
 .placeholdersSection h4 {
   margin: 0 0 16px 0;
   font-size: 0.95rem;
-  color: #854d0e;
+  color: #0D4715;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -212,8 +212,8 @@
 }
 
 .checkbox input[type="checkbox"]:checked + .checkmark {
-  background: #667eea;
-  border-color: #667eea;
+  background: #0D4715;
+  border-color: #0D4715;
 }
 
 .checkbox input[type="checkbox"]:checked + .checkmark::after {
@@ -267,14 +267,15 @@
 }
 
 .sendBtn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #0D4715;
   color: white;
   border: none;
 }
 
 .sendBtn:hover:not(:disabled) {
+  background: #41644A;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(13, 71, 21, 0.3);
 }
 
 .sendBtn:disabled,

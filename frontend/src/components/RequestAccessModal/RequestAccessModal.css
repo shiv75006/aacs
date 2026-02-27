@@ -151,13 +151,13 @@
 }
 
 .role-card:hover:not(.pending) {
-  border-color: var(--role-color, #3b82f6);
+  border-color: var(--role-color, #0D4715);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .role-card.selected {
-  border-color: var(--role-color, #3b82f6);
-  background: color-mix(in srgb, var(--role-color, #3b82f6) 5%, white);
+  border-color: var(--role-color, #0D4715);
+  background: color-mix(in srgb, var(--role-color, #0D4715) 5%, white);
 }
 
 .role-card.pending {
@@ -179,8 +179,8 @@
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: color-mix(in srgb, var(--role-color, #3b82f6) 15%, white);
-  color: var(--role-color, #3b82f6);
+  background: color-mix(in srgb, var(--role-color, #0D4715) 15%, white);
+  color: var(--role-color, #0D4715);
 }
 
 .role-card-header h3 {
@@ -208,7 +208,7 @@
 }
 
 .selected-check {
-  color: var(--role-color, #3b82f6);
+  color: var(--role-color, #0D4715);
   font-size: 24px;
 }
   border-radius: 6px;
@@ -239,7 +239,7 @@
 }
 
 .role-benefits li .material-symbols-rounded {
-  color: var(--role-color, #3b82f6);
+  color: var(--role-color, #0D4715);
   flex-shrink: 0;
   font-size: 18px;
 }
@@ -290,8 +290,8 @@
 
 .form-group textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #0D4715;
+  box-shadow: 0 0 0 3px rgba(13, 71, 21, 0.1);
 }
 
 .char-count {
@@ -309,7 +309,7 @@
   gap: 8px;
   width: 100%;
   padding: 14px 24px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: #0D4715;
   color: white;
   border: none;
   border-radius: 10px;
@@ -320,8 +320,9 @@
 }
 
 .submit-btn:hover:not(:disabled) {
+  background: #41644A;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(13, 71, 21, 0.3);
 }
 
 .submit-btn:disabled {

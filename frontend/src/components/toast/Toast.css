@@ -58,9 +58,9 @@
 
 /* Toast Types */
 .toast-success {
-  background-color: #d4edda;
-  color: #155724;
-  border-left: 4px solid #28a745;
+  background-color: #f0fdf4;
+  color: #0D4715;
+  border-left: 4px solid #0D4715;
 }
 
 .toast-error {
@@ -76,9 +76,9 @@
 }
 
 .toast-info {
-  background-color: #d1ecf1;
-  color: #0c5460;
-  border-left: 4px solid #17a2b8;
+  background-color: #f0fdf4;
+  color: #0D4715;
+  border-left: 4px solid #41644A;
 }
 
 /* Animation */

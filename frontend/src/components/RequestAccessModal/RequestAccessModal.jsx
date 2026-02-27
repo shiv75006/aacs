@@ -6,7 +6,7 @@ const ROLE_CONFIG = {
   author: {
     label: 'Author',
     icon: 'edit_document',
-    color: '#3b82f6',
+    color: '#0D4715',
     description: 'Submit research papers and manage your submissions through the editorial process.',
     benefits: [
       'Submit papers to any journal',
@@ -18,7 +18,7 @@ const ROLE_CONFIG = {
   reviewer: {
     label: 'Reviewer',
     icon: 'rate_review',
-    color: '#10b981',
+    color: '#41644A',
     description: 'Review and evaluate research papers assigned to you by editors.',
     benefits: [
       'Review assigned papers',
@@ -30,7 +30,7 @@ const ROLE_CONFIG = {
   editor: {
     label: 'Editor',
     icon: 'edit_note',
-    color: '#f59e0b',
+    color: '#4ade80',
     description: 'Manage journal submissions and coordinate the peer review process.',
     benefits: [
       'Manage submissions',

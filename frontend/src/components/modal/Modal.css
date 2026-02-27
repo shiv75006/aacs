@@ -62,7 +62,7 @@
 
 /* Modal Types - Minimal colored left border only */
 .modal-info {
-  border-left: 3px solid #0066cc;
+  border-left: 3px solid #0D4715;
 }
 
 .modal-warning {
@@ -74,7 +74,7 @@
 }
 
 .modal-success {
-  border-left: 3px solid #4caf50;
+  border-left: 3px solid #0D4715;
 }
 
 .modal-body {
@@ -124,11 +124,11 @@
 }
 
 .modal-btn-info {
-  background-color: #0066cc;
+  background-color: #0D4715;
 }
 
 .modal-btn-info:hover {
-  background-color: #0052a3;
+  background-color: #41644A;
 }
 
 .modal-btn-warning {
@@ -148,11 +148,11 @@
 }
 
 .modal-btn-success {
-  background-color: #4caf50;
+  background-color: #0D4715;
 }
 
 .modal-btn-success:hover {
-  background-color: #388e3c;
+  background-color: #41644A;
 }
 
 /* Animations */
