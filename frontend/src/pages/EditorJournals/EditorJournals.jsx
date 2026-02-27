@@ -41,20 +41,8 @@ const EditorJournals = () => {
   };
 
   const handleEdit = (journal) => {
-    setEditingJournal({
-      ...journal,
-      // Form state
-      description: journal.description || '',
-      co_editor: journal.chief_editor || '',
-      journal_logo: journal.journal_logo || '',
-      guidelines: journal.guidelines || '',
-      // Chief editor only fields
-      fld_journal_name: journal.journal_name || '',
-      freq: journal.frequency || '',
-      issn_ol: journal.issn_online || '',
-      issn_prt: journal.issn_print || '',
-      cheif_editor: journal.chief_editor || '',
-    });
+    // Navigate to journal detail page with edit mode
+    navigate(`/journal/${journal.journal_id}?edit=true`);
   };
 
   const handleView = (journal) => {

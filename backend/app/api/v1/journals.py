@@ -295,6 +295,23 @@ async def create_journal(
                 section_role.editor_type = 'section_editor'
         db.commit()
     
+    # Create JournalDetails if any detail fields are provided
+    if any([data.about_journal, data.chief_say, data.aim_objective, 
+            data.criteria, data.scope, data.detailed_guidelines, data.readings]):
+        journal_details = JournalDetails(
+            journal_id=str(new_journal.fld_id),
+            about_journal=data.about_journal,
+            cheif_say=data.chief_say,
+            aim_objective=data.aim_objective,
+            criteria=data.criteria,
+            scope=data.scope,
+            guidelines=data.detailed_guidelines,
+            readings=data.readings,
+            added_on=datetime.utcnow()
+        )
+        db.add(journal_details)
+        db.commit()
+    
     return JournalResponse(
         id=new_journal.fld_id,
         name=new_journal.fld_journal_name,
@@ -370,6 +387,46 @@ async def update_journal(
     
     db.commit()
     db.refresh(journal)
+    
+    # Update or create JournalDetails if any detail fields are provided
+    if any([data.about_journal, data.chief_say, data.aim_objective, 
+            data.criteria, data.scope, data.detailed_guidelines, data.readings]):
+        journal_details = db.query(JournalDetails).filter(
+            JournalDetails.journal_id == str(journal_id)
+        ).first()
+        
+        if journal_details:
+            # Update existing details
+            if data.about_journal is not None:
+                journal_details.about_journal = data.about_journal
+            if data.chief_say is not None:
+                journal_details.cheif_say = data.chief_say
+            if data.aim_objective is not None:
+                journal_details.aim_objective = data.aim_objective
+            if data.criteria is not None:
+                journal_details.criteria = data.criteria
+            if data.scope is not None:
+                journal_details.scope = data.scope
+            if data.detailed_guidelines is not None:
+                journal_details.guidelines = data.detailed_guidelines
+            if data.readings is not None:
+                journal_details.readings = data.readings
+        else:
+            # Create new details
+            journal_details = JournalDetails(
+                journal_id=str(journal_id),
+                about_journal=data.about_journal,
+                cheif_say=data.chief_say,
+                aim_objective=data.aim_objective,
+                criteria=data.criteria,
+                scope=data.scope,
+                guidelines=data.detailed_guidelines,
+                readings=data.readings,
+                added_on=datetime.utcnow()
+            )
+            db.add(journal_details)
+        
+        db.commit()
     
     return JournalResponse(
         id=journal.fld_id,

@@ -1,8 +1,16 @@
-/* ReviewerProfile Page Styles */
+/* ReviewerProfile Page Styles - Green Theme */
+:root {
+  --primary-green: #0D4715;
+  --secondary-green: #41644A;
+  --accent-green: #41957d;
+  --light-green: #E8F5E9;
+}
+
 .container {
   max-width: 1000px;
   margin: 0 auto;
   width: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .header {
@@ -12,7 +20,7 @@
 .header h1 {
   font-size: 28px;
   font-weight: 700;
-  color: #0f172a;
+  color: #0D4715;
   margin: 0 0 8px 0;
 }
 
@@ -45,6 +53,7 @@
 }
 
 .loading span {
+  color: #41644A;
   animation: spin 2s linear infinite;
 }
 
@@ -82,7 +91,7 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0D4715 0%, #41644A 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -111,7 +120,7 @@
 
 .title {
   font-size: 13px;
-  color: #94a3b8;
+  color: #41644A;
   margin: 4px 0 0 0;
 }
 
@@ -120,7 +129,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: #3b82f6;
+  background: #0D4715;
   color: white;
   border: none;
   border-radius: 8px;
@@ -132,8 +141,8 @@
 }
 
 .editBtn:hover {
-  background: #2563eb;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: #41644A;
+  box-shadow: 0 4px 12px rgba(13, 71, 21, 0.3);
 }
 
 .editBtn span.material-symbols-rounded {
@@ -156,7 +165,7 @@
 .label {
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: #41644A;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -199,8 +208,8 @@
 
 .formGroup input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #0D4715;
+  box-shadow: 0 0 0 3px rgba(13, 71, 21, 0.1);
 }
 
 .formActions {
@@ -223,13 +232,13 @@
 }
 
 .saveBtn {
-  background: #10b981;
+  background: #0D4715;
   color: white;
 }
 
 .saveBtn:hover {
-  background: #059669;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  background: #41644A;
+  box-shadow: 0 4px 12px rgba(13, 71, 21, 0.3);
 }
 
 .cancelBtn {
@@ -261,8 +270,8 @@
 }
 
 .statCard:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #41644A;
+  box-shadow: 0 4px 12px rgba(13, 71, 21, 0.1);
 }
 
 .statIcon {
@@ -272,8 +281,8 @@
   width: 48px;
   height: 48px;
   border-radius: 8px;
-  background: #f0f9ff;
-  color: #0284c7;
+  background: #E8F5E9;
+  color: #0D4715;
   flex-shrink: 0;
 }
 
@@ -293,7 +302,7 @@
 .statNumber {
   font-size: 24px;
   font-weight: 700;
-  color: #0f172a;
+  color: #0D4715;
   margin: 0;
 }
 

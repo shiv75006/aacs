@@ -94,6 +94,14 @@ export const updateJournal = async (id, journalData) => {
       publication: journalData.publication,
       advertisement: journalData.advertisement,
       description: journalData.description,
+      // Journal details fields
+      about_journal: journalData.about_journal,
+      chief_say: journalData.chief_say,
+      aim_objective: journalData.aim_objective,
+      criteria: journalData.criteria,
+      scope: journalData.scope,
+      detailed_guidelines: journalData.detailed_guidelines,
+      readings: journalData.readings,
     };
     return await apiService.put(JOURNAL_ENDPOINTS.UPDATE(id), transformedData);
   } catch (error) {

@@ -11,7 +11,6 @@ export const ReviewerDashboard = () => {
     total_assignments: 0,
     pending_reviews: 0,
     completed_reviews: 0,
-    avg_review_time: 0,
   });
   const [recentAssignments, setRecentAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +18,6 @@ export const ReviewerDashboard = () => {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      // Only fetch if user is authenticated
       if (!isAuthenticated || !user) {
         setLoading(false);
         return;
@@ -29,20 +27,15 @@ export const ReviewerDashboard = () => {
         setLoading(true);
         setError(null);
         
-        // Fetch dashboard stats
         const statsData = await acsApi.reviewer.getDashboardStats();
-        console.log('Reviewer stats received:', statsData);
         setStats({
           total_assignments: statsData?.total_assignments || 0,
           pending_reviews: statsData?.pending_reviews || 0,
           completed_reviews: statsData?.completed_reviews || 0,
-          avg_review_time: statsData?.avg_review_time || 0,
         });
         
-        // Fetch recent assignments
         try {
           const assignmentsData = await acsApi.reviewer.listAssignments(0, 5);
-          console.log('Assignments data received:', assignmentsData);
           const assignments = assignmentsData?.assignments || assignmentsData || [];
           setRecentAssignments(Array.isArray(assignments) ? assignments.slice(0, 5) : []);
         } catch (assignErr) {
@@ -63,27 +56,18 @@ export const ReviewerDashboard = () => {
 
   const getStatusColorClass = (status) => {
     const statusLower = status?.toLowerCase() || '';
-    if (statusLower.includes('pending')) return 'Blue';
-    if (statusLower.includes('progress') || statusLower.includes('in_progress')) return 'Amber';
+    if (statusLower.includes('pending')) return 'Amber';
+    if (statusLower.includes('progress') || statusLower.includes('in_progress')) return 'Blue';
     if (statusLower.includes('submit') || statusLower.includes('completed')) return 'Emerald';
-    if (statusLower.includes('reject')) return 'Rose';
+    if (statusLower.includes('reject') || statusLower.includes('declined')) return 'Rose';
     return 'Slate';
-  };
-
-  const getStatusIcon = (status) => {
-    const statusLower = status?.toLowerCase() || '';
-    if (statusLower.includes('pending')) return 'schedule';
-    if (statusLower.includes('progress') || statusLower.includes('in_progress')) return 'history_edu';
-    if (statusLower.includes('submit') || statusLower.includes('completed')) return 'check_circle';
-    if (statusLower.includes('reject')) return 'cancel';
-    return 'description';
   };
 
   if (loading) {
     return (
       <div className={styles.dashboardLoading}>
-        <span className={`material-symbols-rounded ${styles.loadingIcon}`}>hourglass_empty</span>
-        <span>Loading dashboard...</span>
+        <span className={`material-symbols-rounded ${styles.loadingIcon}`}>clock_loader_20</span>
+        <span>Loading</span>
       </div>
     );
   }
@@ -104,11 +88,9 @@ export const ReviewerDashboard = () => {
         <div className={styles.statCard}>
           <div className={styles.statTop}>
             <div className={`${styles.statIcon} ${styles.statIconBlue}`}>
-              <span className="material-symbols-rounded">description</span>
+              <span className="material-symbols-rounded">assignment</span>
             </div>
-            <span className={`${styles.statTrend} ${stats.total_assignments > 0 ? styles.statTrendUp : styles.statTrendStable}`}>
-              {stats.total_assignments > 0 ? '↑' : '→'} {stats.total_assignments}
-            </span>
+            <span className={`${styles.statTrend} ${styles.statTrendUp}`}>↑ Active</span>
           </div>
           <div className={styles.statBottom}>
             <p className={styles.statLabel}>Total Assignments</p>
@@ -121,9 +103,7 @@ export const ReviewerDashboard = () => {
             <div className={`${styles.statIcon} ${styles.statIconAmber}`}>
               <span className="material-symbols-rounded">rate_review</span>
             </div>
-            <span className={`${styles.statTrend} ${stats.pending_reviews > 0 ? styles.statTrendDown : styles.statTrendStable}`}>
-              {stats.pending_reviews > 0 ? '↓' : '→'} {stats.pending_reviews}
-            </span>
+            <span className={`${styles.statTrend} ${styles.statTrendDown}`}>Action Required</span>
           </div>
           <div className={styles.statBottom}>
             <p className={styles.statLabel}>Pending Reviews</p>
@@ -136,71 +116,75 @@ export const ReviewerDashboard = () => {
             <div className={`${styles.statIcon} ${styles.statIconEmerald}`}>
               <span className="material-symbols-rounded">check_circle</span>
             </div>
-            <span className={`${styles.statTrend} ${styles.statTrendUp}`}>↑ {stats.completed_reviews}</span>
+            <span className={`${styles.statTrend} ${styles.statTrendUp}`}>↑ Great</span>
           </div>
           <div className={styles.statBottom}>
             <p className={styles.statLabel}>Completed Reviews</p>
             <h3 className={styles.statNumber}>{(stats.completed_reviews || 0).toLocaleString()}</h3>
           </div>
         </div>
-
-
       </div>
 
-      {/* Recent Assignments */}
-      <div className={styles.dashboardCard}>
-        <div className={styles.cardHeader}>
-          <h3>Recent Assignments</h3>
-          <Link to="/reviewer/assignments" className={styles.viewAllLink}>
-            View All
-          </Link>
-        </div>
+      {/* Section Heading */}
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>Recent Assignments</h2>
+        <Link to="/reviewer/assignments" className={styles.viewAllLink}>View All</Link>
+      </div>
 
-        <div className={styles.assignmentsList}>
-          {recentAssignments.length === 0 ? (
-            <div className={styles.emptyState}>
-              <span className="material-symbols-rounded">inbox</span>
-              <p>No assignments yet</p>
-            </div>
-          ) : (
-            recentAssignments.map((assignment) => (
-              <div key={assignment.id} className={`${styles.assignmentItem} ${assignment.is_resubmission && assignment.status === 'pending' ? styles.reReviewItem : ''}`}>
-                <div className={styles.assignmentContent}>
-                  <div className={styles.assignmentInfo}>
-                    <h4 className={styles.assignmentTitle}>
-                      {assignment.paper_title}
+      {/* Recent Assignments Table */}
+      <div className={styles.dashboardCard}>
+        <div className={styles.tableWrapper}>
+          {recentAssignments.length > 0 ? (
+            <table className={styles.assignmentsTable}>
+              <thead>
+                <tr>
+                  <th>Paper Title</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentAssignments.map((assignment, index) => (
+                  <tr key={assignment.id || index}>
+                    <td className={styles.titleCell}>
+                      <span className={styles.paperTitle}>
+                        {assignment.paper_title || 'Untitled Paper'}
+                      </span>
                       {assignment.paper_version > 1 && (
                         <span className={styles.versionTag}>v{assignment.paper_version}</span>
                       )}
-                    </h4>
-                    {assignment.is_resubmission && assignment.status === 'pending' && (
-                      <span className={styles.resubmitBadge}>
-                        <span className="material-symbols-rounded">replay</span>
-                        Re-review Required
+                      {assignment.is_resubmission && assignment.status === 'pending' && (
+                        <span className={styles.resubmitBadge}>Re-review</span>
+                      )}
+                    </td>
+                    <td className={styles.dateCell}>
+                      {new Date(assignment.due_date).toLocaleDateString()}
+                    </td>
+                    <td>
+                      <span className={`${styles.statusBadge} ${styles[`statusBadge${getStatusColorClass(assignment.status)}`]}`}>
+                        {assignment.is_resubmission && assignment.status === 'pending' 
+                          ? 'Re-review Pending' 
+                          : assignment.status || 'Unknown'}
                       </span>
-                    )}
-                    <p className={styles.assignmentDate}>
-                      <span className="material-symbols-rounded">calendar_today</span>
-                      Due: {new Date(assignment.due_date).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-                <div className={styles.assignmentActions}>
-                  <span className={`${styles.statusBadge} ${styles[`status${getStatusColorClass(assignment.status)}`]}`}>
-                    {assignment.is_resubmission && assignment.status === 'pending' ? 'Pending Re-review' : assignment.status}
-                  </span>
-                  <button
-                    className={`${styles.startReviewBtn} ${assignment.is_resubmission && assignment.status === 'pending' ? styles.reReviewBtn : ''}`}
-                    onClick={() => {
-                      navigate(`/reviewer/assignments/${assignment.id}/review`);
-                    }}
-                    title={assignment.is_resubmission && assignment.status === 'pending' ? "Re-review Paper" : "Start Review"}
-                  >
-                    <span className="material-symbols-rounded">{assignment.is_resubmission && assignment.status === 'pending' ? 'replay' : 'chevron_right'}</span>
-                  </button>
-                </div>
-              </div>
-            ))
+                    </td>
+                    <td>
+                      <button
+                        className={styles.reviewBtn}
+                        onClick={() => navigate(`/reviewer/assignments/${assignment.id}/review`)}
+                      >
+                        <span className="material-symbols-rounded">chevron_right</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className={styles.noData}>
+              <span className="material-symbols-rounded">inbox</span>
+              <p>No assignments yet</p>
+            </div>
           )}
         </div>
       </div>

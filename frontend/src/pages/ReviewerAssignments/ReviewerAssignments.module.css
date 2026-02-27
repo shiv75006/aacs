@@ -1,25 +1,82 @@
-/* ReviewerAssignments Page Styles */
+/* ReviewerAssignments Page Styles - Green Theme */
+:root {
+  --primary-green: #0D4715;
+  --secondary-green: #41644A;
+  --accent-green: #41957d;
+  --light-green: #E8F5E9;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .header {
-  margin-bottom: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-bottom: 24px;
 }
 
-.header h1 {
+.headerContent h1 {
   font-size: 28px;
   font-weight: 700;
-  color: #0f172a;
+  color: #0D4715;
   margin: 0 0 8px 0;
 }
 
-.header p {
+.headerContent p {
   font-size: 14px;
   color: #64748b;
   margin: 0;
+}
+
+/* Filter Section */
+.filterSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filterGroup label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.filterSelect {
+  padding: 8px 32px 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #374151;
+  background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E") no-repeat right 8px center;
+  background-size: 16px;
+  appearance: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 150px;
+}
+
+.filterSelect:hover {
+  border-color: #41644A;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: #0D4715;
+  box-shadow: 0 0 0 3px rgba(13, 71, 21, 0.1);
 }
 
 /* Search Bar */
@@ -37,13 +94,13 @@
 
 .searchBar:focus-within {
   background-color: #f1f5f9;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: #0D4715;
+  box-shadow: 0 0 0 3px rgba(13, 71, 21, 0.1);
 }
 
 .searchBar span {
   font-size: 20px;
-  color: #94a3b8;
+  color: #41644A;
   flex-shrink: 0;
 }
 
@@ -59,7 +116,7 @@
 }
 
 .searchInput::placeholder {
-  color: #cbd5e1;
+  color: #94a3b8;
 }
 
 .clearSearchBtn {
@@ -77,8 +134,8 @@
 }
 
 .clearSearchBtn:hover {
-  color: #64748b;
-  background-color: #e2e8f0;
+  color: #0D4715;
+  background-color: #E8F5E9;
 }
 
 /* Loading State */
@@ -94,7 +151,7 @@
 
 .loading span {
   font-size: 48px;
-  color: #cbd5e1;
+  color: #41644A;
   animation: spin 2s linear infinite;
 }
 
@@ -126,21 +183,30 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 12px;
   padding: 64px 32px;
   background: #f9fafb;
-  border: 2px dashed #e5e7eb;
+  border: 2px dashed #d1d5db;
   border-radius: 12px;
-  color: #94a3b8;
+  color: #64748b;
 }
 
 .empty span {
-  font-size: 48px;
+  font-size: 56px;
+  color: #41644A;
+}
+
+.empty h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
 }
 
 .empty p {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
+  color: #6b7280;
 }
 
 /* Assignments List */
@@ -151,188 +217,6 @@
   margin-bottom: 32px;
 }
 
-.assignmentCard {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 20px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-  min-height: 100px;
-}
-
-.assignmentCard:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.cardContent {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  justify-content: center;
-}
-
-.titleSection {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.paperTitle {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Meta Information */
-.metaSection {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.metaLeft {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-.metaItem {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #64748b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.metaItem span.material-symbols-rounded {
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.metaRight {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-/* Status Badge */
-.statusBadge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.statusPending {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.statusInProgress {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.statusCompleted {
-  background: #dcfce7;
-  color: #166534;
-}
-
-/* Urgency Badge */
-.urgencyBadge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.urgencyHigh {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.urgencyMedium {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.urgencyLow {
-  background: #dcfce7;
-  color: #166534;
-}
-
-/* Action Buttons */
-.startBtn,
-.continueBtn,
-.viewBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
-  align-self: center;
-  height: fit-content;
-}
-
-.startBtn:hover,
-.continueBtn:hover {
-  background: #2563eb;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.viewBtn {
-  background: #8b5cf6;
-}
-
-.viewBtn:hover {
-  background: #7c3aed;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-}
-
-.startBtn span,
-.continueBtn span,
-.viewBtn span {
-  display: flex;
-  align-items: center;
-}
-
-.startBtn span.material-symbols-rounded,
-.continueBtn span.material-symbols-rounded,
-.viewBtn span.material-symbols-rounded {
-  font-size: 18px;
-}
-
 /* Pagination */
 .paginationContainer {
   display: flex;
@@ -341,287 +225,42 @@
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
-  .assignmentCard {
-    gap: 12px;
-    padding: 16px;
+@media (max-width: 900px) {
+  .header {
+    flex-direction: column;
+    gap: 16px;
   }
 
-  .cardContent {
-    gap: 8px;
+  .filterSection {
+    width: 100%;
   }
 
-  .paperTitle {
-    font-size: 14px;
-  }
-
-  .metaItem {
-    font-size: 12px;
-  }
-
-  .startBtn,
-  .continueBtn,
-  .viewBtn {
-    padding: 6px 12px;
-    font-size: 12px;
+  .filterSelect {
+    flex: 1;
   }
 }
 
-@media (max-width: 768px) {
-  .assignmentCard {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    padding: 12px 16px;
-    min-height: auto;
+@media (max-width: 640px) {
+  .headerContent h1 {
+    font-size: 24px;
   }
 
-  .cardContent {
-    width: 100%;
-  }
-
-  .metaSection {
-    width: 100%;
+  .filterGroup {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
-  }
-
-  .metaLeft {
     width: 100%;
-    flex-direction: column;
-    gap: 8px;
   }
 
-  .metaRight {
+  .filterSelect {
     width: 100%;
-    justify-content: space-between;
   }
 
-  .startBtn,
-  .continueBtn,
-  .viewBtn {
-    width: 100%;
-    justify-content: center;
-    align-self: stretch;
-  }
-}
-
-/* Pending Invitations Section */
-.invitationsSection {
-  display: none;
-  margin-bottom: 48px;
-}
-
-.sectionHeader {
-  display: none;
-}
-
-.sectionHeader h2 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0;
-}
-
-.invitationCount {
-  display: none;
-}
-
-.invitationsList {
-  display: none;
-}
-
-.invitationCard {
-  display: none;
-}
-
-.invitationCard:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-  border-color: #fbbf24;
-}
-
-.cardContent {
-  display: none;
-}
-
-.invitationIcon {
-  display: none;
-}
-
-.invitationInfo {
-  flex: 1;
-  min-width: 0;
-}
-
-.invitationTitle {
-  display: none;
-}
-
-.invitationMeta {
-  display: none;
-}
-
-.invitationMessage {
-  display: none;
-}
-
-.invitationActions {
-  display: none;
-}
-
-.acceptBtn,
-.declineBtn {
-  display: none;
-}
-
-.acceptBtn:hover:not(:disabled) {
-  background-color: #059669;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
-}
-
-.acceptBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.declineBtn:hover:not(:disabled) {
-  background-color: #dc2626;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
-}
-
-.declineBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.acceptBtn span,
-.declineBtn span {
-  font-size: 16px;
-}
-
-.emptyInvitations {
-  display: none;
-}
-
-.emptyInvitations span {
-  font-size: 36px;
-  color: #cbd5e1;
-}
-
-.emptyInvitations p {
-  margin: 0;
-  font-size: 14px;
-}
-
-.assignmentsHeader {
-  margin-top: 40px;
-  padding-bottom: 12px;
-}
-
-.assignmentsHeader h2 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0;
-}
-
-@media (max-width: 768px) {
   .searchBar {
-    margin-bottom: 20px;
+    padding: 10px 14px;
   }
 
   .searchInput {
     font-size: 13px;
-  }
-
-  .searchBar span {
-    font-size: 18px;
-  }
-
-  .invitationCard {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .invitationActions {
-    width: 100%;
-    margin-left: 0;
-    margin-top: 12px;
-  }
-
-  .acceptBtn,
-  .declineBtn {
-    flex: 1;
-    justify-content: center;
-  }
-
-  .cardContent {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .searchBar {
-    padding: 10px 12px;
-    margin-bottom: 16px;
-    gap: 10px;
-  }
-
-  .searchInput {
-    font-size: 12px;
-  }
-
-  .searchInput::placeholder {
-    font-size: 12px;
-  }
-
-  .searchBar span {
-    font-size: 16px;
-  }
-
-  .clearSearchBtn {
-    padding: 2px;
-  }
-
-  .clearSearchBtn span {
-    font-size: 16px;
-  }
-
-  .invitationCard {
-    padding: 12px;
-  }
-
-  .cardContent {
-    gap: 12px;
-  }
-
-  .invitationIcon {
-    min-width: 36px;
-    width: 36px;
-    height: 36px;
-    font-size: 18px;
-  }
-
-  .invitationTitle {
-    font-size: 14px;
-  }
-
-  .invitationMeta {
-    gap: 8px;
-  }
-
-  .acceptBtn,
-  .declineBtn {
-    padding: 6px 10px;
-    font-size: 12px;
-  }
-
-  .acceptBtn span,
-  .declineBtn span {
-    font-size: 14px;
   }
 }
 

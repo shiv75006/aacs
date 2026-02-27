@@ -41,6 +41,14 @@ const AdminJournals = () => {
     publication: '',
     advertisement: '',
     abs_ind: '',
+    // Journal details fields
+    about_journal: '',
+    chief_say: '',
+    aim_objective: '',
+    criteria: '',
+    scope: '',
+    detailed_guidelines: '',
+    readings: '',
   });
   const [newEditor, setNewEditor] = useState({
     editor_name: '',
@@ -194,6 +202,13 @@ const AdminJournals = () => {
         publication: '',
         advertisement: '',
         abs_ind: '',
+        about_journal: '',
+        chief_say: '',
+        aim_objective: '',
+        criteria: '',
+        scope: '',
+        detailed_guidelines: '',
+        readings: '',
       });
       setSelectedChiefEditor('');
       setSelectedCoEditor('');
@@ -783,6 +798,80 @@ const AdminJournals = () => {
                   onChange={(e) => setNewJournal({...newJournal, description: e.target.value})}
                   placeholder="Enter a detailed description of the journal..."
                   rows={4}
+                />
+              </div>
+
+              {/* Journal Details - Content for Subdomain Pages */}
+              <h3 className={styles.sectionTitle}>Journal Content (for Subdomain Pages)</h3>
+              <p className={styles.sectionHint}>This content will be displayed on the journal's subdomain website.</p>
+              
+              <div className={styles.formGroup}>
+                <label>About the Journal</label>
+                <textarea
+                  value={newJournal.about_journal}
+                  onChange={(e) => setNewJournal({...newJournal, about_journal: e.target.value})}
+                  placeholder="Enter detailed information about the journal, its history, mission, etc. (HTML supported)"
+                  rows={5}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Aim & Objectives</label>
+                <textarea
+                  value={newJournal.aim_objective}
+                  onChange={(e) => setNewJournal({...newJournal, aim_objective: e.target.value})}
+                  placeholder="Enter the aims and objectives of the journal (HTML supported)"
+                  rows={4}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Scope</label>
+                <textarea
+                  value={newJournal.scope}
+                  onChange={(e) => setNewJournal({...newJournal, scope: e.target.value})}
+                  placeholder="Enter the scope and topics covered by the journal (HTML supported)"
+                  rows={4}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Submission Criteria</label>
+                <textarea
+                  value={newJournal.criteria}
+                  onChange={(e) => setNewJournal({...newJournal, criteria: e.target.value})}
+                  placeholder="Enter the criteria for paper submission (HTML supported)"
+                  rows={4}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Detailed Author Guidelines</label>
+                <textarea
+                  value={newJournal.detailed_guidelines}
+                  onChange={(e) => setNewJournal({...newJournal, detailed_guidelines: e.target.value})}
+                  placeholder="Enter detailed submission and formatting guidelines (HTML supported)"
+                  rows={5}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>From the Editor's Desk</label>
+                <textarea
+                  value={newJournal.chief_say}
+                  onChange={(e) => setNewJournal({...newJournal, chief_say: e.target.value})}
+                  placeholder="Enter a message from the Chief Editor (HTML supported)"
+                  rows={4}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Recommended Readings</label>
+                <textarea
+                  value={newJournal.readings}
+                  onChange={(e) => setNewJournal({...newJournal, readings: e.target.value})}
+                  placeholder="Enter recommended readings or references (HTML supported)"
+                  rows={3}
                 />
               </div>
             </div>

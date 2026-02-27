@@ -55,6 +55,14 @@ class JournalRequest(BaseModel):
     chief_editor_id: Optional[int] = Field(None, description="ID of the chief editor to assign")
     co_editor_id: Optional[int] = Field(None, description="ID of the co-editor to assign")
     section_editor_ids: Optional[List[int]] = Field(None, description="List of section editor IDs to assign")
+    # Journal details fields
+    about_journal: Optional[str] = Field(None, description="About the journal (HTML content)")
+    chief_say: Optional[str] = Field(None, description="Chief editor's statement (HTML content)")
+    aim_objective: Optional[str] = Field(None, description="Aims and objectives (HTML content)")
+    criteria: Optional[str] = Field(None, description="Publication criteria (HTML content)")
+    scope: Optional[str] = Field(None, description="Journal scope (HTML content)")
+    detailed_guidelines: Optional[str] = Field(None, description="Detailed submission guidelines (HTML content)")
+    readings: Optional[str] = Field(None, description="Recommended readings (HTML content)")
     
     class Config:
         json_schema_extra = {

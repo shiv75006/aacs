@@ -11,6 +11,7 @@ const ReviewerAssignments = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [statusFilter, setStatusFilter] = useState('');
 
   const fetchAssignmentsWithFilters = useCallback(async (skip, limit, filters) => {
     return await acsApi.reviewer.listAssignments(skip, limit, '', filters.sort || 'due_soon');
@@ -21,11 +22,9 @@ const ReviewerAssignments = () => {
     loading,
     error,
     pagination,
-    filters,
     goToPage,
   } = useListWithFilters(fetchAssignmentsWithFilters, { sort: 'due_soon' }, 10, refreshTrigger);
 
-  // Refresh data when page regains focus
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
@@ -36,32 +35,22 @@ const ReviewerAssignments = () => {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
-  // Debounce search term
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm.toLowerCase());
     }, 300);
-
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Filter assignments based on search term
   const assignments = allAssignments.filter(assignment => {
-    if (!debouncedSearchTerm) return true;
-    const title = (assignment.paper_title || '').toLowerCase();
-    const code = (assignment.paper_code || '').toLowerCase();
-    return title.includes(debouncedSearchTerm) || code.includes(debouncedSearchTerm);
+    const matchesSearch = !debouncedSearchTerm || 
+      (assignment.paper_title || '').toLowerCase().includes(debouncedSearchTerm) ||
+      (assignment.paper_code || '').toLowerCase().includes(debouncedSearchTerm);
+    
+    const matchesStatus = !statusFilter || assignment.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
   });
-
-  // Debug logging
-  useEffect(() => {
-    if (assignments.length > 0) {
-      console.log('✓ Assignments loaded:', assignments.length);
-    }
-    if (error) {
-      console.error('✗ Error loading assignments:', error);
-    }
-  }, [assignments, error]);
 
   const handleStartReview = (assignmentId) => {
     navigate(`/reviewer/assignments/${assignmentId}/review`);
@@ -70,8 +59,26 @@ const ReviewerAssignments = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1>My Submissions</h1>
-        <p>View and manage your paper review assignments</p>
+        <div className={styles.headerContent}>
+          <h1>My Assignments</h1>
+          <p>View and manage your paper review assignments</p>
+        </div>
+        <div className={styles.filterSection}>
+          <div className={styles.filterGroup}>
+            <label>Filter by Status:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className={styles.filterSelect}
+              disabled={loading}
+            >
+              <option value="">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -115,16 +122,14 @@ const ReviewerAssignments = () => {
       {!loading && !error && assignments.length === 0 && (
         <div className={styles.empty}>
           <span className="material-symbols-rounded">inbox</span>
-          <p>No assignments yet</p>
+          <h3>No assignments found</h3>
+          <p>You don't have any review assignments yet.</p>
         </div>
       )}
 
       {/* Assignments List */}
       {!loading && assignments.length > 0 && (
         <>
-          <div className={styles.assignmentsHeader}>
-            <h2>Active Assignments</h2>
-          </div>
           <div className={styles.assignmentsList}>
             {assignments.map((assignment) => (
               <AssignmentCard

@@ -1,8 +1,16 @@
-/* ReviewerHistory Page Styles */
+/* ReviewerHistory Page Styles - Green Theme */
+:root {
+  --primary-green: #0D4715;
+  --secondary-green: #41644A;
+  --accent-green: #41957d;
+  --light-green: #E8F5E9;
+}
+
 .container {
   max-width: 1000px;
   margin: 0 auto;
   width: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .header {
@@ -12,7 +20,7 @@
 .header h1 {
   font-size: 28px;
   font-weight: 700;
-  color: #0f172a;
+  color: #0D4715;
   margin: 0 0 8px 0;
 }
 
@@ -35,7 +43,7 @@
 
 .loading span {
   font-size: 48px;
-  color: #cbd5e1;
+  color: #41644A;
   animation: spin 2s linear infinite;
 }
 
@@ -70,13 +78,14 @@
   gap: 16px;
   padding: 64px 32px;
   background: #f9fafb;
-  border: 2px dashed #e5e7eb;
+  border: 2px dashed #d1d5db;
   border-radius: 12px;
-  color: #94a3b8;
+  color: #64748b;
 }
 
 .empty span {
-  font-size: 48px;
+  font-size: 56px;
+  color: #41644A;
 }
 
 .empty p {
@@ -101,8 +110,8 @@
 }
 
 .reviewCard:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #41644A;
+  box-shadow: 0 4px 12px rgba(13, 71, 21, 0.1);
 }
 
 .cardHeader {
@@ -136,27 +145,27 @@
   flex-shrink: 0;
 }
 
-.recommendationAccept {
+.recommendation-accept {
   background: #dcfce7;
   color: #166534;
 }
 
-.recommendationMinor {
+.recommendation-minor {
   background: #fef3c7;
   color: #92400e;
 }
 
-.recommendationMajor {
+.recommendation-major {
   background: #fed7aa;
   color: #9a3412;
 }
 
-.recommendationReject {
+.recommendation-reject {
   background: #fee2e2;
   color: #991b1b;
 }
 
-.recommendationNeutral {
+.recommendation-neutral {
   background: #f3f4f6;
   color: #374151;
 }
@@ -189,6 +198,7 @@
 
 .metaItem span.material-symbols-rounded {
   font-size: 16px;
+  color: #41644A;
 }
 
 .averageRating {
@@ -197,11 +207,12 @@
   gap: 4px;
   font-size: 14px;
   font-weight: 600;
-  color: #f59e0b;
+  color: #41644A;
 }
 
 .averageRating span.material-symbols-rounded {
   font-size: 18px;
+  color: #0D4715;
 }
 
 /* Ratings Grid */
@@ -211,7 +222,7 @@
   gap: 16px;
   margin-bottom: 16px;
   padding: 16px;
-  background: #f9fafb;
+  background: #E8F5E9;
   border-radius: 8px;
 }
 
@@ -224,7 +235,7 @@
 .ratingLabel {
   font-size: 12px;
   font-weight: 600;
-  color: #475569;
+  color: #0D4715;
   text-transform: capitalize;
 }
 
@@ -238,26 +249,26 @@
 }
 
 .starFilled {
-  color: #f59e0b;
+  color: #0D4715;
 }
 
 .starEmpty {
-  color: #cbd5e1;
+  color: #A5D6A7;
 }
 
 /* Comments */
 .comments {
   margin-top: 16px;
   padding: 16px;
-  background: #f0f9ff;
-  border-left: 4px solid #0284c7;
+  background: #E8F5E9;
+  border-left: 4px solid #0D4715;
   border-radius: 8px;
 }
 
 .comments h4 {
   font-size: 12px;
   font-weight: 600;
-  color: #0d4016;
+  color: #0D4715;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin: 0 0 8px 0;
