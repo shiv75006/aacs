@@ -1050,7 +1050,7 @@
   width: 100%;
   max-width: 560px;
   max-height: 80vh;
-  overflow: visible;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -1087,7 +1087,7 @@
 
 .modalBody {
   padding: 24px;
-  overflow: visible;
+  overflow-y: auto;
   flex: 1;
   min-height: 0;
 }
@@ -1120,11 +1120,11 @@
 .emailType {
   font-size: 10px;
   font-weight: 700;
-  color: #2563eb;
+  color: #0D4715;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   padding: 4px 10px;
-  background: #eff6ff;
+  background: #f0fdf4;
   border-radius: 4px;
 }
 
@@ -1152,7 +1152,7 @@
 }
 
 .statussent {
-  color: #059669;
+  color: #0D4715;
 }
 
 .statusfailed {
@@ -1193,7 +1193,7 @@
   align-items: center;
   justify-content: center;
   padding: 4px 12px;
-  background: #2563eb;
+  background: #0D4715;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -1491,4 +1491,83 @@
   font-size: 11px;
   color: #64748b;
   margin: 2px 0 0 0;
+}
+
+/* =====================================================
+   Responsive - Modal
+   ===================================================== */
+@media (max-width: 640px) {
+  .modalOverlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+  
+  .modalContent {
+    max-width: 100%;
+    max-height: 85vh;
+    border-radius: 16px 16px 0 0;
+  }
+  
+  .modalHeader {
+    padding: 16px 20px;
+  }
+  
+  .modalHeader h2 {
+    font-size: 16px;
+  }
+  
+  .modalBody {
+    padding: 16px;
+    overflow-y: auto;
+  }
+  
+  .correspondenceItem,
+  .revisionItem {
+    padding: 14px;
+  }
+  
+  .correspondenceHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  
+  .emailType {
+    font-size: 9px;
+    padding: 3px 8px;
+  }
+  
+  .emailDate {
+    font-size: 11px;
+  }
+  
+  .correspondenceBody {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .emailSubject {
+    font-size: 13px;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+  
+  .emailStatus {
+    font-size: 12px;
+  }
+  
+  .readStatus {
+    margin-left: 0;
+  }
+  
+  .messagePreview {
+    padding: 10px;
+    font-size: 12px;
+  }
+  
+  .revisionMeta {
+    flex-direction: column;
+    gap: 4px;
+  }
 }
