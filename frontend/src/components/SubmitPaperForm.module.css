@@ -256,7 +256,7 @@
 .select:focus,
 .textarea:focus {
   outline: none;
-  border-color: #769FCD;
+  border-color: #0d4016;
   box-shadow: 0 0 0 3px rgba(118, 159, 205, 0.1);
 }
 
@@ -326,7 +326,7 @@
 }
 
 .uploadArea:hover {
-  border-color: #769FCD;
+  border-color: #0d4016;
   background: #f0f5ff;
 }
 
@@ -348,7 +348,7 @@
 
 .browseBtn {
   display: inline-block;
-  background: #769FCD;
+  background: #0d4016;
   color: white;
   padding: 10px 24px;
   border-radius: 6px;
@@ -420,7 +420,7 @@
 }
 
 .reviewSection h3 {
-  color: #769FCD;
+  color: #0d4016;
   font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
@@ -494,7 +494,7 @@
 }
 
 .btnPrimary {
-  background: #769FCD;
+  background: #0d4016;
   color: white;
 }
 
@@ -612,7 +612,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: linear-gradient(135deg, #769FCD 0%, #5a7fa8 100%);
+  background: linear-gradient(135deg, #0d4016 0%, #5a7fa8 100%);
   color: white;
   padding: 6px 12px;
   border-radius: 20px;
@@ -825,7 +825,7 @@
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: #769FCD;
+  accent-color: #0d4016;
 }
 
 /* Review Grid */
@@ -844,7 +844,7 @@
 .reviewLabel {
   font-size: 12px;
   font-weight: 600;
-  color: #769FCD;
+  color: #0d4016;
   text-transform: uppercase;
 }
 
@@ -859,7 +859,7 @@
   padding: 12px 16px;
   border-radius: 8px;
   margin-bottom: 10px;
-  border-left: 3px solid #769FCD;
+  border-left: 3px solid #0d4016;
 }
 
 .coAuthorReview strong {

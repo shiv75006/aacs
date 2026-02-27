@@ -29,7 +29,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #EEF5FF;
+  background: #ffffff;
 }
 
 .carousel-item img {
@@ -38,7 +38,7 @@
   width: auto;
   height: auto;
   object-fit: contain;
-  background: #EEF5FF;
+  background: #ffffff;
   display: block;
   margin: 0 auto;
 }
@@ -65,7 +65,7 @@
 
 .slider-description h4 {
   margin: 0;
-  background: #769FCD;
+  background: #0d4016;
   font-size: 100%;
   padding: 2px 3px;
   font-family: "Trebuchet MS", Trebuchet, Arial, Verdana, sans-serif;

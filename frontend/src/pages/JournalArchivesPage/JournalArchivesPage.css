@@ -19,7 +19,7 @@
 
 /* Page Header */
 .archives-page-header {
-  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #0d4016 0%, #0d4016 100%);
   color: #fff;
   padding: 3rem 1.5rem;
 }
@@ -163,7 +163,7 @@
   width: 20px;
   height: 20px;
   border: 2px solid #e2e8f0;
-  border-top-color: #2563eb;
+  border-top-color: #0d4016;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -198,7 +198,7 @@
 }
 
 .issue-card:hover {
-  border-color: #2563eb;
+  border-color: #0d4016;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
   transform: translateY(-2px);
 }
@@ -209,7 +209,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #0d4016 0%, #0d4016 100%);
   border-radius: 6px;
   margin-bottom: 1rem;
 }

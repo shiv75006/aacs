@@ -146,7 +146,7 @@
 
 .sort-select:focus {
   outline: none;
-  border-color: #769fcd;
+  border-color: #0d4016;
 }
 
 /* Assignments List */
@@ -165,7 +165,7 @@
 }
 
 .assignment-card:hover {
-  border-color: #769fcd;
+  border-color: #0d4016;
   box-shadow: 0 2px 12px rgba(118, 159, 205, 0.15);
 }
 
@@ -304,7 +304,7 @@
 
 .btn-start,
 .btn-continue {
-  background-color: #769fcd;
+  background-color: #0d4016;
   color: white;
 }
 
@@ -322,12 +322,12 @@
 
 .btn-details {
   background-color: transparent;
-  color: #769fcd;
-  border: 1px solid #769fcd;
+  color: #0d4016;
+  border: 1px solid #0d4016;
 }
 
 .btn-details:hover {
-  background-color: #769fcd;
+  background-color: #0d4016;
   color: white;
 }
 
@@ -356,7 +356,7 @@
   padding: 1.25rem;
   background-color: #f8f9fa;
   border-radius: 8px;
-  border-left: 4px solid #769fcd;
+  border-left: 4px solid #0d4016;
 }
 
 .guideline-card h4 {

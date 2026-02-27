@@ -1,27 +1,27 @@
 .role-switcher {
   position: relative;
   display: inline-flex;
+  
 }
 
 .role-switcher-trigger {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  background: linear-gradient(135deg, var(--role-color, #3b82f6) 0%, color-mix(in srgb, var(--role-color, #3b82f6) 80%, #000) 100%);
-  color: white;
+  padding: 8px 20px;
+  background-color: #ffffff;
+  color: #0D4715;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #41644A;
 }
 
 .role-switcher-trigger:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .role-switcher-trigger:disabled {
@@ -35,6 +35,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: #0D4715;
 }
 
 .role-switcher-trigger .chevron {
@@ -71,11 +72,11 @@
 
 .dropdown-header {
   padding: 12px 16px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: #F5F5F5;
+  border-bottom: 1px solid #ddd;
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: #41644A;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -99,7 +100,7 @@
 }
 
 .role-option:hover:not(:disabled) {
-  background: #f1f5f9;
+  background: #F5F5F5;
 }
 
 .role-option:disabled {
@@ -107,7 +108,7 @@
 }
 
 .role-option.active {
-  background: color-mix(in srgb, var(--role-color, #3b82f6) 10%, transparent);
+  background: #F5F5F5;
 }
 
 .role-option-icon {
@@ -117,8 +118,8 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--role-color, #3b82f6) 15%, white);
-  color: var(--role-color, #3b82f6);
+  background: #0D4715;
+  color: #FFFFFF;
 }
 
 .role-option-info {
@@ -131,21 +132,21 @@
 .role-option-label {
   font-size: 14px;
   font-weight: 500;
-  color: #1e293b;
+  color: #333333;
 }
 
 .role-option-desc {
   font-size: 12px;
-  color: #64748b;
+  color: #41644A;
 }
 
 .role-check {
-  color: var(--role-color, #3b82f6);
+  color: #0D4715;
 }
 
 .role-loading {
   animation: spin 1s linear infinite;
-  color: #64748b;
+  color: #41644A;
 }
 
 @keyframes spin {
@@ -154,31 +155,5 @@
   }
   to {
     transform: rotate(360deg);
-  }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .role-dropdown {
-    background: #1e293b;
-    border: 1px solid #334155;
-  }
-
-  .dropdown-header {
-    background: #0f172a;
-    border-color: #334155;
-    color: #94a3b8;
-  }
-
-  .role-option:hover:not(:disabled) {
-    background: #334155;
-  }
-
-  .role-option-label {
-    color: #f1f5f9;
-  }
-
-  .role-option-desc {
-    color: #94a3b8;
   }
 }

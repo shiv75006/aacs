@@ -9,7 +9,7 @@
   top: 0;
   z-index: 1000;
   background-color: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #ddd;
 }
 
 .container {
@@ -54,7 +54,7 @@
 }
 
 .navLink {
-  color: #000;
+  color: #333333;
   font-size: 14px;
   text-decoration: none;
   background: none;
@@ -65,7 +65,7 @@
 }
 
 .navLink:hover {
-  color: #999;
+  color: #41644A;
 }
 
 /* User Menu */
@@ -89,7 +89,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #769FCD, #5A7FA6);
+  background: linear-gradient(135deg, #0D4715, #41644A);
   color: white;
   font-weight: 600;
   font-size: 14px;
@@ -108,12 +108,12 @@
 .userName {
   font-size: 14px;
   font-weight: 500;
-  color: #000;
+  color: #333333;
 }
 
 .userRole {
   font-size: 12px;
-  color: #666;
+  color: #41644A;
   text-transform: capitalize;
 }
 
@@ -145,8 +145,8 @@
 }
 
 .dropdownItem:hover {
-  background: #f5f5f5;
-  color: #769FCD;
+  background: #F5F5F5;
+  color: #0D4715;
 }
 
 .logout {
@@ -160,14 +160,14 @@
 
 /* Signup Button */
 .signupBtn {
-  background: #F68048;
+  background: #0D4715;
   color: white;
   padding: 8px 16px;
   transition: background 0.3s;
 }
 
 .signupBtn:hover {
-  background: #e67e3a;
+  background: #41644A;
   color: white;
 }
 

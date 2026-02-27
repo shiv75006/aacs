@@ -17,7 +17,7 @@
 .journal-card-header {
   padding: 10px;
   display: flex;
-  color: #769FCD;
+  color: #0d4016;
   align-items: center;
   gap: 10px;
 }
@@ -150,7 +150,7 @@
 }
 
 .journal-visit-btn {
-  background: #769FCD;
+  background: #0d4016;
   color: white;
 }
 
@@ -164,8 +164,8 @@
 
 .journal-details-btn {
   background: white;
-  color: #769FCD;
-  border: 1px solid #769FCD;
+  color: #0d4016;
+  border: 1px solid #0d4016;
 }
 
 .journal-details-btn:hover {
@@ -173,7 +173,7 @@
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(118, 159, 205, 0.15);
   text-decoration: none;
-  color: #769FCD;
+  color: #0d4016;
 }
 
 .journal-card-btn:active {

@@ -1,58 +1,42 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import './Footer.css';
+import styles from './Footer.module.css';
 
 const Footer = () => {
   return (
-    <footer className="footer-wrapper">
-      <div className="footer-container">
-        <div className="footer-content">
-          {/* Branding Column */}
-          <div className="footer-branding">
-            <span className="footer-logo-text">Breakthrough Publishers</span>
-            <p className="footer-description">
-              Dedicated to the global advancement of combinatorial sciences through rigorous peer-reviewed research and scholarly excellence.
+    <footer className={styles.footerWrapper}>
+      <div className={styles.footerContainer}>
+        <div className={styles.footerGrid}>
+          <div className={styles.footerCompany}>
+            <h4 className={styles.footerBrand}>BreakThrough Publishers India</h4>
+            <p className={styles.footerDescription}>
+              Empowering researchers globally through excellence in academic publishing. Our platform ensures rigorous peer review and maximum visibility for your work.
             </p>
           </div>
-
-          {/* Quick Links Column */}
-          <div className="footer-section">
-            <h5 className="footer-section-title">Quick Links</h5>
-            <ul className="footer-links">
-              <li><Link to="/journals" className="footer-link">Publishing Policy</Link></li>
-              <li><Link to="/submit" className="footer-link">Author Guidelines</Link></li>
-              <li><Link to="/journals" className="footer-link">Editorial Board</Link></li>
-              <li><a href="#ethics" className="footer-link">Ethics & Malpractice</a></li>
+          <div className={styles.footerLinks}>
+            <h5 className={styles.footerLinksTitle}>Resources</h5>
+            <ul className={styles.footerLinksList}>
+              <li><Link to="/author-guidelines">For Authors</Link></li>
+              <li><Link to="/reviewer-guidelines">For Reviewers</Link></li>
+              <li><Link to="/libraries">For Libraries</Link></li>
+              <li><Link to="/open-access">Open Access</Link></li>
             </ul>
           </div>
-
-          {/* Contact Column */}
-          <div className="footer-section">
-            <h5 className="footer-section-title">Contact</h5>
-            <ul className="footer-links">
-              <li className="footer-contact-item">
-                <span className="material-icons">email</span>
-                <span>editorial@breakthroughpublishers.org</span>
-              </li>
-              <li className="footer-contact-item">
-                <span className="material-icons">location_on</span>
-                <span>123 Academic Way, Science City</span>
-              </li>
-              <li className="footer-contact-item">
-                <span className="material-icons">phone</span>
-                <span>+1 (555) 123-4567</span>
-              </li>
+          <div className={styles.footerLinks}>
+            <h5 className={styles.footerLinksTitle}>Legal</h5>
+            <ul className={styles.footerLinksList}>
+              <li><Link to="/privacy-policy">Privacy Policy</Link></li>
+              <li><Link to="/terms-of-service">Terms of Service</Link></li>
+              <li><Link to="/cookie-policy">Cookie Policy</Link></li>
             </ul>
           </div>
         </div>
-
-        {/* Bottom Section */}
-        <div className="footer-bottom">
-          <p>© 2024 Breakthrough Publishers. All rights reserved.</p>
-          <div className="footer-bottom-links">
-            <a href="#privacy" className="footer-bottom-link">Privacy Policy</a>
-            <a href="#terms" className="footer-bottom-link">Terms of Service</a>
-            <a href="#cookies" className="footer-bottom-link">Cookie Policy</a>
+        <div className={styles.footerBottom}>
+          <p>© 2024 BreakThrough Publishers India. All rights reserved.</p>
+          <div className={styles.footerSocial}>
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">Twitter</a>
+            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">Facebook</a>
           </div>
         </div>
       </div>

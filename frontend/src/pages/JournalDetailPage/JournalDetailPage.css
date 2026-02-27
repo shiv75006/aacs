@@ -1,5 +1,5 @@
 .journal-detail-page {
-  background-color: #EEF5FF;
+  background-color: #ffffff;
   min-height: calc(100vh - 200px);
   padding: 1.5rem 2rem;
   color: #000000;
@@ -142,8 +142,8 @@
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #EEF5FF;
-  border-top-color: #769FCD;
+  border: 4px solid #ffffff;
+  border-top-color: #0d4016;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -174,7 +174,7 @@
 
 .journal-detail-error .btn-back,
 .journal-detail-empty .btn-back {
-  background: #769FCD;
+  background: #0d4016;
   color: white;
   padding: 12px 30px;
   border: none;
@@ -213,7 +213,7 @@
 
   .info-card {
     border-left: none;
-    border-top: 4px solid #769FCD;
+    border-top: 4px solid #0d4016;
   }
 }
 
@@ -369,7 +369,7 @@
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #769FCD;
+  border-color: #0d4016;
   background-color: #ffffff;
 }
 
@@ -409,7 +409,7 @@
 }
 
 .form-actions .btn-primary {
-  background-color: #769FCD;
+  background-color: #0d4016;
   color: white;
 }
 
@@ -484,8 +484,8 @@
 .spinner-small {
   width: 20px;
   height: 20px;
-  border: 2px solid #EEF5FF;
-  border-top-color: #769FCD;
+  border: 2px solid #ffffff;
+  border-top-color: #0d4016;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -525,11 +525,11 @@
 }
 
 .volume-header:hover {
-  background: #EEF5FF;
+  background: #ffffff;
 }
 
 .volume-header.expanded {
-  background: #769FCD;
+  background: #0d4016;
   color: white;
   border-bottom: 1px solid #5a8ac0;
 }
@@ -601,7 +601,7 @@
 }
 
 .issue-card:hover {
-  border-color: #769FCD;
+  border-color: #0d4016;
   box-shadow: 0 4px 12px rgba(118, 159, 205, 0.15);
   transform: translateY(-2px);
 }
@@ -645,7 +645,7 @@
 .issue-papers .material-symbols-rounded,
 .issue-pages .material-symbols-rounded {
   font-size: 16px;
-  color: #769FCD;
+  color: #0d4016;
 }
 
 /* Responsive Volumes */

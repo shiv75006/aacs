@@ -1,34 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import RequestAccessModal from '../RequestAccessModal';
 import './RoleSwitcher.css';
 
 const ROLE_CONFIG = {
   author: {
     label: 'Author',
     icon: 'edit_document',
-    color: '#3b82f6',
+    color: '#41644A',
     dashboardPath: '/author',
     description: 'Submit and manage papers'
   },
   reviewer: {
     label: 'Reviewer',
     icon: 'rate_review',
-    color: '#10b981',
+    color: '#0D4715',
     dashboardPath: '/reviewer',
     description: 'Review assigned papers'
   },
   editor: {
     label: 'Editor',
     icon: 'edit_note',
-    color: '#f59e0b',
+    color: '#4ade80',
     dashboardPath: '/editor',
     description: 'Manage journal submissions'
   },
   admin: {
     label: 'Admin',
     icon: 'admin_panel_settings',
-    color: '#ef4444',
+    color: '#333333',
     dashboardPath: '/admin',
     description: 'System administration'
   }
@@ -39,6 +40,7 @@ const RoleSwitcher = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
   const dropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -53,12 +55,7 @@ const RoleSwitcher = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Don't render if user has only one role or no roles
   const approvedRoles = roles.filter(r => r.status === 'approved');
-  if (approvedRoles.length <= 1) {
-    return null;
-  }
-
   const currentRoleConfig = ROLE_CONFIG[activeRole?.toLowerCase()] || ROLE_CONFIG.author;
 
   const handleRoleSwitch = async (newRole) => {
@@ -134,8 +131,26 @@ const RoleSwitcher = () => {
               );
             })}
           </div>
+          <div className="dropdown-divider"></div>
+          <div className="dropdown-footer">
+            <button 
+              className="request-access-btn"
+              onClick={() => {
+                setIsOpen(false);
+                setShowRequestModal(true);
+              }}
+            >
+              <span className="material-symbols-rounded">add_moderator</span>
+              <span>Request Additional Access</span>
+            </button>
+          </div>
         </div>
       )}
+
+      <RequestAccessModal
+        isOpen={showRequestModal}
+        onClose={() => setShowRequestModal(false)}
+      />
     </div>
   );
 };

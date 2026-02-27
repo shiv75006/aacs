@@ -1,5 +1,5 @@
 .issue-papers-page {
-  background-color: #EEF5FF;
+  background-color: #ffffff;
   min-height: calc(100vh - 200px);
   padding: 1.5rem 2rem;
   color: #000000;
@@ -39,7 +39,7 @@
 }
 
 .volume-badge {
-  background: #769FCD;
+  background: #0d4016;
   color: white;
 }
 
@@ -128,7 +128,7 @@
 }
 
 .paper-card:hover {
-  border-color: #769FCD;
+  border-color: #0d4016;
   box-shadow: 0 4px 12px rgba(118, 159, 205, 0.15);
   transform: translateY(-2px);
 }
@@ -140,7 +140,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #769FCD;
+  background: #0d4016;
   color: white;
   border-radius: 8px;
   font-weight: 600;
@@ -163,7 +163,7 @@
 }
 
 .paper-card:hover .paper-title {
-  color: #769FCD;
+  color: #0d4016;
 }
 
 .paper-authors {
@@ -221,7 +221,7 @@
 }
 
 .paper-card:hover .paper-arrow {
-  color: #769FCD;
+  color: #0d4016;
 }
 
 .paper-arrow .material-symbols-rounded {
@@ -241,8 +241,8 @@
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #EEF5FF;
-  border-top-color: #769FCD;
+  border: 4px solid #ffffff;
+  border-top-color: #0d4016;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -275,7 +275,7 @@
 }
 
 .btn-back {
-  background: #769FCD;
+  background: #0d4016;
   color: white;
   padding: 12px 30px;
   border: none;

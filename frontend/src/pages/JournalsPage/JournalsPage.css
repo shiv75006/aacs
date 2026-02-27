@@ -1,6 +1,6 @@
 .journals-page {
   min-height: calc(100vh - 200px);
-  background-color: #EEF5FF;
+  background-color: #ffffff;
   padding: 1.5rem 2rem;
 }
 
@@ -82,7 +82,7 @@
 
 .spinner {
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #769FCD;
+  border-top: 4px solid #0d4016;
   border-radius: 50%;
   width: 50px;
   height: 50px;
@@ -97,7 +97,7 @@
 
 .journals-loading p {
   font-size: 1.1rem;
-  color: #769FCD;
+  color: #0d4016;
   margin: 0;
 }
 
@@ -149,14 +149,14 @@
 }
 
 .footer-link {
-  color: #769FCD;
+  color: #0d4016;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.3s ease;
 }
 
 .footer-link:hover {
-  color: #F68048;
+  color: #4ade80;
 }
 
 @media (max-width: 768px) {

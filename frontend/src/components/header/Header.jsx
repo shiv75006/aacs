@@ -46,7 +46,7 @@ const Header = () => {
     <nav className={styles.navbar}>
       <div className={styles.container}>
         <Link className={styles.brand} to="/">
-          <span className={styles.logoText}>Breakthrough Publishers</span>
+          <span className={styles.logoText}>Breakthrough Publishers India</span>
         </Link>
         
         <ul className={styles.navList}>

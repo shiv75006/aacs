@@ -35,7 +35,7 @@
   width: 50px;
   height: 50px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #769FCD;
+  border-top: 4px solid #0d4016;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 20px;
@@ -128,7 +128,7 @@
 }
 
 .invitation-header {
-  background: linear-gradient(135deg, #769FCD 0%, #5a7aa0 100%);
+  background: linear-gradient(135deg, #0d4016 0%, #166534 100%);
   color: white;
   padding: 40px 30px;
   display: flex;
@@ -198,7 +198,7 @@
 .paper-title {
   font-size: 16px;
   font-weight: 600;
-  color: #769FCD;
+  color: #0d4016;
   line-height: 1.6;
 }
 
@@ -264,7 +264,7 @@
 }
 
 .button-primary {
-  background: linear-gradient(135deg, #769FCD 0%, #5a7aa0 100%);
+  background: linear-gradient(135deg, #0d4016 0%, #166534 100%);
   color: white;
 }
 
@@ -342,7 +342,7 @@
 
 .decline-reason-input:focus {
   outline: none;
-  border-color: #769FCD;
+  border-color: #0d4016;
   box-shadow: 0 0 0 3px rgba(118, 159, 205, 0.1);
 }
 
@@ -361,7 +361,7 @@
 .already-accepted-notice,
 .already-declined-notice {
   background: #f0f7ff;
-  border-left: 4px solid #769FCD;
+  border-left: 4px solid #0d4016;
   padding: 20px;
   border-radius: 6px;
   margin-top: 20px;
@@ -459,7 +459,7 @@
   }
 
   .invitation-header {
-    background: linear-gradient(135deg, #5a7aa0 0%, #4a6280 100%);
+    background: linear-gradient(135deg, #166534 0%, #4a6280 100%);
   }
 
   .invitation-details {
@@ -518,7 +518,7 @@
   }
 
   .decline-reason-input:focus {
-    border-color: #769FCD;
+    border-color: #0d4016;
   }
 
   .spinner {

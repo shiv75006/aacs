@@ -72,13 +72,14 @@
 }
 
 .portalBadge {
-  padding: 0.25rem 0.75rem;
+  padding: 0.5rem 0.75rem;
   background: var(--primary-light);
   color: var(--primary);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 8px;
+  font-weight: 400;
   border-radius: 20px;
   margin-left: 0.5rem;
+  margin-top: 4px;
 }
 
 .headerNav {
@@ -99,7 +100,7 @@
 
 .navLink:hover {
   background: var(--bg-light);
-  color: var(--text-primary);
+  color: #4ade80;
   text-decoration: none;
 }
 
@@ -162,7 +163,7 @@
   gap: 0.5rem;
   padding: 0.375rem 0.5rem;
   background: none;
-  border: 1px solid var(--border-color);
+  border: 1px solid #0D4715;
   border-radius: 8px;
   cursor: pointer;
   transition: var(--transition);
@@ -213,19 +214,25 @@
 }
 
 .userName {
-  font-size: 0.9rem;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .userEmail {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
+  font-size: 10px;
+  color: #41644A;
 }
 
 .userRole {
-  font-size: 0.75rem;
-  color: var(--primary);
+  font-size: 10px;
+  background-color: #41644A;
+  min-width: 16px;
+  padding: 2px;
+  max-width: 46px;
+  border-radius:20px ;
+  text-align: center;
+  color: #ffffff;
   text-transform: capitalize;
   font-weight: 500;
 }
@@ -319,6 +326,7 @@
 }
 
 .sidebarItem:hover {
+  text-decoration: none;
   background: var(--bg-light);
   color: var(--text-primary);
 }

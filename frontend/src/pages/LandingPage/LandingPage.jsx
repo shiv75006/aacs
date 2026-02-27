@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Header from '../../components/header/Header';
 import acsApi from '../../api/apiService';
 import './LandingPage.css';
 
@@ -10,7 +9,6 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
         const journalsData = await acsApi.journals.listJournals();
         setJournals(journalsData.slice(0, 3) || []);
       } catch (err) {
@@ -44,8 +42,6 @@ const LandingPage = () => {
 
   return (
     <div className="landing-page">
-      <Header />
-
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-background">
@@ -107,12 +103,14 @@ const LandingPage = () => {
                 <p className="journal-card-description">
                   {journal.description || journal.about || 'Dedicated to publishing high-quality peer-reviewed research in specialized fields.'}
                 </p>
-                <Link 
-                  to={journal.subdomain ? `https://${journal.subdomain}.breakthroughpublishers.com` : `/journals/${journal.id}`}
-                  className="journal-card-btn"
-                >
-                  View Journal
-                </Link>
+                <div className="journal-card-btn-wrapper">
+                  <Link 
+                    to={journal.subdomain ? `https://${journal.subdomain}.breakthroughpublishers.com` : `/journals/${journal.id}`}
+                    className="journal-card-btn"
+                  >
+                    View Journal
+                  </Link>
+                </div>
               </div>
             ))}
           </div>

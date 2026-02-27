@@ -80,8 +80,8 @@ export const AuthorDashboard = () => {
   if (loading) {
     return (
       <div className={styles.dashboardLoading}>
-        <span className={`material-symbols-rounded ${styles.loadingIcon}`}>hourglass_empty</span>
-        <span>Loading dashboard...</span>
+        <span className={`material-symbols-rounded ${styles.loadingIcon}`}>clock_loader_20</span>
+        <span>Loading</span>
       </div>
     );
   }
@@ -197,23 +197,8 @@ export const AuthorDashboard = () => {
             )}
           </div>
         </div>
-
-        {/* Sidebar - Using Reusable Component */}
-        <DashboardSidebar
-          showStatus={true}
-          showQuickLinks={true}
-          statusItems={[
-            { label: 'Accepted', value: stats.accepted_papers || 0, color: 'Green' },
-            { label: 'Under Review', value: stats.under_review || 0, color: 'Yellow' },
-            { label: 'Rejected', value: stats.rejected_papers || 0, color: 'Red' },
-          ]}
-          quickLinks={[
-            { to: '/submit', icon: 'add_circle', label: 'Submit Paper', color: 'Blue' },
-            { to: '/author/submissions', icon: 'list', label: 'My Papers', color: 'Emerald' },
-            { to: '/author/profile', icon: 'person', label: 'Profile', color: 'Amber' },
-            { to: '/journals', icon: 'library_books', label: 'Journals', color: 'Purple' },
-          ]}
-        />
+       
+    
       </div>
 
       {/* Request Access Section - Always show so users can check status */}

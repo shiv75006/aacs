@@ -19,7 +19,6 @@ import { LoginPage } from './pages/LoginPage/LoginPage';
 import { SignupPage } from './pages/SignupPage/SignupPage';
 import { DashboardPage } from './pages/DashboardPage/DashboardPage';
 import { SubmitPage } from './pages/SubmitPage/SubmitPage';
-import LandingPage from './pages/LandingPage/LandingPage';
 import InvitationPage from './pages/InvitationPage/InvitationPage';
 // Journal subdomain pages
 import JournalHomePage from './pages/JournalHomePage/JournalHomePage';
@@ -173,7 +172,7 @@ function AppContent() {
       <main className={`app-main ${isPortalRoute ? 'portal-main' : ''}`}>
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<DashboardPage />} />
           <Route path="/journals" element={<JournalsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />

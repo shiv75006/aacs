@@ -31,7 +31,7 @@
 
 .due-date {
   margin-top: 10px;
-  color: #769FCD;
+  color: #0d4016;
   font-weight: 600;
   font-size: 15px;
 }
@@ -67,8 +67,8 @@
 }
 
 .tab.active {
-  color: #769FCD;
-  border-bottom-color: #769FCD;
+  color: #0d4016;
+  border-bottom-color: #0d4016;
 }
 
 /* Form Sections */
@@ -116,14 +116,14 @@
 }
 
 .rating-item:hover {
-  border-color: #769FCD;
+  border-color: #0d4016;
   background: #fafbfd;
   box-shadow: 0 2px 8px rgba(118, 159, 205, 0.1);
 }
 
 .rating-item.large {
   background: linear-gradient(135deg, #f9f9f9 0%, #f0f7ff 100%);
-  border-color: #769FCD;
+  border-color: #0d4016;
   padding: 25px;
 }
 
@@ -141,7 +141,7 @@
 }
 
 .rating-value {
-  background: #769FCD;
+  background: #0d4016;
   color: white;
   padding: 4px 12px;
   border-radius: 20px;
@@ -180,14 +180,14 @@
 }
 
 .star:hover {
-  border-color: #769FCD;
-  color: #769FCD;
+  border-color: #0d4016;
+  color: #0d4016;
   transform: scale(1.1);
 }
 
 .star.filled {
-  background: #769FCD;
-  border-color: #769FCD;
+  background: #0d4016;
+  border-color: #0d4016;
   color: white;
 }
 
@@ -300,7 +300,7 @@
 
 .comment-textarea:focus {
   outline: none;
-  border-color: #769FCD;
+  border-color: #0d4016;
   box-shadow: 0 0 0 3px rgba(118, 159, 205, 0.1);
 }
 
@@ -368,7 +368,7 @@
 }
 
 .rating-summary li.overall {
-  background: linear-gradient(135deg, #769FCD 0%, #5a7aa0 100%);
+  background: linear-gradient(135deg, #0d4016 0%, #166534 100%);
   color: white;
   border: none;
   font-weight: 600;
@@ -389,7 +389,7 @@
   padding: 4px 12px;
   border-radius: 20px;
   font-weight: 600;
-  color: #769FCD;
+  color: #0d4016;
   font-size: 14px;
 }
 
@@ -460,7 +460,7 @@
 
 .summary-note {
   background: #f0f7ff;
-  border-left: 4px solid #769FCD;
+  border-left: 4px solid #0d4016;
   padding: 15px;
   border-radius: 6px;
   color: #555;
@@ -497,7 +497,7 @@
 }
 
 .button-primary {
-  background: linear-gradient(135deg, #769FCD 0%, #5a7aa0 100%);
+  background: linear-gradient(135deg, #0d4016 0%, #166534 100%);
   color: white;
 }
 
@@ -560,7 +560,7 @@
   width: 50px;
   height: 50px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #769FCD;
+  border-top: 4px solid #0d4016;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 20px;
@@ -745,7 +745,7 @@
   }
 
   .tab.active {
-    color: #769FCD;
+    color: #0d4016;
   }
 
   .form-section h3,
@@ -767,7 +767,7 @@
 
   .rating-item:hover {
     background: #2d3748;
-    border-color: #769FCD;
+    border-color: #0d4016;
   }
 
   .rating-header label {
@@ -785,13 +785,13 @@
   }
 
   .star:hover {
-    border-color: #769FCD;
-    color: #769FCD;
+    border-color: #0d4016;
+    color: #0d4016;
   }
 
   .star.filled {
-    background: #769FCD;
-    border-color: #769FCD;
+    background: #0d4016;
+    border-color: #0d4016;
     color: white;
   }
 
@@ -802,7 +802,7 @@
   }
 
   .comment-textarea:focus {
-    border-color: #769FCD;
+    border-color: #0d4016;
   }
 
   .comment-textarea.error {
@@ -823,7 +823,7 @@
 
   .summary-note {
     background: rgba(118, 159, 205, 0.1);
-    border-left-color: #769FCD;
+    border-left-color: #0d4016;
     color: #cbd5e0;
   }
 
@@ -849,7 +849,7 @@
   }
 
   .rating-summary li.overall {
-    background: linear-gradient(135deg, #5a7aa0 0%, #4a6280 100%);
+    background: linear-gradient(135deg, #166534 0%, #4a6280 100%);
   }
 
   .criterion-name {
@@ -858,7 +858,7 @@
 
   .criterion-value {
     background: #4a5568;
-    color: #769FCD;
+    color: #0d4016;
   }
 
   .rating-summary li.overall .criterion-value {
