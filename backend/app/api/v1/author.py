@@ -401,7 +401,7 @@ async def contact_editorial_office(
     
     # Get journal info to find editors
     journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
-    journal_name = journal.fld_journal_name if journal else "Breakthrough Publishers Journal"
+    journal_name = journal.fld_journal_name if journal else "Breakthrough Publishers India Journal"
     
     # Find editors for this journal (chief editors first)
     editors = db.query(Editor).filter(
@@ -469,11 +469,11 @@ From: {user_name} ({user_email})
 {message}
 ---
 
-This message was sent through the Breakthrough Publishers Journal Management System.
+This message was sent through the Breakthrough Publishers India Journal Management System.
 To respond, please use the correspondence feature in the admin panel.
 
 Best regards,
-Breakthrough Publishers Journal System
+Breakthrough Publishers India Journal System
 """,
             sender_id=int(user_id),
             sender_role='author',
@@ -686,7 +686,7 @@ async def submit_paper(
             
             if author and author.email:
                 author_name = f"{author.fname or ''} {author.lname or ''}".strip() or "Author"
-                journal_name = journal.fld_journal_name if journal else "Breakthrough Publishers Journal"
+                journal_name = journal.fld_journal_name if journal else "Breakthrough Publishers India Journal"
                 
                 async def send_submission_email():
                     from app.db.database import SessionLocal
@@ -1036,7 +1036,7 @@ async def resubmit_paper(
             
             if author and author.email:
                 author_name = f"{author.fname or ''} {author.lname or ''}".strip() or "Author"
-                journal_name = journal.fld_journal_name if journal else "Breakthrough Publishers Journal"
+                journal_name = journal.fld_journal_name if journal else "Breakthrough Publishers India Journal"
                 
                 # Notify author of successful resubmission
                 async def send_resubmit_email():
@@ -1118,7 +1118,7 @@ async def resubmit_paper(
                                 <p>Please log in to the system to review the revised manuscript.</p>
                                 <p>Thank you for your continued contribution to the peer review process.</p>
                                 <br>
-                                <p>Best regards,<br>Breakthrough Publishers Editorial Team</p>
+                                <p>Best regards,<br>Breakthrough Publishers India Editorial Team</p>
                                 """,
                                 is_html=True
                             )

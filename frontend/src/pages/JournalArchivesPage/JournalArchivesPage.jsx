@@ -67,6 +67,11 @@ const JournalArchivesPage = () => {
       }));
     } catch (err) {
       console.error('Failed to fetch issues:', err);
+      // Set empty array on error to show "No issues available" instead of infinite loader
+      setIssues(prev => ({
+        ...prev,
+        [volumeNo]: []
+      }));
     }
   };
 

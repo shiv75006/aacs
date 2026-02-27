@@ -63,7 +63,7 @@ const Navbar = ({ sections = [], portalName = "Portal" }) => {
           {/* Left: Logo */}
           <div className={styles.headerLeft}>
             <Link className={styles.brand} to="/">
-              <span className={styles.logoText}>Breakthrough Publishers</span>
+              <span className={styles.logoText}>Breakthrough Publishers India</span>
             </Link>
             {sections.length > 0 && (
               <span className={styles.portalBadge}>{portalName}</span>

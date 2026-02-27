@@ -146,7 +146,7 @@ async def health_check():
     """
     return {
         "status": "healthy",
-        "service": "Breakthrough Publishers Backend API",
+        "service": "Breakthrough Publishers India Backend API",
         "version": settings.API_VERSION
     }
 

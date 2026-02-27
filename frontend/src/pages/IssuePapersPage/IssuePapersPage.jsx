@@ -1,12 +1,17 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useJournalContext } from '../../contexts/JournalContext';
 import { acsApi, apiService } from '../../api/apiService';
 import Breadcrumbs from '../../components/breadcrumbs/Breadcrumbs';
 import './IssuePapersPage.css';
 
 const IssuePapersPage = () => {
-  const { id: journalId, volumeNo, issueNo } = useParams();
+  const { id: urlJournalId, volumeNo, issueNo } = useParams();
+  const { currentJournal, isJournalSite } = useJournalContext();
   const navigate = useNavigate();
+  
+  // Use journal ID from URL params, or from context if on subdomain
+  const journalId = urlJournalId || currentJournal?.id;
   
   const [journal, setJournal] = useState(null);
   const [papers, setPapers] = useState([]);
@@ -14,12 +19,22 @@ const IssuePapersPage = () => {
   const [error, setError] = useState(null);
 
   const fetchData = useCallback(async () => {
+    if (!journalId) {
+      setError('Journal not found');
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     try {
-      // Fetch journal details
-      const journalData = await acsApi.journals.getDetail(journalId);
-      setJournal(journalData);
+      // Use current journal from context if available, otherwise fetch
+      if (isJournalSite && currentJournal) {
+        setJournal(currentJournal);
+      } else {
+        const journalData = await acsApi.journals.getDetail(journalId);
+        setJournal(journalData);
+      }
 
       // Fetch papers for this issue - using correct API path
       const papersResponse = await apiService.get(
@@ -32,7 +47,7 @@ const IssuePapersPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [journalId, volumeNo, issueNo]);
+  }, [journalId, currentJournal, isJournalSite, volumeNo, issueNo]);
 
   useEffect(() => {
     fetchData();
@@ -54,19 +69,27 @@ const IssuePapersPage = () => {
       <div className="issue-papers-page">
         <div className="issue-papers-error">
           <p>{error}</p>
-          <button className="btn-back" onClick={() => navigate(`/journal/${journalId}`)}>
-            Back to Journal
+          <button className="btn-back" onClick={() => navigate(isJournalSite ? '/archives' : `/journal/${journalId}`)}>
+            {isJournalSite ? 'Back to Archives' : 'Back to Journal'}
           </button>
         </div>
       </div>
     );
   }
 
-  const breadcrumbItems = [
+  // Get display name, handling different field names
+  const journalName = journal?.name || journal?.fld_journal_name || journal?.short_form || 'Journal';
+
+  // Breadcrumbs - different for subdomain vs main site
+  const breadcrumbItems = isJournalSite ? [
+    { label: 'Home', path: '/' },
+    { label: 'Archives', path: '/archives' },
+    { label: `Vol. ${volumeNo}, Issue ${issueNo}` },
+  ] : [
     { label: 'Home', path: '/' },
     { label: 'Journals', path: '/journals' },
-    { label: journal?.name || 'Journal', path: `/journal/${journalId}` },
-    { label: `Vol. ${volumeNo}, Issue ${issueNo}`, path: `/journal/${journalId}/volume/${volumeNo}/issue/${issueNo}` },
+    { label: journalName, path: `/journal/${journalId}` },
+    { label: `Vol. ${volumeNo}, Issue ${issueNo}` },
   ];
 
   return (
@@ -76,7 +99,7 @@ const IssuePapersPage = () => {
       {/* Header */}
       <div className="issue-papers-header">
         <div className="issue-papers-header-content">
-          <h1>{journal?.name}</h1>
+          <h1>{journalName}</h1>
           <div className="issue-info">
             <span className="volume-badge">Volume {volumeNo}</span>
             <span className="issue-badge">Issue {issueNo}</span>

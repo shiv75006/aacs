@@ -104,7 +104,7 @@ class ReviewerEmailScheduler:
                         
                         <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
                         <p style="color: #999; font-size: 11px; margin: 0;">
-                            Breakthrough Publishers Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
+                            Breakthrough Publishers India Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
                         </p>
                     </div>
                 </body>
@@ -127,7 +127,7 @@ Please log into the reviewer portal to submit your review:
 If you have any questions or need to request an extension, contact the editor at editor@breakthroughpublishers.com.
 
 ---
-Breakthrough Publishers Journal Management System
+Breakthrough Publishers India Journal Management System
             """
             
             # Send email
@@ -237,7 +237,7 @@ Breakthrough Publishers Journal Management System
                     
                     <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
                     <p style="color: #999; font-size: 11px; margin: 0;">
-                        Breakthrough Publishers Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
+                        Breakthrough Publishers India Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
                     </p>
                 </div>
             </body>
@@ -277,7 +277,7 @@ Breakthrough Publishers Journal Management System
                     
                     <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
                     <p style="color: #999; font-size: 11px; margin: 0;">
-                        Breakthrough Publishers Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
+                        Breakthrough Publishers India Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
                     </p>
                 </div>
             </body>
@@ -306,7 +306,7 @@ Breakthrough Publishers Journal Management System
                     
                     <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
                     <p style="color: #999; font-size: 11px; margin: 0;">
-                        Breakthrough Publishers Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
+                        Breakthrough Publishers India Journal Management System | {datetime.utcnow().strftime('%B %d, %Y')}
                     </p>
                 </div>
             </body>

@@ -62,7 +62,7 @@ const ContactEditorialModal = ({
         paper_title: paperTitle,
         paper_id: paperId,
         current_status: currentStatus,
-        journal_name: 'Breakthrough Publishers Journal',
+        journal_name: 'Breakthrough Publishers India Journal',
         sender_name: senderRole === 'admin' ? 'Administrator' : 'Editor'
       };
       
@@ -108,7 +108,7 @@ const ContactEditorialModal = ({
         paper_title: paperTitle,
         paper_id: paperId,
         current_status: currentStatus,
-        journal_name: 'Breakthrough Publishers Journal',
+        journal_name: 'Breakthrough Publishers India Journal',
         sender_name: senderRole === 'admin' ? 'Administrator' : 'Editor'
       };
       

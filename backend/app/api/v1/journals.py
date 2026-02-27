@@ -489,21 +489,21 @@ async def get_journal_volumes(
 
 
 @router.get(
-    "/{journal_id}/volumes/{volume_id}/issues",
+    "/{journal_id}/volumes/{volume_no}/issues",
     status_code=status.HTTP_200_OK,
     summary="Get volume issues",
     description="Retrieve all issues for a specific volume"
 )
 async def get_volume_issues(
     journal_id: int,
-    volume_id: int,
+    volume_no: int,
     db: Session = Depends(get_db)
 ):
     """
     Get all issues for a specific volume.
     
     - **journal_id**: The journal ID
-    - **volume_id**: The volume ID
+    - **volume_no**: The volume number
     
     Returns list of issues with article counts.
     """
@@ -515,20 +515,20 @@ async def get_volume_issues(
             detail=f"Journal with ID {journal_id} not found"
         )
     
-    # Verify volume exists and belongs to this journal
+    # Verify volume exists and belongs to this journal (using volume_no, not id)
     volume = db.query(Volume).filter(
-        Volume.id == volume_id,
+        Volume.volume_no == volume_no,
         Volume.journal == str(journal_id)
     ).first()
     if not volume:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Volume with ID {volume_id} not found for this journal"
+            detail=f"Volume {volume_no} not found for this journal"
         )
     
-    # Get issues for this volume
+    # Get issues for this volume (using volume.id as foreign key reference)
     issues = db.query(Issue).filter(
-        Issue.volume == volume_id
+        Issue.volume == volume.id
     ).order_by(Issue.issue_no).all()
     
     issues_list = []
@@ -552,7 +552,7 @@ async def get_volume_issues(
     return {
         "journal_id": journal_id,
         "journal_name": journal.fld_journal_name,
-        "volume_id": volume_id,
+        "volume_id": volume.id,
         "volume_no": volume.volume_no,
         "year": volume.year,
         "total_issues": len(issues_list),

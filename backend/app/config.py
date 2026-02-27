@@ -20,9 +20,9 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRATION_DAYS: int = 7
     
     # API Configuration
-    API_TITLE: str = "Breakthrough Publishers Backend API"
+    API_TITLE: str = "Breakthrough Publishers India Backend API"
     API_VERSION: str = "1.0.0"
-    API_DESCRIPTION: str = "Breakthrough Publishers Academic Publishing System REST API"
+    API_DESCRIPTION: str = "Breakthrough Publishers India Academic Publishing System REST API"
     
     # Environment
     ENVIRONMENT: str = "development"
@@ -48,8 +48,8 @@ class Settings(BaseSettings):
     # Crossref DOI Configuration
     CROSSREF_USERNAME: str = ""  # Your Crossref username
     CROSSREF_PASSWORD: str = ""  # Your Crossref password
-    CROSSREF_DOI_PREFIX: str = "10.58517"  # Breakthrough Publishers DOI prefix
-    CROSSREF_DEPOSITOR_NAME: str = "Breakthrough Publishers"
+    CROSSREF_DOI_PREFIX: str = "10.58517"  # Breakthrough Publishers India DOI prefix
+    CROSSREF_DEPOSITOR_NAME: str = "Breakthrough Publishers India"
     CROSSREF_DEPOSITOR_EMAIL: str = "info@breakthroughpublishers.com"
     CROSSREF_API_URL: str = "https://doi.crossref.org/servlet/deposit"
     CROSSREF_TEST_URL: str = "https://test.crossref.org/servlet/deposit"

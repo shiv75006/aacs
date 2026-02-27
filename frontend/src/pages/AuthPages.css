@@ -1,10 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&family=Open+Sans:wght@400;600;700&display=swap');
+
 .auth-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0D4715 0%, #41644A 100%);
   padding: 20px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .auth-container {
@@ -35,15 +38,16 @@
 
 .auth-header h1 {
   margin: 0 0 8px 0;
-  font-size: 32px;
-  color: #1f2937;
+  font-family: 'Crimson Pro', serif;
+  font-size: 2.5rem;
+  color: #0D4715;
   font-weight: 700;
 }
 
 .auth-header p {
   margin: 0;
-  font-size: 16px;
-  color: #6b7280;
+  font-size: 1.125rem;
+  color: #4a5568;
 }
 
 .auth-footer {
@@ -53,19 +57,19 @@
 
 .auth-footer p {
   margin: 0;
-  font-size: 14px;
-  color: #6b7280;
+  font-size: 1rem;
+  color: #4a5568;
 }
 
 .auth-link {
-  color: #3b82f6;
+  color: #0D4715;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.2s ease;
 }
 
 .auth-link:hover {
-  color: #2563eb;
+  color: #41644A;
   text-decoration: underline;
 }
 
@@ -78,14 +82,15 @@
 }
 
 .auth-side-content h2 {
-  font-size: 48px;
+  font-family: 'Crimson Pro', serif;
+  font-size: 3.5rem;
   margin: 0 0 16px 0;
   font-weight: 700;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .auth-side-content p {
-  font-size: 18px;
+  font-size: 1.25rem;
   margin: 0;
   opacity: 0.9;
   text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
@@ -102,12 +107,12 @@
 }
 
 .auth-box-signup::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #41644A;
   border-radius: 3px;
 }
 
 .auth-box-signup::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #0D4715;
 }
 
 @media (max-width: 1024px) {
@@ -141,10 +146,10 @@
   }
 
   .auth-header h1 {
-    font-size: 24px;
+    font-size: 2rem;
   }
 
   .auth-header p {
-    font-size: 14px;
+    font-size: 1rem;
   }
 }

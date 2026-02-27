@@ -43,7 +43,7 @@
 
 .auth-error-message {
   margin: 0;
-  font-size: 14px;
+  font-size: 1rem;
   color: #7f1d1d;
   font-weight: 500;
   word-wrap: break-word;
@@ -70,7 +70,7 @@
 }
 
 .auth-field-error {
-  font-size: 13px;
+  font-size: 0.9rem;
   color: #dc2626;
   margin-top: 4px;
   font-weight: 500;

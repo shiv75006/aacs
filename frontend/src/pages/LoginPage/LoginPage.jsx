@@ -62,7 +62,7 @@ export const LoginPage = () => {
 
         <div className="auth-side-image">
           <div className="auth-side-content">
-            <h2>Breakthrough Publishers</h2>
+            <h2>Breakthrough Publishers India</h2>
             <p>Academic Publishing Excellence</p>
           </div>
         </div>

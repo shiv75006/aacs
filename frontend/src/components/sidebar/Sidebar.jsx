@@ -40,7 +40,7 @@ const Sidebar = () => {
 
   const getStaticNews = () => {
     return [
-      { id: 1, title: 'Breakthrough Publishers Journal Rankings Updated', date: '2024-02-12' },
+      { id: 1, title: 'Breakthrough Publishers India Journal Rankings Updated', date: '2024-02-12' },
       { id: 2, title: 'New Editorial Board Members', date: '2024-02-09' },
       { id: 3, title: 'Call for Special Issues', date: '2024-02-06' },
       { id: 4, title: 'Conference Announcements', date: '2024-02-04' }
