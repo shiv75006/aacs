@@ -95,8 +95,8 @@ const AssignmentCard = ({ assignment, onStartReview }) => {
       {(assignment.status === 'completed' || assignment.status === 'submitted') && (
         <button
           className={styles.viewBtn}
-          onClick={() => navigate(`/reviewer/assignments/${assignment.id}`)}
-          title="View Submission"
+          onClick={() => navigate(`/reviewer/assignments/${assignment.id}/review`)}
+          title="View Review"
         >
           <span>View</span>
           <span className="material-symbols-rounded">open_in_new</span>

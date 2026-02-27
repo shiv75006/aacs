@@ -7,7 +7,7 @@
 }
 
 .container {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   width: 100%;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -41,10 +41,13 @@
   color: #64748b;
 }
 
-.loading span {
-  font-size: 48px;
-  color: #41644A;
-  animation: spin 2s linear infinite;
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #E8F5E9;
+  border-top-color: #0D4715;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
@@ -55,9 +58,8 @@
 /* Error State */
 .error {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
   padding: 48px 32px;
   background: #fef2f2;
   border: 1px solid #fecaca;
@@ -65,17 +67,16 @@
   color: #dc2626;
 }
 
-.error span {
-  font-size: 40px;
+.error p {
+  margin: 0;
+  font-size: 14px;
 }
 
 /* Empty State */
 .empty {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
   padding: 64px 32px;
   background: #f9fafb;
   border: 2px dashed #d1d5db;
@@ -83,202 +84,106 @@
   color: #64748b;
 }
 
-.empty span {
-  font-size: 56px;
-  color: #41644A;
-}
-
 .empty p {
   margin: 0;
   font-size: 16px;
 }
 
-/* Reviews List */
-.reviewsList {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 32px;
-}
-
-.reviewCard {
-  background: white;
-  border: 1px solid #e2e8f0;
+/* Table Styles */
+.tableWrapper {
+  overflow-x: auto;
+  border: 1px solid #c8e6c9;
   border-radius: 12px;
-  padding: 24px;
-  transition: all 0.2s ease;
+  background: white;
 }
 
-.reviewCard:hover {
-  border-color: #41644A;
-  box-shadow: 0 4px 12px rgba(13, 71, 21, 0.1);
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
 }
 
-.cardHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
+.table thead {
+  background: linear-gradient(135deg, #0D4715 0%, #1a5c23 100%);
 }
 
-.paperTitle {
-  font-size: 16px;
+.table th {
+  padding: 16px 20px;
+  text-align: left;
+  font-size: 13px;
   font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.table th:first-child {
+  border-top-left-radius: 11px;
+}
+
+.table th:last-child {
+  border-top-right-radius: 11px;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background-color: #f0f9f1;
+}
+
+.table td {
+  padding: 16px 20px;
+  font-size: 14px;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.titleCell {
+  font-weight: 500;
   color: #1e293b;
-  margin: 0;
-  flex: 1;
+  max-width: 300px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Recommendation Badge */
-.recommendationBadge {
+/* Status Badge */
+.statusBadge {
+  display: inline-block;
   padding: 6px 14px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
-  flex-shrink: 0;
+  text-transform: capitalize;
 }
 
-.recommendation-accept {
+.statusCompleted {
   background: #dcfce7;
   color: #166534;
 }
 
-.recommendation-minor {
+.statusPending {
   background: #fef3c7;
   color: #92400e;
 }
 
-.recommendation-major {
-  background: #fed7aa;
-  color: #9a3412;
+.statusInProgress {
+  background: #dbeafe;
+  color: #1e40af;
 }
 
-.recommendation-reject {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.recommendation-neutral {
+.statusNeutral {
   background: #f3f4f6;
   color: #374151;
-}
-
-/* Meta Information */
-.cardMeta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.metaLeft,
-.metaRight {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.metaItem {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #64748b;
-}
-
-.metaItem span.material-symbols-rounded {
-  font-size: 16px;
-  color: #41644A;
-}
-
-.averageRating {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #41644A;
-}
-
-.averageRating span.material-symbols-rounded {
-  font-size: 18px;
-  color: #0D4715;
-}
-
-/* Ratings Grid */
-.ratingsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
-  padding: 16px;
-  background: #E8F5E9;
-  border-radius: 8px;
-}
-
-.ratingItem {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ratingLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: #0D4715;
-  text-transform: capitalize;
-}
-
-.ratingStars {
-  display: flex;
-  gap: 4px;
-}
-
-.ratingStars span.material-symbols-rounded {
-  font-size: 18px;
-}
-
-.starFilled {
-  color: #0D4715;
-}
-
-.starEmpty {
-  color: #A5D6A7;
-}
-
-/* Comments */
-.comments {
-  margin-top: 16px;
-  padding: 16px;
-  background: #E8F5E9;
-  border-left: 4px solid #0D4715;
-  border-radius: 8px;
-}
-
-.comments h4 {
-  font-size: 12px;
-  font-weight: 600;
-  color: #0D4715;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0 0 8px 0;
-}
-
-.comments p {
-  font-size: 13px;
-  color: #334155;
-  margin: 0;
-  line-height: 1.6;
 }
 
 /* Pagination */
@@ -290,57 +195,34 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .cardHeader {
-    flex-direction: column;
-    align-items: flex-start;
+  .header h1 {
+    font-size: 24px;
   }
 
-  .paperTitle {
-    width: 100%;
+  .table th,
+  .table td {
+    padding: 12px 16px;
+    font-size: 13px;
   }
 
-  .cardMeta {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .metaLeft,
-  .metaRight {
-    width: 100%;
-  }
-
-  .ratingsGrid {
-    grid-template-columns: 1fr;
+  .statusBadge {
+    font-size: 11px;
+    padding: 4px 10px;
   }
 }
 
 @media (max-width: 480px) {
-  .reviewCard {
-    padding: 16px;
+  .header h1 {
+    font-size: 20px;
   }
 
-  .cardHeader {
-    gap: 8px;
+  .header p {
+    font-size: 13px;
   }
 
-  .paperTitle {
-    font-size: 14px;
-  }
-
-  .recommendationBadge {
-    font-size: 11px;
-    padding: 4px 10px;
-  }
-
-  .metaItem {
+  .table th,
+  .table td {
+    padding: 10px 12px;
     font-size: 12px;
-  }
-
-  .ratingLabel {
-    font-size: 11px;
-  }
-
-  .ratingStars span.material-symbols-rounded {
-    font-size: 16px;
   }
 }

@@ -5,7 +5,6 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f8fafc;
 }
 
 .header {
@@ -13,9 +12,9 @@
   align-items: center;
   gap: 16px;
   padding: 16px 24px;
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0D4715 0%, #1a5c23 100%);
+  border-bottom: none;
   flex-shrink: 0;
 }
 
@@ -25,18 +24,18 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  border: 1px solid #e2e8f0;
-  background: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #0f172a;
+  color: white;
   flex-shrink: 0;
 }
 
 .backBtn:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .backBtn .material-symbols-rounded {
@@ -55,14 +54,14 @@
 .headerContent h1 {
   font-size: 24px;
   font-weight: 700;
-  color: #0f172a;
+  color: white;
   margin: 0;
 }
 
 .headerContent p {
   width: 100%;
   font-size: 14px;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.8);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -85,12 +84,12 @@
 .loading .material-symbols-rounded,
 .error .material-symbols-rounded {
   font-size: 48px;
-  color: #cbd5e1;
+  color: #41644A;
 }
 
 .loading p {
   font-size: 16px;
-  color: #64748b;
+  color: #41644A;
   margin: 0;
 }
 
@@ -132,12 +131,12 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
-  color: #7c3aed;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
-  border: 1px solid #c4b5fd;
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .versionBadge .material-symbols-rounded {
@@ -151,15 +150,15 @@
   gap: 12px;
   margin: 16px 24px 0;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a30 100%);
-  border: 1px solid #f59e0b;
+  background: linear-gradient(135deg, #E8F5E9 0%, #c8e6c9 100%);
+  border: 1px solid #41644A;
   border-radius: 12px;
   flex-shrink: 0;
 }
 
 .resubmissionNotice > .material-symbols-rounded {
   font-size: 24px;
-  color: #d97706;
+  color: #0D4715;
   flex-shrink: 0;
 }
 
@@ -172,13 +171,13 @@
   display: block;
   font-size: 15px;
   font-weight: 700;
-  color: #92400e;
+  color: #0D4715;
   margin-bottom: 4px;
 }
 
 .noticeContent p {
   font-size: 13px;
-  color: #a16207;
+  color: #41644A;
   margin: 0;
   line-height: 1.6;
 }
@@ -187,11 +186,10 @@
 .previousReviewCard {
   margin: 16px 24px 0;
   background: white;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #c8e6c9;
   border-radius: 12px;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .previousReviewHeader {
@@ -199,16 +197,16 @@
   align-items: center;
   gap: 10px;
   padding: 14px 18px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #0D4715 0%, #1a5c23 100%);
+  border-bottom: none;
   font-size: 14px;
   font-weight: 600;
-  color: #475569;
+  color: white;
 }
 
 .previousReviewHeader .material-symbols-rounded {
   font-size: 20px;
-  color: #3b82f6;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .previousReviewContent {
@@ -224,14 +222,15 @@
   flex-direction: column;
   gap: 6px;
   padding: 12px;
-  background: #f8fafc;
+  background: linear-gradient(135deg, #E8F5E9 0%, #f0f9f1 100%);
   border-radius: 8px;
+  border: 1px solid #c8e6c9;
 }
 
 .ratingLabel {
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: #41644A;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -239,7 +238,7 @@
 .ratingValue {
   font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
+  color: #0D4715;
   text-transform: capitalize;
 }
 
@@ -252,13 +251,13 @@
 
 .previousComments p {
   font-size: 13px;
-  color: #475569;
+  color: #1e293b;
   margin: 0;
   line-height: 1.6;
-  background: #f8fafc;
+  background: linear-gradient(135deg, #E8F5E9 0%, #f0f9f1 100%);
   padding: 12px 14px;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #c8e6c9;
 }
 
 /* Review Layout - Main Content Area */
@@ -274,20 +273,20 @@
   display: flex;
   flex-direction: column;
   background: white;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #c8e6c9;
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
   min-height: 600px;
+  overflow: hidden;
 }
 
 .formSection {
   display: flex;
   flex-direction: column;
   background: white;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #c8e6c9;
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
   min-height: 600px;
+  overflow: hidden;
 }
 
 /* Responsive Design */
