@@ -105,7 +105,7 @@ const LandingPage = () => {
                 </p>
                 <div className="journal-card-btn-wrapper">
                   <Link 
-                    to={journal.subdomain ? `https://${journal.subdomain}.breakthroughpublishers.com` : `/journals/${journal.id}`}
+                    to={`/journal/${journal.id}`}
                     className="journal-card-btn"
                   >
                     View Journal

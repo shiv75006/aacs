@@ -74,7 +74,7 @@ export const DashboardPage = () => {
                     {journal.description || journal.about || 'Dedicated to publishing high-quality peer-reviewed research in specialized fields.'}
                   </p>
                   <Link
-                    to={journal.subdomain ? `https://${journal.subdomain}.breakthroughpublishers.com` : `/journal/${journal.id}`}
+                    to={`/journal/${journal.id}`}
                     className={styles.journalCardBtn}
                   >
                     View Journal

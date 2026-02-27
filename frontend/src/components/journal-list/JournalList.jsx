@@ -26,7 +26,7 @@ const JournalList = ({ limit = null, isCard = false }) => {
           issnOnline: j.issn_ol || j.issn_online || '',
           issnPrint: j.issn_prt || j.issn_print || '',
           description: j.description || '',
-          url: `journal.html?Journal=${encodeURIComponent(j.short_form || j.title || j.name || 'journal')}`
+          url: `?journal=${encodeURIComponent((j.short_form || j.title || j.name || 'journal').toLowerCase())}`
         }));
         
         setJournals(limit ? mappedJournals.slice(0, limit) : mappedJournals);
@@ -53,7 +53,7 @@ const JournalList = ({ limit = null, isCard = false }) => {
         issnOnline: '2321-0001',
         issnPrint: '2321-0009',
         description: 'Mathematical Sciences and Computer research journal',
-        url: 'journal.html?Journal=ITMSC'
+        url: '?journal=itmsc'
       },
       {
         id: 2,
@@ -63,7 +63,7 @@ const JournalList = ({ limit = null, isCard = false }) => {
         issnOnline: '2321-0010',
         issnPrint: '2321-0019',
         description: 'Applied Sciences research journal',
-        url: 'journal.html?Journal=ITAS'
+        url: '?journal=itas'
       },
       {
         id: 3,
@@ -73,7 +73,7 @@ const JournalList = ({ limit = null, isCard = false }) => {
         issnOnline: '2321-0020',
         issnPrint: '2321-0029',
         description: 'Inventory Control and Management journal',
-        url: 'journal.html?Journal=IJICM'
+        url: '?journal=ijicm'
       },
       {
         id: 4,
@@ -83,7 +83,7 @@ const JournalList = ({ limit = null, isCard = false }) => {
         issnOnline: '2321-0030',
         issnPrint: '2321-0039',
         description: 'Operations Research and Optimization journal',
-        url: 'journal.html?Journal=IJORO'
+        url: '?journal=ijoro'
       },
       {
         id: 5,
@@ -93,7 +93,7 @@ const JournalList = ({ limit = null, isCard = false }) => {
         issnOnline: '2321-0040',
         issnPrint: '2321-0049',
         description: 'Stability and Fluid Mechanics journal',
-        url: 'journal.html?Journal=IJSFM'
+        url: '?journal=ijsfm'
       },
       {
         id: 6,
@@ -103,14 +103,14 @@ const JournalList = ({ limit = null, isCard = false }) => {
         issnOnline: '2321-0050',
         issnPrint: '2321-0059',
         description: 'Humanities and Social Sciences journal',
-        url: 'journal.html?Journal=ITHSS'
+        url: '?journal=ithss'
       }
     ];
   };
 
   const handleJournalClick = (journal) => {
-    // Navigate to journal page or handle journal selection
-    window.open(journal.url, '_blank');
+    // Navigate to journal page on same domain
+    window.location.href = journal.url;
   };
 
   if (loading) {

@@ -82,15 +82,14 @@ export const isJournalSubdomain = () => {
 };
 
 /**
- * Generate a URL for a specific journal's subdomain site
- * 
+ * Generate a URL for a specific journal's page
+ *
  * @param {string} shortForm - The journal's short_form identifier
- * @returns {string} The full URL to the journal's subdomain
- * 
+ * @returns {string} The full URL to the journal's page (using query parameter)
+ *
  * @example
  * getJournalUrl('ijest')
- * // Production: 'https://ijest.breakthroughpublishers.com'
- * // Development: 'http://localhost:5173?journal=ijest'
+ * // Returns: 'http://localhost:5173?journal=ijest' (dev) or current domain with ?journal=ijest (prod)
  */
 export const getJournalUrl = (shortForm) => {
   if (!shortForm) {
@@ -100,14 +99,10 @@ export const getJournalUrl = (shortForm) => {
   
   const normalizedShortForm = shortForm.toLowerCase();
   
-  // Development mode
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    const port = window.location.port ? `:${window.location.port}` : '';
-    return `http://${window.location.hostname}${port}?journal=${normalizedShortForm}`;
-  }
-  
-  // Production mode
-  return `https://${normalizedShortForm}.${BASE_DOMAIN}`;
+  // Use query parameter format for all environments (no subdomains)
+  const protocol = window.location.protocol;
+  const host = window.location.host;
+  return `${protocol}//${host}?journal=${normalizedShortForm}`;
 };
 
 /**
