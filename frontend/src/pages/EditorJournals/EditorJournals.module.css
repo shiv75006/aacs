@@ -14,7 +14,7 @@
 
 .headerLeft h1 {
   font-size: 1.75rem;
-  color: #1a1a2e;
+  color: #0D4715;
   margin: 0 0 0.25rem 0;
 }
 
@@ -33,14 +33,13 @@
 .journalCard {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e2e8f0;
+  border: 1px solid #c8e6c9;
   overflow: hidden;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .journalCard:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-color: #41644A;
   transform: translateY(-2px);
 }
 
@@ -48,8 +47,8 @@
   display: flex;
   align-items: flex-start;
   padding: 1.25rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #E8F5E9 0%, #ffffff 100%);
+  border-bottom: 1px solid #c8e6c9;
   gap: 1rem;
 }
 
@@ -58,7 +57,7 @@
   height: 64px;
   border-radius: 8px;
   object-fit: cover;
-  background: #e2e8f0;
+  background: #E8F5E9;
   flex-shrink: 0;
 }
 
@@ -66,7 +65,7 @@
   width: 64px;
   height: 64px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  background: linear-gradient(135deg, #0D4715, #41644A);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -84,7 +83,7 @@
 .journalName {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1a1a2e;
+  color: #0D4715;
   margin: 0 0 0.25rem 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -123,13 +122,13 @@
 }
 
 .chiefBadge {
-  background: #fef3c7;
-  color: #92400e;
+  background: #E8F5E9;
+  color: #0D4715;
 }
 
 .sectionBadge {
-  background: #dbeafe;
-  color: #1e40af;
+  background: #E8F5E9;
+  color: #41644A;
 }
 
 .cardBody {
@@ -141,7 +140,6 @@
   color: #64748b;
   margin: 0 0 1rem 0;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.5;
@@ -157,14 +155,14 @@
 .statItem {
   text-align: center;
   padding: 0.75rem;
-  background: #f8fafc;
+  background: #E8F5E9;
   border-radius: 8px;
 }
 
 .statValue {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1a1a2e;
+  color: #0D4715;
 }
 
 .statLabel {
@@ -177,7 +175,7 @@
   display: flex;
   gap: 0.5rem;
   padding: 1rem 1.25rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #c8e6c9;
   background: #f8fafc;
 }
 
@@ -197,29 +195,32 @@
 }
 
 .editBtn {
-  background: #3b82f6;
+  background: #0D4715;
   color: white;
 }
 
 .editBtn:hover {
-  background: #2563eb;
+  background: #41644A;
 }
 
 .viewBtn {
   background: white;
   color: #64748b;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #c8e6c9;
 }
 
 .viewBtn:hover {
-  background: #f1f5f9;
-  color: #1a1a2e;
+  background: #E8F5E9;
+  color: #0D4715;
 }
 
 .loading {
   text-align: center;
   padding: 4rem 2rem;
-  color: #64748b;
+  color: #41644A;
+  background: #E8F5E9;
+  border-radius: 12px;
+  border: 1px dashed #41644A;
 }
 
 .error {
@@ -234,20 +235,20 @@
 .emptyState {
   text-align: center;
   padding: 4rem 2rem;
-  background: #f8fafc;
+  background: #E8F5E9;
   border-radius: 12px;
-  border: 2px dashed #e2e8f0;
+  border: 2px dashed #41644A;
 }
 
 .emptyIcon {
   font-size: 4rem;
-  color: #cbd5e1;
+  color: #41644A;
   margin-bottom: 1rem;
 }
 
 .emptyState h3 {
   font-size: 1.25rem;
-  color: #1a1a2e;
+  color: #0D4715;
   margin: 0 0 0.5rem 0;
 }
 
@@ -278,7 +279,6 @@
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
 }
 
 .modalHeader {
@@ -286,21 +286,23 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #c8e6c9;
+  background: linear-gradient(135deg, #0D4715 0%, #41644A 100%);
+  border-radius: 12px 12px 0 0;
 }
 
 .modalHeader h2 {
   margin: 0;
   font-size: 1.25rem;
-  color: #1a1a2e;
+  color: #ffffff;
 }
 
 .closeBtn {
-  background: none;
-  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   padding: 0.5rem;
   cursor: pointer;
-  color: #64748b;
+  color: #ffffff;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -308,8 +310,7 @@
 }
 
 .closeBtn:hover {
-  background: #f1f5f9;
-  color: #1a1a2e;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .modalBody {
@@ -324,7 +325,7 @@
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: #0D4715;
   margin-bottom: 0.375rem;
 }
 
@@ -332,17 +333,16 @@
 .formGroup textarea {
   width: 100%;
   padding: 0.625rem 0.875rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid #c8e6c9;
   border-radius: 6px;
   font-size: 0.9rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .formGroup input:focus,
 .formGroup textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #0D4715;
 }
 
 .formGroup textarea {
@@ -352,8 +352,8 @@
 
 .formGroup input:disabled,
 .formGroup textarea:disabled {
-  background: #f3f4f6;
-  color: #9ca3af;
+  background: #E8F5E9;
+  color: #64748b;
   cursor: not-allowed;
 }
 
@@ -367,12 +367,12 @@
 .formSection {
   margin-top: 1.5rem;
   padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #c8e6c9;
 }
 
 .formSection h3 {
   font-size: 0.9rem;
-  color: #64748b;
+  color: #41644A;
   margin: 0 0 1rem 0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -382,15 +382,16 @@
   display: flex;
   gap: 0.75rem;
   padding: 1.25rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #c8e6c9;
   background: #f8fafc;
+  border-radius: 0 0 12px 12px;
 }
 
 .cancelBtn {
   flex: 1;
   padding: 0.75rem 1rem;
   background: white;
-  border: 1px solid #d1d5db;
+  border: 1px solid #c8e6c9;
   border-radius: 6px;
   font-size: 0.9rem;
   font-weight: 500;
@@ -400,13 +401,13 @@
 }
 
 .cancelBtn:hover {
-  background: #f1f5f9;
+  background: #E8F5E9;
 }
 
 .saveBtn {
   flex: 1;
   padding: 0.75rem 1rem;
-  background: #3b82f6;
+  background: #0D4715;
   border: none;
   border-radius: 6px;
   font-size: 0.9rem;
@@ -421,15 +422,24 @@
 }
 
 .saveBtn:hover:not(:disabled) {
-  background: #2563eb;
+  background: #41644A;
 }
 
 .saveBtn:disabled {
-  background: #93c5fd;
+  background: #c8e6c9;
   cursor: not-allowed;
 }
 
 @media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerLeft h1 {
+    font-size: 1.5rem;
+  }
+
   .journalGrid {
     grid-template-columns: 1fr;
   }
@@ -440,5 +450,63 @@
   
   .cardActions {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 8px;
+  }
+
+  .headerLeft h1 {
+    font-size: 1.25rem;
+  }
+
+  .headerLeft p {
+    font-size: 13px;
+  }
+
+  .journalCard {
+    border-radius: 8px;
+  }
+
+  .cardHeader {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .journalLogo,
+  .logoPlaceholder {
+    width: 56px;
+    height: 56px;
+  }
+
+  .journalInfo h3 {
+    font-size: 1rem;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .statValue {
+    font-size: 1.125rem;
+  }
+
+  .statLabel {
+    font-size: 11px;
+  }
+
+  .cardActions {
+    padding: 0.75rem;
+  }
+
+  .editBtn,
+  .viewBtn {
+    padding: 0.5rem 0.75rem;
+    font-size: 13px;
   }
 }

@@ -1,9 +1,9 @@
-/* EditorPublishing Module Styles */
+/* EditorPublishing Module Styles - Green Theme */
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 /* Header */
@@ -22,13 +22,14 @@
   gap: 12px;
   font-size: 28px;
   font-weight: 700;
-  color: #1e293b;
+  color: #0D4715;
   margin: 0 0 8px 0;
+  line-height: 1.2;
 }
 
 .headerContent h1 span {
-  font-size: 32px;
-  color: #3b82f6;
+  font-size: 28px;
+  color: #0D4715;
 }
 
 .headerContent p {
@@ -42,7 +43,7 @@
   flex-direction: column;
   align-items: center;
   padding: 16px 24px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #0D4715 0%, #41644A 100%);
   border-radius: 12px;
   color: #ffffff;
 }
@@ -70,8 +71,8 @@
   justify-content: center;
   padding: 80px 24px;
   text-align: center;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: #E8F5E9;
+  border: 1px dashed #41644A;
   border-radius: 12px;
 }
 
@@ -80,7 +81,7 @@
 .empty span {
   font-size: 64px;
   margin-bottom: 16px;
-  color: #64748b;
+  color: #41644A;
 }
 
 .error span {
@@ -88,21 +89,21 @@
 }
 
 .empty span {
-  color: #94a3b8;
+  color: #41644A;
 }
 
 .loading p,
 .error p,
 .empty p {
   font-size: 15px;
-  color: #64748b;
+  color: #41644A;
   margin: 0;
 }
 
 .empty h3 {
   font-size: 20px;
   font-weight: 600;
-  color: #1e293b;
+  color: #0D4715;
   margin: 0 0 8px 0;
 }
 
@@ -110,7 +111,7 @@
 .linkBtn {
   margin-top: 20px;
   padding: 10px 20px;
-  background: #3b82f6;
+  background: #0D4715;
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -126,7 +127,7 @@
 
 .retryBtn:hover,
 .linkBtn:hover {
-  background: #2563eb;
+  background: #41644A;
 }
 
 /* Papers List */
@@ -138,15 +139,14 @@
 
 .paperCard {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #c8e6c9;
   border-radius: 12px;
   padding: 24px;
   transition: all 0.2s ease;
 }
 
 .paperCard:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #41644A;
 }
 
 .paperHeader {
@@ -171,10 +171,10 @@
 .paperCode {
   font-size: 12px;
   padding: 4px 10px;
-  background: #f1f5f9;
-  color: #475569;
+  background: #E8F5E9;
+  color: #0D4715;
   border-radius: 6px;
-  font-family: 'Fira Code', monospace;
+  font-family: "Fira Code", monospace;
 }
 
 .paperTitle {
@@ -192,7 +192,7 @@
 }
 
 .paperTitle a:hover {
-  color: #3b82f6;
+  color: #0D4715;
 }
 
 .paperInfo {
@@ -212,7 +212,7 @@
 
 .infoItem span.material-symbols-rounded {
   font-size: 18px;
-  color: #94a3b8;
+  color: #41644A;
 }
 
 .paperAbstract {
@@ -221,7 +221,7 @@
   line-height: 1.6;
   margin: 0 0 20px 0;
   padding: 12px;
-  background: #f8fafc;
+  background: #E8F5E9;
   border-radius: 8px;
 }
 
@@ -251,32 +251,31 @@
 }
 
 .btnPrimary {
-  background: #3b82f6;
+  background: #0D4715;
   color: #ffffff;
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background: #2563eb;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: #41644A;
 }
 
 .btnSecondary {
-  background: #e2e8f0;
-  color: #1e293b;
+  background: #E8F5E9;
+  color: #0D4715;
 }
 
 .btnSecondary:hover:not(:disabled) {
-  background: #cbd5e1;
+  background: #c8e6c9;
 }
 
 .btnOutline {
   background: transparent;
-  color: #3b82f6;
-  border: 1px solid #3b82f6;
+  color: #0D4715;
+  border: 1px solid #0D4715;
 }
 
 .btnOutline:hover:not(:disabled) {
-  background: #eff6ff;
+  background: #E8F5E9;
 }
 
 .btn:disabled {
@@ -313,7 +312,6 @@
   max-width: 560px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 .modalHeader {
@@ -321,7 +319,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #c8e6c9;
+  background: linear-gradient(135deg, #0D4715 0%, #41644A 100%);
+  border-radius: 16px 16px 0 0;
 }
 
 .modalHeader h2 {
@@ -330,13 +330,13 @@
   gap: 10px;
   font-size: 20px;
   font-weight: 600;
-  color: #1e293b;
+  color: #ffffff;
   margin: 0;
 }
 
 .modalHeader h2 span {
   font-size: 24px;
-  color: #3b82f6;
+  color: #ffffff;
 }
 
 .closeBtn {
@@ -345,20 +345,20 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: #f1f5f9;
-  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .closeBtn:hover {
-  background: #e2e8f0;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .closeBtn span {
   font-size: 20px;
-  color: #64748b;
+  color: #ffffff;
 }
 
 .modalBody {
@@ -367,7 +367,7 @@
 
 .paperSummary {
   padding: 16px;
-  background: #f8fafc;
+  background: #E8F5E9;
   border-radius: 10px;
   margin-bottom: 24px;
 }
@@ -375,7 +375,7 @@
 .paperSummary h4 {
   font-size: 16px;
   font-weight: 600;
-  color: #1e293b;
+  color: #0D4715;
   margin: 0 0 6px 0;
   line-height: 1.4;
 }
@@ -409,13 +409,13 @@
 .formGroupFull label {
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
+  color: #0D4715;
 }
 
 .formGroup input,
 .formGroupFull input {
   padding: 10px 14px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #c8e6c9;
   border-radius: 8px;
   font-size: 14px;
   transition: all 0.2s ease;
@@ -424,13 +424,12 @@
 .formGroup input:focus,
 .formGroupFull input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #0D4715;
 }
 
 .formGroup input:disabled,
 .formGroupFull input:disabled {
-  background: #f1f5f9;
+  background: #E8F5E9;
   cursor: not-allowed;
 }
 
@@ -445,7 +444,7 @@
   justify-content: flex-end;
   gap: 12px;
   padding: 20px 24px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #c8e6c9;
   background: #f8fafc;
   border-radius: 0 0 16px 16px;
 }
@@ -466,7 +465,11 @@
   }
 
   .headerContent h1 {
-    font-size: 22px;
+    font-size: 24px;
+  }
+
+  .headerContent h1 span {
+    font-size: 24px;
   }
 
   .paperCard {
@@ -501,5 +504,36 @@
 
   .modalFooter {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .headerContent h1 {
+    font-size: 20px;
+  }
+
+  .headerContent h1 span {
+    font-size: 20px;
+  }
+
+  .headerContent p {
+    font-size: 13px;
+  }
+
+  .statsNumber {
+    font-size: 28px;
+  }
+
+  .statsLabel {
+    font-size: 11px;
+  }
+
+  .paperTitle {
+    font-size: 15px;
+  }
+
+  .btn {
+    padding: 10px 14px;
+    font-size: 13px;
   }
 }

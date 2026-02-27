@@ -99,8 +99,8 @@
 }
 
 .statIconBlue {
-  background: #dbeafe;
-  color: #2563eb;
+  background: #E8F5E9;
+  color: #0D4715;
 }
 
 .statIconEmerald {
@@ -114,8 +114,8 @@
 }
 
 .statIconPurple {
-  background: #ede9fe;
-  color: #7c3aed;
+  background: #c8e6c9;
+  color: #41644A;
 }
 
 .statTrend {
@@ -235,14 +235,14 @@
 }
 
 .filterBtn:hover {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: #0D4715;
+  color: #0D4715;
 }
 
 .filterBtnActive {
-  background: #2563eb;
+  background: #0D4715;
   color: white;
-  border-color: #2563eb;
+  border-color: #0D4715;
 }
 
 /* Papers Table */
@@ -299,8 +299,8 @@
 }
 
 .statusBadgeBlue {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: #E8F5E9;
+  color: #0D4715;
 }
 
 .statusBadgeAmber {
@@ -446,8 +446,8 @@
 }
 
 .quickLink:hover {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 1px #2563eb;
+  border-color: #0D4715;
+  box-shadow: 0 0 0 1px #0D4715;
 }
 
 .quickLink span:first-child {
@@ -455,7 +455,7 @@
 }
 
 .quickLinkBlue {
-  color: #2563eb;
+  color: #0D4715;
 }
 
 .quickLinkEmerald {
@@ -467,7 +467,7 @@
 }
 
 .quickLinkPurple {
-  color: #8b5cf6;
+  color: #41644A;
 }
 
 .quickLink span:last-child {

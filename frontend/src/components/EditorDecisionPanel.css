@@ -20,7 +20,7 @@
 
 .panel-header h1 {
   margin: 0;
-  color: #333;
+  color: #0D4715;
   font-size: 32px;
   font-weight: 600;
 }
@@ -43,8 +43,8 @@
 
 /* Paper Section */
 .paper-section {
-  background: linear-gradient(135deg, rgba(118, 159, 205, 0.05) 0%, rgba(118, 159, 205, 0.02) 100%);
-  border: 1px solid #e0e0e0;
+  background: linear-gradient(135deg, rgba(13, 71, 21, 0.05) 0%, rgba(13, 71, 21, 0.02) 100%);
+  border: 1px solid #c8e6c9;
   border-radius: 12px;
   padding: 25px;
   margin-bottom: 30px;
@@ -86,8 +86,8 @@
 }
 
 .status-badge.under_review {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: #E8F5E9;
+  color: #0D4715;
 }
 
 .status-badge.revision_requested {
@@ -239,10 +239,10 @@
 .rating-badge {
   display: inline-block;
   padding: 4px 12px;
-  background: #e8f4f8;
+  background: #E8F5E9;
   border-radius: 4px;
   font-size: 13px;
-  color: #0277bd;
+  color: #0D4715;
   font-weight: 600;
 }
 
@@ -327,8 +327,8 @@
 
 /* Decision Section */
 .decision-section {
-  background: linear-gradient(135deg, rgba(118, 159, 205, 0.08) 0%, rgba(118, 159, 205, 0.03) 100%);
-  border: 2px solid #e0e0e0;
+  background: linear-gradient(135deg, rgba(13, 71, 21, 0.08) 0%, rgba(13, 71, 21, 0.03) 100%);
+  border: 2px solid #c8e6c9;
   border-radius: 12px;
   padding: 25px;
 }
