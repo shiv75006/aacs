@@ -6,7 +6,6 @@ import './LandingPage.css';
 
 const LandingPage = () => {
   const [journals, setJournals] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -14,10 +13,8 @@ const LandingPage = () => {
         setLoading(true);
         const journalsData = await acsApi.journals.listJournals();
         setJournals(journalsData.slice(0, 3) || []);
-        setLoading(false);
       } catch (err) {
         console.error('Error fetching data:', err);
-        setLoading(false);
       }
     };
 

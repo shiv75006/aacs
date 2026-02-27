@@ -349,7 +349,8 @@
 }
 
 .footer-links-section {
-  /* Links section styling */
+  display: flex;
+  flex-direction: column;
 }
 
 .footer-links-title {
