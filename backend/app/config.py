@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
     
-    # CORS Configuration - includes wildcard subdomains for production
+    # CORS Configuration - includes allowed domains for production
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://localhost:5173",
@@ -39,10 +39,10 @@ class Settings(BaseSettings):
         "https://aacs-woad.vercel.app",
     ]
     
-    # Base domain for subdomain detection
+    # Base domain for the application
     BASE_DOMAIN: str = "aacsjournals.com"
     
-    # Allow all subdomains via regex pattern (handled in middleware)
+    # Allow domains via regex pattern for CORS
     CORS_ORIGIN_REGEX: str = r"https?://(.*\.aacsjournals\.com|.*\.up\.railway\.app|.*\.railway\.app|.*\.vercel\.app|localhost:\d+)"
     
     # Crossref DOI Configuration

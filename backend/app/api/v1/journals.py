@@ -66,29 +66,29 @@ async def list_journals(
 
 
 @router.get(
-    "/by-subdomain/{subdomain}",
+    "/by-subdomain/{short_form}",
     response_model=JournalResponse,
     status_code=status.HTTP_200_OK,
-    summary="Get journal by subdomain",
-    description="Retrieve journal information using its short_form (subdomain identifier)"
+    summary="Get journal by short form",
+    description="Retrieve journal information using its short_form identifier"
 )
-async def get_journal_by_subdomain(subdomain: str, db: Session = Depends(get_db)):
+async def get_journal_by_short_form(short_form: str, db: Session = Depends(get_db)):
     """
-    Get a journal by its short_form (used as subdomain).
+    Get a journal by its short_form.
     
-    - **subdomain**: The journal's short_form (e.g., 'ijest', 'ijrm')
+    - **short_form**: The journal's short_form (e.g., 'ijest', 'ijrm')
     
-    This endpoint is used when accessing journal-specific subdomains
-    like ijest.aacsjournals.com to identify which journal to display.
+    This endpoint is used when accessing journal pages via routing
+    (e.g., /j/ijest) to identify which journal to display.
     """
     journal = db.query(Journal).filter(
-        Journal.short_form.ilike(subdomain)
+        Journal.short_form.ilike(short_form)
     ).first()
     
     if not journal:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Journal with subdomain '{subdomain}' not found"
+            detail=f"Journal with short_form '{short_form}' not found"
         )
     
     return JournalResponse(
