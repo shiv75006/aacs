@@ -136,3 +136,38 @@ textarea.auth-form-input {
     grid-column: auto;
   }
 }
+
+/* OrganizationAutocomplete styling within auth forms */
+.auth-form-group [class*="OrganizationAutocomplete_input"] {
+  padding: 14px 16px;
+  padding-right: 40px;
+  font-size: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: white;
+  color: #333333;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.auth-form-group [class*="OrganizationAutocomplete_input"]:focus {
+  outline: none;
+  border-color: #0D4715;
+  box-shadow: 0 0 0 3px rgba(13, 71, 21, 0.1);
+}
+
+.auth-form-group [class*="OrganizationAutocomplete_input"]:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.auth-form-group .error [class*="OrganizationAutocomplete_input"] {
+  border-color: #dc2626;
+  background-color: #fef2f2;
+}
+
+.auth-form-group [class*="OrganizationAutocomplete_dropdown"] {
+  border-radius: 8px;
+  margin-top: 6px;
+}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../hooks/useToast';
 import acsApi from '../api/apiService.js';
+import OrganizationAutocomplete from './OrganizationAutocomplete';
 import styles from './SubmitPaperForm.module.css';
 
 const SALUTATION_OPTIONS = [
@@ -753,14 +754,15 @@ export const SubmitPaperForm = () => {
                 </div>
                 <div className={`${styles.field} ${touched.author_organisation && fieldErrors.author_organisation ? styles.fieldError : ''}`}>
                   <label htmlFor="author_organisation">Organisation *</label>
-                  <input
+                  <OrganizationAutocomplete
                     id="author_organisation"
-                    type="text"
-                    placeholder="e.g., University of Technology"
+                    name="author_organisation"
+                    placeholder="Search for your organization..."
                     value={formData.authorDetails.organisation}
-                    onChange={(e) => handleAuthorChange('organisation', e.target.value)}
-                    onBlur={() => handleAuthorBlur('organisation')}
-                    className={`${styles.input} ${touched.author_organisation && fieldErrors.author_organisation ? styles.inputError : ''}`}
+                    onChange={(value) => handleAuthorChange('organisation', value)}
+                    onSelect={() => handleAuthorBlur('organisation')}
+                    required
+                    className={touched.author_organisation && fieldErrors.author_organisation ? styles.inputError : ''}
                   />
                   {touched.author_organisation && fieldErrors.author_organisation && (
                     <span className={styles.errorText}>{fieldErrors.author_organisation}</span>
@@ -903,13 +905,14 @@ export const SubmitPaperForm = () => {
                       </div>
                       <div className={`${styles.field} ${touched[`coauthor_${index}_organisation`] && fieldErrors[`coauthor_${index}_organisation`] ? styles.fieldError : ''}`}>
                         <label>Organisation *</label>
-                        <input
-                          type="text"
-                          placeholder="Organisation"
+                        <OrganizationAutocomplete
+                          name={`coauthor_${index}_organisation`}
+                          placeholder="Search for organization..."
                           value={coAuthor.organisation}
-                          onChange={(e) => updateCoAuthor(index, 'organisation', e.target.value)}
-                          onBlur={() => handleCoAuthorBlur(index, 'organisation')}
-                          className={`${styles.input} ${touched[`coauthor_${index}_organisation`] && fieldErrors[`coauthor_${index}_organisation`] ? styles.inputError : ''}`}
+                          onChange={(value) => updateCoAuthor(index, 'organisation', value)}
+                          onSelect={() => handleCoAuthorBlur(index, 'organisation')}
+                          required
+                          className={touched[`coauthor_${index}_organisation`] && fieldErrors[`coauthor_${index}_organisation`] ? styles.inputError : ''}
                         />
                         {touched[`coauthor_${index}_organisation`] && fieldErrors[`coauthor_${index}_organisation`] && (
                           <span className={styles.errorText}>{fieldErrors[`coauthor_${index}_organisation`]}</span>

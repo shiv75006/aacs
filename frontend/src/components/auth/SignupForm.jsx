@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { AuthFieldError } from './AuthError';
 import { validateSignupForm } from '../../utils/validation';
+import OrganizationAutocomplete from '../OrganizationAutocomplete';
 import './AuthForms.css';
 
 export const SignupForm = ({ onSuccess = null }) => {
@@ -206,15 +207,19 @@ export const SignupForm = ({ onSuccess = null }) => {
         <label htmlFor="affiliation" className="auth-form-label">
           Affiliation / Organization
         </label>
-        <input
+        <OrganizationAutocomplete
           id="affiliation"
-          type="text"
           name="affiliation"
-          className={`auth-form-input ${fieldErrors.affiliation ? 'error' : ''}`}
-          placeholder="University, Institute, etc. (optional)"
+          placeholder="Search for your organization (optional)"
           value={formData.affiliation}
-          onChange={handleInputChange}
+          onChange={(value) => {
+            setFormData((prev) => ({ ...prev, affiliation: value }));
+            if (fieldErrors.affiliation) {
+              setFieldErrors((prev) => ({ ...prev, affiliation: null }));
+            }
+          }}
           disabled={loading || isValidating}
+          className={fieldErrors.affiliation ? 'error' : ''}
         />
         {fieldErrors.affiliation && (
           <AuthFieldError error={fieldErrors.affiliation} />
