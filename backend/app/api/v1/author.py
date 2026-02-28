@@ -1385,6 +1385,86 @@ async def view_paper_file(
     )
 
 
+@router.get("/submissions/{paper_id}/view-title-page")
+async def view_title_page(
+    paper_id: int,
+    current_user: dict = Depends(get_current_user_from_token_or_query),
+    db: Session = Depends(get_db)
+):
+    """
+    View the title page of the paper (for authors viewing their own papers).
+    """
+    from fastapi.responses import FileResponse
+    from app.utils.file_handler import get_file_full_path
+    
+    user_id = str(current_user.get("id"))
+    
+    # Verify paper belongs to author
+    paper = db.query(Paper).filter(
+        Paper.id == paper_id,
+        Paper.added_by == user_id
+    ).first()
+    
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    # Use title_page if available, fall back to file
+    file_path = paper.title_page or paper.file
+    if not file_path:
+        raise HTTPException(status_code=404, detail="Title page file not found")
+    
+    filepath = get_file_full_path(file_path)
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Title page file not found on server")
+    
+    filename = filepath.name
+    ext = filepath.suffix.lower()
+    media_types = {'.pdf': 'application/pdf', '.doc': 'application/msword', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}
+    media_type = media_types.get(ext, 'application/octet-stream')
+    
+    return FileResponse(path=str(filepath), filename=filename, media_type=media_type, headers={"Content-Disposition": f"inline; filename=\"{filename}\""})
+
+
+@router.get("/submissions/{paper_id}/view-blinded-manuscript")
+async def view_blinded_manuscript(
+    paper_id: int,
+    current_user: dict = Depends(get_current_user_from_token_or_query),
+    db: Session = Depends(get_db)
+):
+    """
+    View the blinded manuscript of the paper (for authors viewing their own papers).
+    """
+    from fastapi.responses import FileResponse
+    from app.utils.file_handler import get_file_full_path
+    
+    user_id = str(current_user.get("id"))
+    
+    # Verify paper belongs to author
+    paper = db.query(Paper).filter(
+        Paper.id == paper_id,
+        Paper.added_by == user_id
+    ).first()
+    
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    # Use blinded_manuscript if available, fall back to file
+    file_path = paper.blinded_manuscript or paper.file
+    if not file_path:
+        raise HTTPException(status_code=404, detail="Blinded manuscript file not found")
+    
+    filepath = get_file_full_path(file_path)
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Blinded manuscript file not found on server")
+    
+    filename = filepath.name
+    ext = filepath.suffix.lower()
+    media_types = {'.pdf': 'application/pdf', '.doc': 'application/msword', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}
+    media_type = media_types.get(ext, 'application/octet-stream')
+    
+    return FileResponse(path=str(filepath), filename=filename, media_type=media_type, headers={"Content-Disposition": f"inline; filename=\"{filename}\""})
+
+
 @router.get("/submissions/{paper_id}/reviews/{review_id}/view-report")
 async def view_review_report(
     paper_id: int,

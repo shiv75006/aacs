@@ -666,11 +666,13 @@ async def view_paper_file(
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
     
-    if not paper.file:
+    # Reviewers only see blinded manuscript (no author info) - fall back to file for older papers
+    file_path = paper.blinded_manuscript or paper.file
+    if not file_path:
         raise HTTPException(status_code=404, detail="Paper file not found")
     
     # Get full file path from relative path stored in DB
-    filepath = get_file_full_path(paper.file)
+    filepath = get_file_full_path(file_path)
     
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="Paper file not found on server")

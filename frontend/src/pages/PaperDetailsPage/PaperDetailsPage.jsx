@@ -546,7 +546,10 @@ const PaperDetailsPage = () => {
     if (paper?.id) {
       const token = localStorage.getItem('authToken');
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const viewUrl = `${baseUrl}/api/v1/editor/papers/${paper.id}/view-title-page`;
+      // Authors use author endpoint, editors/admins use editor endpoint
+      const viewUrl = isAuthor() 
+        ? `${baseUrl}/api/v1/author/submissions/${paper.id}/view-title-page`
+        : `${baseUrl}/api/v1/editor/papers/${paper.id}/view-title-page`;
       window.open(`${viewUrl}?token=${token}`, '_blank');
       info('Opening title page in new tab...', 2000);
     }
@@ -556,7 +559,10 @@ const PaperDetailsPage = () => {
     if (paper?.id) {
       const token = localStorage.getItem('authToken');
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const viewUrl = `${baseUrl}/api/v1/editor/papers/${paper.id}/view-blinded-manuscript`;
+      // Authors use author endpoint, editors/admins use editor endpoint
+      const viewUrl = isAuthor() 
+        ? `${baseUrl}/api/v1/author/submissions/${paper.id}/view-blinded-manuscript`
+        : `${baseUrl}/api/v1/editor/papers/${paper.id}/view-blinded-manuscript`;
       window.open(`${viewUrl}?token=${token}`, '_blank');
       info('Opening blinded manuscript in new tab...', 2000);
     }
@@ -695,16 +701,8 @@ const PaperDetailsPage = () => {
             
             {/* Action Buttons */}
             <div className={styles.headerActions}>
-              {/* For authors - show single View PDF button */}
-              {isAuthor() && (
-                <button className={styles.btnOutline} onClick={handleViewPaper}>
-                  <span className="material-symbols-rounded">visibility</span>
-                  View PDF
-                </button>
-              )}
-              
-              {/* For editors/admins - show both title page and blinded manuscript buttons */}
-              {(isEditor() || isAdmin()) && (
+              {/* For authors/editors/admins - show both title page and blinded manuscript buttons */}
+              {(isAuthor() || isEditor() || isAdmin()) && (
                 <>
                   <button className={styles.btnOutline} onClick={handleViewTitlePage}>
                     <span className="material-symbols-rounded">article</span>
