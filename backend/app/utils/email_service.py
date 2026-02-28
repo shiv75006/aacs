@@ -7,16 +7,18 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 from typing import List, Optional, Dict
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-# SMTP Configuration
-SMTP_SERVER = "mail.breakthroughpublishers.com"
-SMTP_PORT = 587
-SMTP_USERNAME = "info@breakthroughpublishers.com"
-SMTP_PASSWORD = "Aacs@2020"
-EMAIL_FROM = "info@breakthroughpublishers.com"
-EMAIL_FROM_NAME = "Breakthrough Publishers India Journal Management System"
+# SMTP Configuration from environment variables
+SMTP_SERVER = settings.SMTP_SERVER
+SMTP_PORT = settings.SMTP_PORT
+SMTP_USERNAME = settings.SMTP_USERNAME
+SMTP_PASSWORD = settings.SMTP_PASSWORD
+EMAIL_FROM = settings.EMAIL_FROM
+EMAIL_FROM_NAME = settings.EMAIL_FROM_NAME
 
 
 class EmailService:
