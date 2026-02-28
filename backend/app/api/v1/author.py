@@ -934,7 +934,9 @@ async def get_revision_history(
 @router.post("/submissions/{paper_id}/resubmit")
 async def resubmit_paper(
     paper_id: int,
-    file: UploadFile = File(...),
+    track_changes_file: UploadFile = File(..., description="Manuscript with track changes"),
+    clean_file: UploadFile = File(..., description="Clean revised manuscript"),
+    response_file: UploadFile = File(..., description="Response to reviewer comments"),
     revision_reason: str = Form(...),
     change_summary: str = Form(None),
     background_tasks: BackgroundTasks = None,
@@ -946,7 +948,9 @@ async def resubmit_paper(
     
     Args:
         paper_id: Paper ID
-        file: Revised paper file
+        track_changes_file: Manuscript with track changes showing revisions
+        clean_file: Clean version of the revised manuscript
+        response_file: Response letter to reviewer comments
         revision_reason: Why the paper is being resubmitted
         change_summary: Summary of changes made
         
@@ -970,34 +974,57 @@ async def resubmit_paper(
     if paper.status != "correction":
         raise HTTPException(status_code=400, detail="This paper does not require revision")
     
-    # Validate file
+    # Validate all files
     allowed_types = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
-    if file.content_type not in allowed_types:
-        raise HTTPException(status_code=400, detail="Only PDF and Word documents allowed")
     
-    # Read and validate file size
-    content = await file.read()
-    if len(content) > 50 * 1024 * 1024:  # 50MB max
-        raise HTTPException(status_code=400, detail="File size must be less than 50MB")
+    files_to_validate = [
+        (track_changes_file, "Track changes file"),
+        (clean_file, "Clean manuscript file"),
+        (response_file, "Response to reviewer file")
+    ]
+    
+    file_contents = {}
+    for file_obj, file_label in files_to_validate:
+        if file_obj.content_type not in allowed_types:
+            raise HTTPException(status_code=400, detail=f"{file_label}: Only PDF and Word documents allowed")
+        content = await file_obj.read()
+        if len(content) > 50 * 1024 * 1024:  # 50MB max
+            raise HTTPException(status_code=400, detail=f"{file_label}: File size must be less than 50MB")
+        file_contents[file_label] = content
     
     try:
-        # Save new version
+        # Save new versions of all files
         upload_dir = f"uploads/papers/user_{user_id}"
         os.makedirs(upload_dir, exist_ok=True)
         
         new_version = paper.version_number + 1
-        filename = f"{paper_id}_v{new_version}_{file.filename}"
-        filepath = os.path.join(upload_dir, filename)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
-        with open(filepath, 'wb') as f:
-            f.write(content)
+        # Save track changes file
+        track_changes_filename = f"{paper_id}_v{new_version}_track_changes_{timestamp}_{track_changes_file.filename}"
+        track_changes_path = os.path.join(upload_dir, track_changes_filename)
+        with open(track_changes_path, 'wb') as f:
+            f.write(file_contents["Track changes file"])
         
-        # Create version record
+        # Save clean file
+        clean_filename = f"{paper_id}_v{new_version}_clean_{timestamp}_{clean_file.filename}"
+        clean_path = os.path.join(upload_dir, clean_filename)
+        with open(clean_path, 'wb') as f:
+            f.write(file_contents["Clean manuscript file"])
+        
+        # Save response file
+        response_filename = f"{paper_id}_v{new_version}_response_{timestamp}_{response_file.filename}"
+        response_path = os.path.join(upload_dir, response_filename)
+        with open(response_path, 'wb') as f:
+            f.write(file_contents["Response to reviewer file"])
+        
+        # Create version record (using clean file as primary)
+        total_size = sum(len(c) for c in file_contents.values())
         version_record = PaperVersion(
             paper_id=paper_id,
             version_number=new_version,
-            file=filepath,
-            file_size=len(content),
+            file=clean_path,
+            file_size=total_size,
             revision_reason=revision_reason,
             change_summary=change_summary,
             uploaded_by=user_id
@@ -1008,7 +1035,10 @@ async def resubmit_paper(
         old_status = paper.status
         paper.version_number = new_version
         paper.revision_count += 1
-        paper.file = filepath
+        paper.file = clean_path  # Legacy field uses clean version
+        paper.revised_track_changes = track_changes_path
+        paper.revised_clean = clean_path
+        paper.response_to_reviewer = response_path
         paper.status = "under_review"  # Changed from "resubmitted" to allow re-review
         
         db.add(version_record)

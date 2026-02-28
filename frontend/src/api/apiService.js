@@ -235,9 +235,11 @@ export const acsApi = {
     getSubmissionReviews: (paperId) => apiService.get(`/api/v1/author/submissions/${paperId}/reviews`),
     getEditorDecision: (paperId) => apiService.get(`/api/v1/author/submissions/${paperId}/decision`),
     getRevisionHistory: (paperId) => apiService.get(`/api/v1/author/submissions/${paperId}/revisions`),
-    resubmitPaper: (paperId, file, revisionReason, changeSummary) => {
+    resubmitPaper: (paperId, trackChangesFile, cleanFile, responseFile, revisionReason, changeSummary) => {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('track_changes_file', trackChangesFile);
+      formData.append('clean_file', cleanFile);
+      formData.append('response_file', responseFile);
       formData.append('revision_reason', revisionReason);
       if (changeSummary) formData.append('change_summary', changeSummary);
       return apiService.post(`/api/v1/author/submissions/${paperId}/resubmit`, formData);

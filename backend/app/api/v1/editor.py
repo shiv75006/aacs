@@ -1970,3 +1970,120 @@ async def view_paper_blinded_manuscript(
         media_type=media_type,
         headers={"Content-Disposition": f"inline; filename=\"{filename}\""}
     )
+
+
+@router.get("/papers/{paper_id}/view-track-changes")
+async def view_paper_track_changes(
+    paper_id: int,
+    current_user: dict = Depends(get_current_user_from_token_or_query),
+    db: Session = Depends(get_db)
+):
+    """
+    View the revised manuscript with track changes in browser.
+    """
+    from fastapi.responses import FileResponse
+    from app.utils.file_handler import get_file_full_path
+    
+    if not check_role(current_user.get("role"), "editor"):
+        raise HTTPException(status_code=403, detail="Editor access required")
+    
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    editor_journal_ids = get_editor_journal_ids(current_user.get("email"), db)
+    if paper.journal not in editor_journal_ids:
+        raise HTTPException(status_code=403, detail="You don't have access to this paper's journal")
+    
+    file_path = paper.revised_track_changes
+    if not file_path:
+        raise HTTPException(status_code=404, detail="Track changes file not found - paper may not have been revised yet")
+    
+    filepath = get_file_full_path(file_path)
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Track changes file not found on server")
+    
+    filename = filepath.name
+    ext = filepath.suffix.lower()
+    media_types = {'.pdf': 'application/pdf', '.doc': 'application/msword', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}
+    media_type = media_types.get(ext, 'application/octet-stream')
+    
+    return FileResponse(path=str(filepath), filename=filename, media_type=media_type, headers={"Content-Disposition": f"inline; filename=\"{filename}\""})
+
+
+@router.get("/papers/{paper_id}/view-clean-revision")
+async def view_paper_clean_revision(
+    paper_id: int,
+    current_user: dict = Depends(get_current_user_from_token_or_query),
+    db: Session = Depends(get_db)
+):
+    """
+    View the clean revised manuscript in browser.
+    """
+    from fastapi.responses import FileResponse
+    from app.utils.file_handler import get_file_full_path
+    
+    if not check_role(current_user.get("role"), "editor"):
+        raise HTTPException(status_code=403, detail="Editor access required")
+    
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    editor_journal_ids = get_editor_journal_ids(current_user.get("email"), db)
+    if paper.journal not in editor_journal_ids:
+        raise HTTPException(status_code=403, detail="You don't have access to this paper's journal")
+    
+    file_path = paper.revised_clean
+    if not file_path:
+        raise HTTPException(status_code=404, detail="Clean revision file not found - paper may not have been revised yet")
+    
+    filepath = get_file_full_path(file_path)
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Clean revision file not found on server")
+    
+    filename = filepath.name
+    ext = filepath.suffix.lower()
+    media_types = {'.pdf': 'application/pdf', '.doc': 'application/msword', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}
+    media_type = media_types.get(ext, 'application/octet-stream')
+    
+    return FileResponse(path=str(filepath), filename=filename, media_type=media_type, headers={"Content-Disposition": f"inline; filename=\"{filename}\""})
+
+
+@router.get("/papers/{paper_id}/view-response-to-reviewer")
+async def view_paper_response_to_reviewer(
+    paper_id: int,
+    current_user: dict = Depends(get_current_user_from_token_or_query),
+    db: Session = Depends(get_db)
+):
+    """
+    View the response to reviewer comments file in browser.
+    """
+    from fastapi.responses import FileResponse
+    from app.utils.file_handler import get_file_full_path
+    
+    if not check_role(current_user.get("role"), "editor"):
+        raise HTTPException(status_code=403, detail="Editor access required")
+    
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    editor_journal_ids = get_editor_journal_ids(current_user.get("email"), db)
+    if paper.journal not in editor_journal_ids:
+        raise HTTPException(status_code=403, detail="You don't have access to this paper's journal")
+    
+    file_path = paper.response_to_reviewer
+    if not file_path:
+        raise HTTPException(status_code=404, detail="Response to reviewer file not found - paper may not have been revised yet")
+    
+    filepath = get_file_full_path(file_path)
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Response to reviewer file not found on server")
+    
+    filename = filepath.name
+    ext = filepath.suffix.lower()
+    media_types = {'.pdf': 'application/pdf', '.doc': 'application/msword', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}
+    media_type = media_types.get(ext, 'application/octet-stream')
+    
+    return FileResponse(path=str(filepath), filename=filename, media_type=media_type, headers={"Content-Disposition": f"inline; filename=\"{filename}\""})

@@ -147,6 +147,10 @@ class Paper(Base):
     file = Column(String(200), nullable=False, default="")  # Legacy field - kept for backwards compatibility
     title_page = Column(String(200), nullable=True, default="")  # Title page with author info
     blinded_manuscript = Column(String(200), nullable=True, default="")  # Blinded manuscript for review
+    # Revision files (populated during resubmission)
+    revised_track_changes = Column(String(200), nullable=True, default="")  # Manuscript with track changes
+    revised_clean = Column(String(200), nullable=True, default="")  # Clean revised manuscript
+    response_to_reviewer = Column(String(200), nullable=True, default="")  # Response letter to reviewer
     added_on = Column(DateTime, nullable=False, default=datetime.utcnow)
     added_by = Column(String(100), nullable=False, default="")
     status = Column(String(50), nullable=False, default="submitted")
@@ -184,6 +188,9 @@ class Paper(Base):
             "file": self.file,
             "title_page": self.title_page,
             "blinded_manuscript": self.blinded_manuscript,
+            "revised_track_changes": self.revised_track_changes,
+            "revised_clean": self.revised_clean,
+            "response_to_reviewer": self.response_to_reviewer,
             "added_on": self.added_on.isoformat() if self.added_on else None,
             "added_by": self.added_by,
             "status": self.status,

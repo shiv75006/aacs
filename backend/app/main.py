@@ -30,21 +30,37 @@ def run_migrations():
     with engine.connect() as conn:
         try:
             # Migration: Add title_page and blinded_manuscript columns to papers table
-            result = conn.execute(text("SHOW COLUMNS FROM papers LIKE 'title_page'"))
+            result = conn.execute(text("SHOW COLUMNS FROM paper LIKE 'title_page'"))
             if not result.fetchone():
-                conn.execute(text("ALTER TABLE papers ADD COLUMN title_page VARCHAR(200) DEFAULT '' AFTER file_path"))
-                print("Migration: Added 'title_page' column to papers table")
+                conn.execute(text("ALTER TABLE paper ADD COLUMN title_page VARCHAR(200) DEFAULT '' AFTER file"))
+                print("Migration: Added 'title_page' column to paper table")
             
-            result = conn.execute(text("SHOW COLUMNS FROM papers LIKE 'blinded_manuscript'"))
+            result = conn.execute(text("SHOW COLUMNS FROM paper LIKE 'blinded_manuscript'"))
             if not result.fetchone():
-                conn.execute(text("ALTER TABLE papers ADD COLUMN blinded_manuscript VARCHAR(200) DEFAULT '' AFTER title_page"))
-                print("Migration: Added 'blinded_manuscript' column to papers table")
+                conn.execute(text("ALTER TABLE paper ADD COLUMN blinded_manuscript VARCHAR(200) DEFAULT '' AFTER title_page"))
+                print("Migration: Added 'blinded_manuscript' column to paper table")
+            
+            # Migration: Add revision files columns (for resubmission)
+            result = conn.execute(text("SHOW COLUMNS FROM paper LIKE 'revised_track_changes'"))
+            if not result.fetchone():
+                conn.execute(text("ALTER TABLE paper ADD COLUMN revised_track_changes VARCHAR(200) DEFAULT '' AFTER blinded_manuscript"))
+                print("Migration: Added 'revised_track_changes' column to paper table")
+            
+            result = conn.execute(text("SHOW COLUMNS FROM paper LIKE 'revised_clean'"))
+            if not result.fetchone():
+                conn.execute(text("ALTER TABLE paper ADD COLUMN revised_clean VARCHAR(200) DEFAULT '' AFTER revised_track_changes"))
+                print("Migration: Added 'revised_clean' column to paper table")
+            
+            result = conn.execute(text("SHOW COLUMNS FROM paper LIKE 'response_to_reviewer'"))
+            if not result.fetchone():
+                conn.execute(text("ALTER TABLE paper ADD COLUMN response_to_reviewer VARCHAR(200) DEFAULT '' AFTER revised_clean"))
+                print("Migration: Added 'response_to_reviewer' column to paper table")
             
             # Migration: Increase abstract column size to 2500 characters
-            result = conn.execute(text("SHOW COLUMNS FROM papers WHERE Field = 'abstract'"))
+            result = conn.execute(text("SHOW COLUMNS FROM paper WHERE Field = 'abstract'"))
             col_info = result.fetchone()
             if col_info and 'varchar(1500)' in str(col_info).lower():
-                conn.execute(text("ALTER TABLE papers MODIFY COLUMN abstract VARCHAR(2500) NOT NULL DEFAULT ''"))
+                conn.execute(text("ALTER TABLE paper MODIFY COLUMN abstract VARCHAR(2500) NOT NULL DEFAULT ''"))
                 print("Migration: Increased 'abstract' column size to 2500 characters")
             
             conn.commit()

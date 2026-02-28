@@ -33,7 +33,9 @@ const PaperDetailsPage = () => {
   const [showReviewerDropdown, setShowReviewerDropdown] = useState(false);
   // Author resubmission state
   const [showResubmitForm, setShowResubmitForm] = useState(false);
-  const [resubmitFile, setResubmitFile] = useState(null);
+  const [trackChangesFile, setTrackChangesFile] = useState(null);
+  const [cleanFile, setCleanFile] = useState(null);
+  const [responseFile, setResponseFile] = useState(null);
   const [revisionReason, setRevisionReason] = useState('');
   const [changeSummary, setChangeSummary] = useState('');
   const [resubmitting, setResubmitting] = useState(false);
@@ -400,8 +402,16 @@ const PaperDetailsPage = () => {
 
   // Handle paper resubmission
   const handleResubmit = async () => {
-    if (!resubmitFile) {
-      showError('Please select a revised paper file', 3000);
+    if (!trackChangesFile) {
+      showError('Please upload the manuscript with track changes', 3000);
+      return;
+    }
+    if (!cleanFile) {
+      showError('Please upload the clean revised manuscript', 3000);
+      return;
+    }
+    if (!responseFile) {
+      showError('Please upload your response to reviewer comments', 3000);
       return;
     }
     if (!revisionReason.trim()) {
@@ -411,10 +421,12 @@ const PaperDetailsPage = () => {
 
     try {
       setResubmitting(true);
-      await acsApi.author.resubmitPaper(paper.id, resubmitFile, revisionReason, changeSummary);
+      await acsApi.author.resubmitPaper(paper.id, trackChangesFile, cleanFile, responseFile, revisionReason, changeSummary);
       success('Paper resubmitted successfully!', 4000);
       setShowResubmitForm(false);
-      setResubmitFile(null);
+      setTrackChangesFile(null);
+      setCleanFile(null);
+      setResponseFile(null);
       setRevisionReason('');
       setChangeSummary('');
       // Refresh paper details
@@ -937,23 +949,74 @@ const PaperDetailsPage = () => {
               </div>
               <div className={styles.sectionCard}>
                 <p className={styles.resubmitNote}>
-                  Please upload your revised manuscript addressing the reviewer's comments and provide a summary of the changes made.
+                  Please upload all three required files addressing the reviewer's comments:
                 </p>
                 <div className={styles.form}>
+                  {/* Track Changes File */}
                   <div className={styles.formGroup}>
-                    <label htmlFor="revisedFile">Revised Paper File *</label>
+                    <label htmlFor="trackChangesFile">
+                      <span className="material-symbols-rounded" style={{verticalAlign: 'middle', marginRight: '6px', fontSize: '18px'}}>track_changes</span>
+                      Manuscript with Track Changes *
+                    </label>
+                    <p className={styles.fileHint}>Upload your revised manuscript showing all changes highlighted using track changes</p>
                     <input
                       type="file"
-                      id="revisedFile"
+                      id="trackChangesFile"
                       accept=".pdf,.doc,.docx"
-                      onChange={(e) => setResubmitFile(e.target.files[0])}
+                      onChange={(e) => setTrackChangesFile(e.target.files[0])}
                       disabled={resubmitting}
                       className={styles.fileInput}
                     />
-                    {resubmitFile && (
+                    {trackChangesFile && (
                       <p className={styles.selectedFile}>
                         <span className="material-symbols-rounded">description</span>
-                        {resubmitFile.name} ({(resubmitFile.size / 1024 / 1024).toFixed(2)} MB)
+                        {trackChangesFile.name} ({(trackChangesFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Clean File */}
+                  <div className={styles.formGroup}>
+                    <label htmlFor="cleanFile">
+                      <span className="material-symbols-rounded" style={{verticalAlign: 'middle', marginRight: '6px', fontSize: '18px'}}>article</span>
+                      Clean Revised Manuscript *
+                    </label>
+                    <p className={styles.fileHint}>Upload the final clean version of your revised manuscript without track changes</p>
+                    <input
+                      type="file"
+                      id="cleanFile"
+                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => setCleanFile(e.target.files[0])}
+                      disabled={resubmitting}
+                      className={styles.fileInput}
+                    />
+                    {cleanFile && (
+                      <p className={styles.selectedFile}>
+                        <span className="material-symbols-rounded">description</span>
+                        {cleanFile.name} ({(cleanFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Response to Reviewer File */}
+                  <div className={styles.formGroup}>
+                    <label htmlFor="responseFile">
+                      <span className="material-symbols-rounded" style={{verticalAlign: 'middle', marginRight: '6px', fontSize: '18px'}}>quick_reply</span>
+                      Response to Reviewer Comments *
+                    </label>
+                    <p className={styles.fileHint}>Upload a detailed response letter addressing each reviewer comment point-by-point</p>
+                    <input
+                      type="file"
+                      id="responseFile"
+                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => setResponseFile(e.target.files[0])}
+                      disabled={resubmitting}
+                      className={styles.fileInput}
+                    />
+                    {responseFile && (
+                      <p className={styles.selectedFile}>
+                        <span className="material-symbols-rounded">description</span>
+                        {responseFile.name} ({(responseFile.size / 1024 / 1024).toFixed(2)} MB)
                       </p>
                     )}
                   </div>
@@ -988,7 +1051,7 @@ const PaperDetailsPage = () => {
                     <button
                       className={styles.btnPrimary}
                       onClick={handleResubmit}
-                      disabled={resubmitting || !resubmitFile || !revisionReason.trim()}
+                      disabled={resubmitting || !trackChangesFile || !cleanFile || !responseFile || !revisionReason.trim()}
                     >
                       {resubmitting ? 'Resubmitting...' : 'Submit Revision'}
                     </button>
@@ -996,7 +1059,9 @@ const PaperDetailsPage = () => {
                       className={styles.btnSecondary}
                       onClick={() => {
                         setShowResubmitForm(false);
-                        setResubmitFile(null);
+                        setTrackChangesFile(null);
+                        setCleanFile(null);
+                        setResponseFile(null);
                         setRevisionReason('');
                         setChangeSummary('');
                       }}
