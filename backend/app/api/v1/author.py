@@ -214,7 +214,7 @@ async def get_submission_detail(
             "middle_name": ca.middle_name,
             "last_name": ca.last_name,
             "email": ca.email,
-            "affiliation": ca.affiliation,
+            "affiliation": ca.organisation,
             "is_corresponding": ca.is_corresponding
         })
     
