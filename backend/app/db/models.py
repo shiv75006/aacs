@@ -443,6 +443,7 @@ class ReviewerInvitation(Base):
     # Additional info
     invitation_message = Column(Text, nullable=True)
     decline_reason = Column(Text, nullable=True)
+    is_external = Column(Boolean, default=False)  # True if reviewer is not in the system
     
     def to_dict(self):
         """Convert model to dictionary"""
@@ -458,6 +459,7 @@ class ReviewerInvitation(Base):
             "accepted_on": self.accepted_on.isoformat() if self.accepted_on else None,
             "declined_on": self.declined_on.isoformat() if self.declined_on else None,
             "token_expiry": self.token_expiry.isoformat() if self.token_expiry else None,
+            "is_external": self.is_external,
         }
 
 

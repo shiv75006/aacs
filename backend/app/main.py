@@ -63,6 +63,15 @@ def run_migrations():
                 conn.execute(text("ALTER TABLE paper MODIFY COLUMN abstract VARCHAR(2500) NOT NULL DEFAULT ''"))
                 print("Migration: Increased 'abstract' column size to 2500 characters")
             
+            # Migration: Add is_external column to reviewer_invitation table
+            try:
+                result = conn.execute(text("SHOW COLUMNS FROM reviewer_invitation LIKE 'is_external'"))
+                if not result.fetchone():
+                    conn.execute(text("ALTER TABLE reviewer_invitation ADD COLUMN is_external TINYINT(1) DEFAULT 0"))
+                    print("Migration: Added 'is_external' column to reviewer_invitation table")
+            except Exception:
+                pass  # Table may not exist yet
+            
             conn.commit()
             print("Database migrations completed successfully")
             
@@ -180,7 +189,7 @@ app.add_middleware(
 # Add trusted host middleware
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.aacsjournals.com", "*.railway.app", "*.up.railway.app"]
+    allowed_hosts=["localhost", "127.0.0.1", "*.aacsjournals.com", "*.railway.app", "*.up.railway.app", "*.vercel.app"]
 )
 
 

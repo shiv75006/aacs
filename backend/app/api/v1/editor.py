@@ -1,4 +1,5 @@
 """Editor API endpoints"""
+import os
 from fastapi import APIRouter, Depends, status, HTTPException, Query, Request, Body, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, or_, exists, and_
@@ -664,42 +665,46 @@ async def invite_reviewer(
             }
         )
     
-    # Validate reviewer exists by email
+    # Prevent editors from assigning reviewers to their own papers
+    if paper.added_by == str(current_user.get("id")):
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "Conflict of interest",
+                "message": "You cannot assign reviewers to papers you submitted",
+                "paper_id": paper_id,
+                "fix": "Ask another editor to handle reviewer assignments for this paper"
+            }
+        )
+    
+    # Check if reviewer exists in the system (for external reviewers, they may not exist yet)
     reviewer = db.query(User).filter(User.email == reviewer_email).first()
-    if not reviewer:
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "error": "Reviewer not found",
-                "message": f"No user found with email {reviewer_email}",
-                "reviewer_email": reviewer_email,
-                "fix": "Create a reviewer account with this email first or use an existing reviewer email"
-            }
-        )
+    is_external_reviewer = reviewer is None
     
-    # Validate reviewer has reviewer role (check both legacy role and UserRole table)
-    has_reviewer_role = "reviewer" in (reviewer.role or "").lower()
-    
-    # Also check UserRole table for approved reviewer role
-    if not has_reviewer_role:
-        user_role_entry = db.query(UserRole).filter(
-            UserRole.user_id == reviewer.id,
-            UserRole.role == "reviewer",
-            UserRole.status == "approved"
-        ).first()
-        has_reviewer_role = user_role_entry is not None
-    
-    if not has_reviewer_role:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "error": "Invalid user role",
-                "message": f"User {reviewer_email} does not have an approved 'reviewer' role",
-                "reviewer_email": reviewer_email,
-                "reviewer_role": reviewer.role,
-                "fix": "Assign the 'reviewer' role to this user in the admin panel"
-            }
-        )
+    # For existing users, validate they have reviewer role
+    if reviewer:
+        has_reviewer_role = "reviewer" in (reviewer.role or "").lower()
+        
+        # Also check UserRole table for approved reviewer role
+        if not has_reviewer_role:
+            user_role_entry = db.query(UserRole).filter(
+                UserRole.user_id == reviewer.id,
+                UserRole.role == "reviewer",
+                UserRole.status == "approved"
+            ).first()
+            has_reviewer_role = user_role_entry is not None
+        
+        if not has_reviewer_role:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "Invalid user role",
+                    "message": f"User {reviewer_email} does not have an approved 'reviewer' role",
+                    "reviewer_email": reviewer_email,
+                    "reviewer_role": reviewer.role,
+                    "fix": "Assign the 'reviewer' role to this user in the admin panel"
+                }
+            )
     
     # Check if already invited (optional - customize as needed)
     existing_review = db.query(OnlineReview).filter(
@@ -721,10 +726,13 @@ async def invite_reviewer(
         )
     
     # Prepare invitation data
-    reviewer_name = f"{reviewer.fname} {reviewer.lname or ''}".strip()
+    reviewer_name = f"{reviewer.fname} {reviewer.lname or ''}".strip() if reviewer else reviewer_email.split('@')[0].title()
     paper_title = paper.title or "Untitled Paper"
     paper_abstract = paper.abstract or "No abstract provided"
-    journal_name = paper.journal or "Breakthrough Publishers India Journal"
+    
+    # Get journal name from Journal table (paper.journal is an integer ID)
+    journal_obj = db.query(Journal).filter(Journal.id == paper.journal).first()
+    journal_name = journal_obj.name if journal_obj else "Breakthrough Publishers India Journal"
     
     # Calculate due date
     due_date = (datetime.utcnow() + timedelta(days=due_days)).strftime("%B %d, %Y")
@@ -737,7 +745,7 @@ async def invite_reviewer(
     try:
         invitation = ReviewerInvitation(
             paper_id=paper_id,
-            reviewer_id=reviewer.id,
+            reviewer_id=reviewer.id if reviewer else None,  # None for external reviewers
             reviewer_email=reviewer_email,
             reviewer_name=reviewer_name,
             journal_id=paper.journal,
@@ -745,7 +753,8 @@ async def invite_reviewer(
             token_expiry=token_expiry,
             status="pending",
             invited_on=datetime.utcnow(),
-            invitation_message=f"You are invited to review the paper '{paper_title}' for {journal_name}"
+            invitation_message=f"You are invited to review the paper '{paper_title}' for {journal_name}",
+            is_external=is_external_reviewer  # Track if external reviewer
         )
         db.add(invitation)
         db.commit()
@@ -759,8 +768,9 @@ async def invite_reviewer(
             detail=f"Failed to create invitation: {str(e)}"
         )
     
-    # Generate invitation link
-    invitation_link = f"https://localhost:3000/invitations/{invitation_token}"
+    # Generate invitation link using configured frontend URL
+    frontend_url = os.environ.get("FRONTEND_URL", "https://aacs-woad.vercel.app")
+    invitation_link = f"{frontend_url}/invitations/{invitation_token}"
     
     # Send invitation email
     email_sent = send_reviewer_invitation(
@@ -783,7 +793,9 @@ async def invite_reviewer(
         "due_days": due_days,
         "due_date": due_date,
         "status": "invitation_sent" if email_sent else "invitation_queued",
-        "email_sent": email_sent
+        "email_sent": email_sent,
+        "is_external_reviewer": is_external_reviewer,
+        "journal_name": journal_name
     }
 
 
@@ -816,6 +828,18 @@ async def assign_reviewer(
                 "message": f"No paper found with ID {paper_id}",
                 "paper_id": paper_id,
                 "fix": "Verify the paper ID is correct"
+            }
+        )
+    
+    # Prevent editors from assigning reviewers to their own papers
+    if paper.added_by == str(current_user.get("id")):
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "Conflict of interest",
+                "message": "You cannot assign reviewers to papers you submitted",
+                "paper_id": paper_id,
+                "fix": "Ask another editor to handle reviewer assignments for this paper"
             }
         )
     
@@ -2087,3 +2111,284 @@ async def view_paper_response_to_reviewer(
     media_type = media_types.get(ext, 'application/octet-stream')
     
     return FileResponse(path=str(filepath), filename=filename, media_type=media_type, headers={"Content-Disposition": f"inline; filename=\"{filename}\""})
+
+
+# ============================================================================
+# PUBLIC INVITATION ENDPOINTS (No Authentication Required)
+# ============================================================================
+
+@router.get("/invitations/status/{token}")
+async def get_invitation_status(
+    token: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Get invitation status by token (public endpoint, no auth required).
+    Used by external reviewers to view invitation details before accepting.
+    
+    Args:
+        token: Invitation token from email link
+        
+    Returns:
+        Invitation details including paper title, journal, due date
+    """
+    invitation = db.query(ReviewerInvitation).filter(
+        ReviewerInvitation.invitation_token == token
+    ).first()
+    
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found. The token may be invalid.")
+    
+    # Check if expired
+    is_expired = invitation.token_expiry < datetime.utcnow() if invitation.token_expiry else False
+    
+    # Get paper details
+    paper = db.query(Paper).filter(Paper.id == invitation.paper_id).first()
+    paper_title = paper.title if paper else "Unknown Paper"
+    paper_abstract = paper.abstract[:500] + "..." if paper and paper.abstract and len(paper.abstract) > 500 else (paper.abstract if paper else "")
+    
+    # Get journal name
+    journal = db.query(Journal).filter(Journal.id == invitation.journal_id).first() if invitation.journal_id else None
+    journal_name = journal.name if journal else "Breakthrough Publishers India Journal"
+    
+    return {
+        "id": invitation.id,
+        "paper_id": invitation.paper_id,
+        "paper_title": paper_title,
+        "paper_abstract": paper_abstract,
+        "journal_name": journal_name,
+        "reviewer_email": invitation.reviewer_email,
+        "reviewer_name": invitation.reviewer_name,
+        "status": invitation.status,
+        "invited_on": invitation.invited_on.isoformat() if invitation.invited_on else None,
+        "token_expiry": invitation.token_expiry.isoformat() if invitation.token_expiry else None,
+        "is_expired": is_expired,
+        "is_external": invitation.is_external if hasattr(invitation, 'is_external') else False,
+        "invitation_message": invitation.invitation_message
+    }
+
+
+@router.post("/invitations/{token}/accept")
+async def accept_invitation_by_token(
+    token: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """
+    Accept an invitation by token (public endpoint).
+    For existing users: Creates the review assignment.
+    For external reviewers: Requires them to register first.
+    
+    Args:
+        token: Invitation token from email link
+        
+    Returns:
+        Acceptance confirmation with next steps
+    """
+    invitation = db.query(ReviewerInvitation).filter(
+        ReviewerInvitation.invitation_token == token
+    ).first()
+    
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found. The token may be invalid.")
+    
+    # Check if already processed
+    if invitation.status != "pending":
+        raise HTTPException(status_code=400, detail=f"Invitation has already been {invitation.status}")
+    
+    # Check if expired
+    if invitation.token_expiry and invitation.token_expiry < datetime.utcnow():
+        invitation.status = "expired"
+        db.commit()
+        raise HTTPException(status_code=410, detail="Invitation has expired. Please contact the editor for a new invitation.")
+    
+    # Check if reviewer exists in the system
+    reviewer = db.query(User).filter(User.email == invitation.reviewer_email).first()
+    
+    if not reviewer:
+        # External reviewer - they need to register first
+        return {
+            "status": "registration_required",
+            "message": "Please create an account to accept this invitation",
+            "invitation_id": invitation.id,
+            "reviewer_email": invitation.reviewer_email,
+            "requires_registration": True
+        }
+    
+    # Check if already assigned
+    existing_review = db.query(OnlineReview).filter(
+        OnlineReview.paper_id == invitation.paper_id,
+        OnlineReview.reviewer_id == str(reviewer.id)
+    ).first()
+    
+    if existing_review:
+        raise HTTPException(status_code=409, detail="You are already assigned as a reviewer for this paper.")
+    
+    # Accept the invitation
+    invitation.status = "accepted"
+    invitation.accepted_on = datetime.utcnow()
+    invitation.reviewer_id = reviewer.id
+    
+    # Create the review assignment
+    from datetime import date
+    online_review = OnlineReview(
+        paper_id=invitation.paper_id,
+        reviewer_id=str(reviewer.id),
+        assigned_on=date.today()
+    )
+    db.add(online_review)
+    db.commit()
+    db.refresh(online_review)
+    
+    return {
+        "status": "accepted",
+        "message": "You have been assigned as a reviewer for this paper",
+        "invitation_id": invitation.id,
+        "paper_id": invitation.paper_id,
+        "review_id": online_review.id,
+        "accepted_on": invitation.accepted_on.isoformat() if invitation.accepted_on else None,
+        "requires_registration": False
+    }
+
+
+@router.post("/invitations/{token}/decline")
+async def decline_invitation_by_token(
+    token: str,
+    reason: str = Query("", description="Optional reason for declining"),
+    db: Session = Depends(get_db)
+):
+    """
+    Decline an invitation by token (public endpoint).
+    
+    Args:
+        token: Invitation token from email link
+        reason: Optional reason for declining
+        
+    Returns:
+        Confirmation of decline
+    """
+    invitation = db.query(ReviewerInvitation).filter(
+        ReviewerInvitation.invitation_token == token
+    ).first()
+    
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found. The token may be invalid.")
+    
+    # Check if already processed
+    if invitation.status != "pending":
+        raise HTTPException(status_code=400, detail=f"Invitation has already been {invitation.status}")
+    
+    # Decline the invitation
+    invitation.status = "declined"
+    invitation.declined_on = datetime.utcnow()
+    invitation.decline_reason = reason if reason else None
+    
+    db.commit()
+    
+    return {
+        "status": "declined",
+        "message": "You have declined this review invitation",
+        "invitation_id": invitation.id,
+        "declined_on": invitation.declined_on.isoformat() if invitation.declined_on else None
+    }
+
+
+@router.post("/invitations/{token}/register-accept")
+async def register_and_accept_invitation(
+    token: str,
+    fname: str = Query(..., description="First name"),
+    lname: str = Query("", description="Last name"),
+    password: str = Query(..., min_length=6, description="Password"),
+    organization: str = Query("", description="Organization/Institution"),
+    db: Session = Depends(get_db)
+):
+    """
+    Register a new user and accept the invitation in one step (for external reviewers).
+    
+    Args:
+        token: Invitation token
+        fname: First name
+        lname: Last name (optional)
+        password: Password (min 6 chars)
+        organization: Organization/Institution (optional)
+        
+    Returns:
+        Registration confirmation and review assignment details
+    """
+    from passlib.context import CryptContext
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    
+    invitation = db.query(ReviewerInvitation).filter(
+        ReviewerInvitation.invitation_token == token
+    ).first()
+    
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found. The token may be invalid.")
+    
+    if invitation.status != "pending":
+        raise HTTPException(status_code=400, detail=f"Invitation has already been {invitation.status}")
+    
+    if invitation.token_expiry and invitation.token_expiry < datetime.utcnow():
+        invitation.status = "expired"
+        db.commit()
+        raise HTTPException(status_code=410, detail="Invitation has expired.")
+    
+    # Check if user already exists
+    existing_user = db.query(User).filter(User.email == invitation.reviewer_email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=400, 
+            detail="An account with this email already exists. Please log in and accept the invitation from your dashboard."
+        )
+    
+    # Create new user with reviewer role
+    hashed_password = pwd_context.hash(password)
+    new_user = User(
+        fname=fname,
+        lname=lname,
+        email=invitation.reviewer_email,
+        password=hashed_password,
+        role="reviewer",
+        organization=organization,
+        status="active"
+    )
+    db.add(new_user)
+    db.flush()  # Get the user ID
+    
+    # Also add to UserRole table
+    user_role = UserRole(
+        user_id=new_user.id,
+        role="reviewer",
+        status="approved"
+    )
+    db.add(user_role)
+    
+    # Accept the invitation
+    invitation.status = "accepted"
+    invitation.accepted_on = datetime.utcnow()
+    invitation.reviewer_id = new_user.id
+    invitation.is_external = False  # Now they're an internal user
+    
+    # Create the review assignment
+    from datetime import date
+    online_review = OnlineReview(
+        paper_id=invitation.paper_id,
+        reviewer_id=str(new_user.id),
+        assigned_on=date.today()
+    )
+    db.add(online_review)
+    
+    db.commit()
+    db.refresh(new_user)
+    db.refresh(online_review)
+    
+    return {
+        "status": "registered_and_accepted",
+        "message": "Account created and review assignment confirmed",
+        "user_id": new_user.id,
+        "user_email": new_user.email,
+        "invitation_id": invitation.id,
+        "paper_id": invitation.paper_id,
+        "review_id": online_review.id,
+        "accepted_on": invitation.accepted_on.isoformat() if invitation.accepted_on else None
+    }

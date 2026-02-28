@@ -729,7 +729,7 @@ const PaperDetailsPage = () => {
                 </button>
               )}
               
-              {(isEditor() || isAdmin()) && (
+              {(isEditor() || isAdmin()) && String(paper.added_by) !== String(user?.id) && (
                 <button className={styles.btnDark} onClick={() => {
                   setShowAssignReviewer(true);
                   setShowReviewerDropdown(true); // Always show dropdown when modal opens

@@ -340,6 +340,8 @@ export const acsApi = {
       apiService.post(`/api/v1/editor/invitations/${token}/accept`, {}, { skipAuth: true }),
     declineInvitation: (token, reason = '') =>
       apiService.post(`/api/v1/editor/invitations/${token}/decline?${reason ? `reason=${encodeURIComponent(reason)}` : ''}`, {}, { skipAuth: true }),
+    registerAndAccept: (token, { fname, lname, password, organization }) =>
+      apiService.post(`/api/v1/editor/invitations/${token}/register-accept?fname=${encodeURIComponent(fname)}&lname=${encodeURIComponent(lname || '')}&password=${encodeURIComponent(password)}&organization=${encodeURIComponent(organization || '')}`, {}, { skipAuth: true }),
   },
 
   // Reviewer endpoints

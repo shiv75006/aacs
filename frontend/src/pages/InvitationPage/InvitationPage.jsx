@@ -17,6 +17,16 @@ const InvitationPage = () => {
   const [showDeclineReason, setShowDeclineReason] = useState(false);
   const [declineReason, setDeclineReason] = useState('');
   const [successMessage, setSuccessMessage] = useState(null);
+  
+  // External reviewer registration state
+  const [showRegistration, setShowRegistration] = useState(false);
+  const [regForm, setRegForm] = useState({
+    fname: '',
+    lname: '',
+    password: '',
+    confirmPassword: '',
+    organization: ''
+  });
 
   useEffect(() => {
     // Auto-redirect if user is already logged in
@@ -70,6 +80,13 @@ const InvitationPage = () => {
       
       const response = await acsApi.invitations.acceptInvitation(token);
       
+      // Check if registration is required (external reviewer)
+      if (response.requires_registration) {
+        setShowRegistration(true);
+        setProcessing(false);
+        return;
+      }
+      
       setSuccessMessage(
         `Thank you! You have accepted the review invitation for "${invitation.paper_title}". ` +
         `Your review is due on ${new Date(response.accepted_on).toLocaleDateString()}.`
@@ -95,6 +112,55 @@ const InvitationPage = () => {
         setError(err.response.data?.detail || 'Unable to accept invitation. It may have already been accepted or declined.');
       } else {
         setError('Failed to accept invitation. Please try again later.');
+      }
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleRegisterAndAccept = async () => {
+    if (processing || !token) return;
+    
+    // Validate form
+    if (!regForm.fname.trim()) {
+      setError('Please enter your first name');
+      return;
+    }
+    if (!regForm.password || regForm.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+    if (regForm.password !== regForm.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    
+    try {
+      setProcessing(true);
+      setError(null);
+      
+      const response = await acsApi.invitations.registerAndAccept(token, {
+        fname: regForm.fname.trim(),
+        lname: regForm.lname.trim(),
+        password: regForm.password,
+        organization: regForm.organization.trim()
+      });
+      
+      setSuccessMessage(
+        `Account created and review invitation accepted! ` +
+        `You can now log in with your email (${response.user_email}) to access the paper and submit your review.`
+      );
+      
+      // Redirect after 4 seconds
+      setTimeout(() => {
+        navigate('/login');
+      }, 4000);
+    } catch (err) {
+      console.error('Failed to register and accept:', err);
+      if (err.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else {
+        setError('Failed to create account. Please try again.');
       }
     } finally {
       setProcessing(false);
@@ -179,23 +245,30 @@ const InvitationPage = () => {
                     <label>Title:</label>
                     <p className="paper-title">{invitation.paper_title}</p>
                   </div>
+                  {invitation.journal_name && (
+                    <div className="detail-item">
+                      <label>Journal:</label>
+                      <p>{invitation.journal_name}</p>
+                    </div>
+                  )}
+                  {invitation.paper_abstract && (
+                    <div className="detail-item">
+                      <label>Abstract:</label>
+                      <p className="paper-abstract">{invitation.paper_abstract}</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="detail-section">
                   <h3>Review Information</h3>
                   <div className="detail-item">
                     <label>Reviewer:</label>
-                    <p>{invitation.reviewer_name}</p>
+                    <p>{invitation.reviewer_name || invitation.reviewer_email}</p>
                   </div>
                   <div className="detail-item">
                     <label>Due Date:</label>
                     <p>
-                      {new Date(invitation.due_date).toLocaleDateString()} 
-                      {invitation.days_remaining > 0 && (
-                        <span className="days-remaining">
-                          ({invitation.days_remaining} days remaining)
-                        </span>
-                      )}
+                      {invitation.token_expiry ? new Date(invitation.token_expiry).toLocaleDateString() : 'Not specified'}
                     </p>
                   </div>
                   <div className="detail-item">
@@ -204,7 +277,100 @@ const InvitationPage = () => {
                   </div>
                 </div>
 
-                {!invitation.is_expired && invitation.status === 'pending' && (
+                {/* External Reviewer Registration Form */}
+                {showRegistration && (
+                  <div className="action-section registration-section">
+                    <h3>Create Your Account</h3>
+                    <p className="instruction-text">
+                      To accept this invitation, please create an account. Your email will be: <strong>{invitation.reviewer_email}</strong>
+                    </p>
+                    
+                    <div className="registration-form">
+                      <div className="form-group">
+                        <label htmlFor="fname">First Name *</label>
+                        <input
+                          type="text"
+                          id="fname"
+                          value={regForm.fname}
+                          onChange={(e) => setRegForm({...regForm, fname: e.target.value})}
+                          placeholder="Enter your first name"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label htmlFor="lname">Last Name</label>
+                        <input
+                          type="text"
+                          id="lname"
+                          value={regForm.lname}
+                          onChange={(e) => setRegForm({...regForm, lname: e.target.value})}
+                          placeholder="Enter your last name"
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label htmlFor="organization">Organization/Institution</label>
+                        <input
+                          type="text"
+                          id="organization"
+                          value={regForm.organization}
+                          onChange={(e) => setRegForm({...regForm, organization: e.target.value})}
+                          placeholder="Enter your organization"
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label htmlFor="password">Password *</label>
+                        <input
+                          type="password"
+                          id="password"
+                          value={regForm.password}
+                          onChange={(e) => setRegForm({...regForm, password: e.target.value})}
+                          placeholder="Minimum 6 characters"
+                          minLength={6}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label htmlFor="confirmPassword">Confirm Password *</label>
+                        <input
+                          type="password"
+                          id="confirmPassword"
+                          value={regForm.confirmPassword}
+                          onChange={(e) => setRegForm({...regForm, confirmPassword: e.target.value})}
+                          placeholder="Confirm your password"
+                          required
+                        />
+                      </div>
+                      
+                      {error && <p className="form-error">{error}</p>}
+                      
+                      <div className="button-group">
+                        <button 
+                          className="button button-primary"
+                          onClick={handleRegisterAndAccept}
+                          disabled={processing}
+                        >
+                          {processing ? 'Creating Account...' : 'Create Account & Accept Invitation'}
+                        </button>
+                        <button 
+                          className="button button-secondary"
+                          onClick={() => {
+                            setShowRegistration(false);
+                            setError(null);
+                          }}
+                          disabled={processing}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {!invitation.is_expired && invitation.status === 'pending' && !showRegistration && (
                   <div className="action-section">
                     <h3>Your Response</h3>
                     <p className="instruction-text">
