@@ -10,7 +10,7 @@ import styles from './AuthorSubmissions.module.css';
 const AuthorSubmissions = () => {
   const [statusStats, setStatusStats] = useState({});
   const [statsLoading, setStatsLoading] = useState(true);
-  const { showToast } = useToast();
+  const { success, error: showError } = useToast();
 
   // Custom fetch function for author's papers with filters
   const fetchPapersWithFilters = async (skip, limit, filters) => {

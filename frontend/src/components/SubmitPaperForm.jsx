@@ -1,6 +1,6 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ToastContext } from '../contexts/ToastContext';
+import { useToast } from '../hooks/useToast';
 import acsApi from '../api/apiService.js';
 import styles from './SubmitPaperForm.module.css';
 
@@ -27,7 +27,7 @@ const EMPTY_CO_AUTHOR = {
 
 export const SubmitPaperForm = () => {
   const navigate = useNavigate();
-  const { addToast } = useContext(ToastContext);
+  const { success, error: showError } = useToast();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -285,12 +285,12 @@ export const SubmitPaperForm = () => {
 
     const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     if (!validTypes.includes(file.type)) {
-      addToast('Only PDF and Word documents are allowed', 'error');
+      showError('Only PDF and Word documents are allowed');
       return;
     }
 
     if (file.size > 50 * 1024 * 1024) {
-      addToast('File size must not exceed 50MB', 'error');
+      showError('File size must not exceed 50MB');
       return;
     }
 
@@ -344,7 +344,7 @@ export const SubmitPaperForm = () => {
         if (!isValid) {
           setFieldErrors(prev => ({ ...prev, ...errors }));
           setTouched(prev => ({ ...prev, title: true, abstract: true, keywords: true, research_area: true, journal_id: true }));
-          addToast('Please fix the errors in the form', 'error');
+          showError('Please fix the errors in the form');
         }
         return isValid;
       },
@@ -384,20 +384,20 @@ export const SubmitPaperForm = () => {
             });
           });
           setTouched(prev => ({ ...prev, ...touchedFields }));
-          addToast('Please fill in all required author details', 'error');
+          showError('Please fill in all required author details');
         }
         return isValid;
       },
       3: () => {
         if (!formData.file) {
-          addToast('Please upload your paper file', 'error');
+          showError('Please upload your paper file');
           return false;
         }
         return true;
       },
       4: () => {
         if (!formData.termsAccepted) {
-          addToast('Please accept the terms and conditions', 'error');
+          showError('Please accept the terms and conditions');
           return false;
         }
         return true;
@@ -437,12 +437,12 @@ export const SubmitPaperForm = () => {
         }))
       });
 
-      addToast(`Paper submitted successfully! Paper ID: ${response.id}`, 'success');
+      success(`Paper submitted successfully! Paper ID: ${response.id}`);
       setTimeout(() => navigate('/author'), 1500);
     } catch (err) {
       console.error('Submit error:', err);
       const errorMsg = err.response?.data?.detail || err.message || 'Failed to submit paper';
-      addToast(errorMsg, 'error');
+      showError(errorMsg);
     } finally {
       setLoading(false);
     }

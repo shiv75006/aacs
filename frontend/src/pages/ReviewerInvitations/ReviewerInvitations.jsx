@@ -5,7 +5,7 @@ import { useToast } from '../../hooks/useToast';
 import styles from './ReviewerInvitations.module.css';
 
 const ReviewerInvitations = () => {
-  const { showToast } = useToast();
+  const { success, error: showError } = useToast();
   const [pendingInvitations, setPendingInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,7 +47,7 @@ const ReviewerInvitations = () => {
     try {
       setInvitationActionLoading(invitationId);
       const response = await acsApi.reviewer.acceptInvitation(invitationId);
-      showToast?.success(response.message || 'Invitation accepted successfully!');
+      success(response.message || 'Invitation accepted successfully!');
       // Remove from pending invitations
       setPendingInvitations(pendingInvitations.filter(inv => inv.id !== invitationId));
       // Update pagination
@@ -57,7 +57,7 @@ const ReviewerInvitations = () => {
       }));
     } catch (err) {
       const errorMsg = err.response?.data?.detail || 'Failed to accept invitation';
-      showToast?.error(errorMsg);
+      showError(errorMsg);
     } finally {
       setInvitationActionLoading(null);
     }
@@ -67,7 +67,7 @@ const ReviewerInvitations = () => {
     try {
       setInvitationActionLoading(invitationId);
       await acsApi.reviewer.declineInvitation(invitationId);
-      showToast?.success('Invitation declined');
+      success('Invitation declined');
       // Remove from pending invitations
       setPendingInvitations(pendingInvitations.filter(inv => inv.id !== invitationId));
       // Update pagination
@@ -77,7 +77,7 @@ const ReviewerInvitations = () => {
       }));
     } catch (err) {
       const errorMsg = err.response?.data?.detail || 'Failed to decline invitation';
-      showToast?.error(errorMsg);
+      showError(errorMsg);
     } finally {
       setInvitationActionLoading(null);
     }

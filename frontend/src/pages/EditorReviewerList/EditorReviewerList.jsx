@@ -11,7 +11,7 @@ import styles from './EditorReviewerList.module.css';
 const EditorReviewerList = () => {
   const navigate = useNavigate();
   const [specializations, setSpecializations] = useState([]);
-  const { showToast } = useToast();
+  const { success, error: showError } = useToast();
   const { showModal, closeModal, isOpen } = useModal();
   const [selectedReviewer, setSelectedReviewer] = useState(null);
   const [searchInput, setSearchInput] = useState('');
@@ -87,18 +87,18 @@ const EditorReviewerList = () => {
     const dueDays = formData.get('due_days');
 
     if (!dueDays || dueDays < 1) {
-      showToast('Please enter valid due days', 'error');
+      showError('Please enter valid due days');
       return;
     }
 
     try {
       await acsApi.editor.inviteReviewer(selectedReviewer.email, parseInt(dueDays));
-      showToast(`Invitation sent to ${selectedReviewer.fname}`, 'success');
+      success(`Invitation sent to ${selectedReviewer.fname}`);
       closeModal();
       setSelectedReviewer(null);
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Failed to send invitation';
-      showToast(errorMsg, 'error');
+      showError(errorMsg);
     }
   };
 

@@ -11,7 +11,7 @@ const EditorPaperQueue = () => {
   const [statusStats, setStatusStats] = useState({});
   const [statsLoading, setStatsLoading] = useState(true);
   const [journals, setJournals] = useState([]);
-  const { showToast } = useToast();
+  const { success, error: showError } = useToast();
 
   // Custom fetch function for editor papers with filters
   const fetchEditorPapersWithFilters = async (skip, limit, filters) => {

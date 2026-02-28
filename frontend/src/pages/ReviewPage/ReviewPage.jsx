@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ToastContext } from '../../contexts/ToastContext';
+import { useToast } from '../../hooks/useToast';
 import acsApi from '../../api/apiService';
 import ReviewForm from '../../components/ReviewForm/ReviewForm';
 import PaperViewer from '../../components/PaperViewer/PaperViewer';
@@ -9,7 +9,7 @@ import styles from './ReviewPage.module.css';
 const ReviewPage = () => {
   const { id: reviewId } = useParams();
   const navigate = useNavigate();
-  const { showToast } = useContext(ToastContext);
+  const { success, error: showError } = useToast();
 
   const [reviewDetail, setReviewDetail] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,7 +25,7 @@ const ReviewPage = () => {
     } catch (err) {
       console.error('Error fetching review detail:', err);
       setError(err.response?.data?.detail || 'Failed to load review details');
-      if (showToast) showToast('error', 'Failed to load review details');
+      showError('Failed to load review details');
     } finally {
       setLoading(false);
     }
@@ -39,11 +39,11 @@ const ReviewPage = () => {
   const handleSaveDraft = async (reviewData) => {
     try {
       const result = await acsApi.reviewer.saveReviewDraft(reviewId, reviewData);
-      if (showToast) showToast('success', 'Review draft saved successfully');
+      success('Review draft saved successfully');
       return result;
     } catch (err) {
       console.error('Error saving draft:', err);
-      if (showToast) showToast('error', err.response?.data?.detail || 'Failed to save draft');
+      showError(err.response?.data?.detail || 'Failed to save draft');
       throw err;
     }
   };
@@ -52,7 +52,7 @@ const ReviewPage = () => {
     try {
       setSubmitting(true);
       const result = await acsApi.reviewer.submitReview(reviewId, reviewData);
-      if (showToast) showToast('success', 'Review submitted successfully');
+      success('Review submitted successfully');
       
       // Update local state with new status
       if (result.assignment) {
@@ -73,7 +73,7 @@ const ReviewPage = () => {
       return result;
     } catch (err) {
       console.error('Error submitting review:', err);
-      if (showToast) showToast('error', err.response?.data?.detail || 'Failed to submit review');
+      showError(err.response?.data?.detail || 'Failed to submit review');
       throw err;
     } finally {
       setSubmitting(false);
@@ -83,11 +83,11 @@ const ReviewPage = () => {
   const handleUploadReport = async (file) => {
     try {
       const result = await acsApi.reviewer.uploadReviewReport(reviewId, file);
-      if (showToast) showToast('success', `Review report uploaded (v${result.file_version})`);
+      success(`Review report uploaded (v${result.file_version})`);
       return result;
     } catch (err) {
       console.error('Error uploading report:', err);
-      if (showToast) showToast('error', err.response?.data?.detail || 'Failed to upload report');
+      showError(err.response?.data?.detail || 'Failed to upload report');
       throw err;
     }
   };
@@ -108,10 +108,10 @@ const ReviewPage = () => {
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      if (showToast) showToast('success', 'Report downloaded successfully');
+      success('Report downloaded successfully');
     } catch (err) {
       console.error('Error downloading report:', err);
-      if (showToast) showToast('error', err.response?.data?.detail || 'Failed to download report');
+      showError(err.response?.data?.detail || 'Failed to download report');
     }
   };
 

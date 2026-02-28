@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import acsApi from '../../api/apiService';
+import { useToast } from '../../hooks/useToast';
 import './AdminRoleRequests.css';
 
 const ROLE_CONFIG = {
@@ -10,6 +11,7 @@ const ROLE_CONFIG = {
 };
 
 const AdminRoleRequests = () => {
+  const { success, error: showError } = useToast();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -60,13 +62,14 @@ const AdminRoleRequests = () => {
       
       // Refresh list
       await fetchRequests();
+      success(`Request ${action}d successfully`);
       
       // Reset state
       setSelectedRequest(null);
       setAdminNotes('');
       setJournalId('');
     } catch (err) {
-      setError(err.response?.data?.detail || `Failed to ${action} request`);
+      showError(err.response?.data?.detail || `Failed to ${action} request`);
     } finally {
       setProcessingId(null);
     }

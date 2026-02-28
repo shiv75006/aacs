@@ -4,7 +4,7 @@ import { useToast } from '../../hooks/useToast';
 import styles from './ReviewerProfile.module.css';
 
 const ReviewerProfile = () => {
-  const { showToast } = useToast();
+  const { success, error: showError } = useToast();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,10 +40,10 @@ const ReviewerProfile = () => {
   const handleSaveProfile = async () => {
     try {
       // TODO: Implement update profile API call when endpoint is available
-      showToast('Profile updated successfully', 'success');
+      success('Profile updated successfully');
       setIsEditing(false);
     } catch (err) {
-      showToast('Failed to update profile', 'error');
+      showError('Failed to update profile');
     }
   };
 

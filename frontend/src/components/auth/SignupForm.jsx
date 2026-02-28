@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../hooks/useToast';
 import { AuthFieldError } from './AuthError';
 import { validateSignupForm } from '../../utils/validation';
 import './AuthForms.css';
 
 export const SignupForm = ({ onSuccess = null }) => {
   const { signup, loading, error, clearError } = useAuth();
+  const { success, error: showError } = useToast();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -56,10 +58,12 @@ export const SignupForm = ({ onSuccess = null }) => {
     try {
       await signup(formData);
       // Success - redirect handled by parent component
+      success('Account created successfully! Redirecting...');
       if (onSuccess) onSuccess();
     } catch (err) {
       // Error handled by context and displayed by parent
       console.error('Signup error:', err);
+      showError(err.response?.data?.detail || 'Failed to create account. Please try again.');
     } finally {
       setIsValidating(false);
     }

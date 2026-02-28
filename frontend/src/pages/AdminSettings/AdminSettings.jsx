@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../../api/apiService';
+import { useToast } from '../../hooks/useToast';
 import styles from './AdminSettings.module.css';
 
 const AdminSettings = () => {
+  const { success, error: showError } = useToast();
   const [activeTab, setActiveTab] = useState('news');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
   
   // News state
   const [newsList, setNewsList] = useState([]);
@@ -48,7 +49,7 @@ const AdminSettings = () => {
       }
     } catch (error) {
       console.error('Error fetching news:', error);
-      setMessage({ type: 'error', text: 'Failed to fetch news' });
+      showError('Failed to fetch news');
     } finally {
       setLoading(false);
     }
@@ -83,10 +84,10 @@ const AdminSettings = () => {
       
       if (editingNewsId) {
         await apiService.admin.updateNews(editingNewsId, newsData);
-        setMessage({ type: 'success', text: 'News updated successfully' });
+        success('News updated successfully');
       } else {
         await apiService.admin.createNews(newsData);
-        setMessage({ type: 'success', text: 'News created successfully' });
+        success('News created successfully');
       }
       
       setNewsForm({ title: '', description: '', journal_id: '' });
@@ -94,7 +95,7 @@ const AdminSettings = () => {
       fetchNews();
     } catch (error) {
       console.error('Error saving news:', error);
-      setMessage({ type: 'error', text: 'Failed to save news' });
+      showError('Failed to save news');
     } finally {
       setLoading(false);
     }
@@ -115,11 +116,11 @@ const AdminSettings = () => {
     setLoading(true);
     try {
       await apiService.admin.deleteNews(newsId);
-      setMessage({ type: 'success', text: 'News deleted successfully' });
+      success('News deleted successfully');
       fetchNews();
     } catch (error) {
       console.error('Error deleting news:', error);
-      setMessage({ type: 'error', text: 'Failed to delete news' });
+      showError('Failed to delete news');
     } finally {
       setLoading(false);
     }
@@ -133,9 +134,9 @@ const AdminSettings = () => {
     setLoading(true);
     try {
       // In a real app, this would save to backend
-      setMessage({ type: 'success', text: 'Settings saved successfully' });
+      success('Settings saved successfully');
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to save settings' });
+      showError('Failed to save settings');
     } finally {
       setLoading(false);
     }
@@ -153,13 +154,6 @@ const AdminSettings = () => {
   return (
     <div className={styles.settingsPage}>
       <h1 className={styles.pageTitle}>Admin Settings</h1>
-      
-      {message.text && (
-        <div className={`${styles.message} ${styles[message.type]}`}>
-          {message.text}
-          <button onClick={() => setMessage({ type: '', text: '' })}>&times;</button>
-        </div>
-      )}
 
       <div className={styles.tabNav}>
         {tabs.map(tab => (

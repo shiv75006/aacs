@@ -10,7 +10,7 @@ const EditorPendingDecision = () => {
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { showToast } = useToast();
+  const { error: showError } = useToast();
   const {
     pagination,
     goToPage,
@@ -39,7 +39,7 @@ const EditorPendingDecision = () => {
       } catch (err) {
         const errorMsg = err.response?.data?.message || 'Failed to load pending decisions';
         setError(errorMsg);
-        showToast(errorMsg, 'error');
+        showError(errorMsg);
         setPapers([]);
       } finally {
         setLoading(false);

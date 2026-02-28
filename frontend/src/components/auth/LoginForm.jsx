@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../hooks/useToast';
 import { AuthFieldError } from './AuthError';
 import { validateLoginForm } from '../../utils/validation';
 import { formatValidationErrors } from '../../utils/errorFormatter';
@@ -7,6 +8,7 @@ import './AuthForms.css';
 
 export const LoginForm = ({ onSuccess = null }) => {
   const { login, loading, error, clearError } = useAuth();
+  const { success, error: showError } = useToast();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -53,10 +55,12 @@ export const LoginForm = ({ onSuccess = null }) => {
     try {
       await login(formData.email, formData.password);
       // Success - redirect handled by parent component
+      success('Login successful! Redirecting...');
       if (onSuccess) onSuccess();
     } catch (err) {
       // Error handled by context and displayed by parent
       console.error('Login error:', err);
+      showError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
     } finally {
       setIsValidating(false);
     }
