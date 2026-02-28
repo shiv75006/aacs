@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+from sqlalchemy import text
 from app.config import settings
 from app.api.v1 import auth, journals, admin, author, editor, reviewer, articles, roles, webhooks
 from app.core.rate_limit import limiter, get_rate_limit_key
@@ -20,6 +21,31 @@ from app.core.auth import hash_password
 
 logger = logging.getLogger(__name__)
 scheduler = None
+
+
+def run_migrations():
+    """Run database migrations for schema updates on existing tables"""
+    print("Running database migrations...")
+    
+    with engine.connect() as conn:
+        try:
+            # Migration: Add title_page and blinded_manuscript columns to papers table
+            result = conn.execute(text("SHOW COLUMNS FROM papers LIKE 'title_page'"))
+            if not result.fetchone():
+                conn.execute(text("ALTER TABLE papers ADD COLUMN title_page VARCHAR(200) DEFAULT '' AFTER file_path"))
+                print("Migration: Added 'title_page' column to papers table")
+            
+            result = conn.execute(text("SHOW COLUMNS FROM papers LIKE 'blinded_manuscript'"))
+            if not result.fetchone():
+                conn.execute(text("ALTER TABLE papers ADD COLUMN blinded_manuscript VARCHAR(200) DEFAULT '' AFTER title_page"))
+                print("Migration: Added 'blinded_manuscript' column to papers table")
+            
+            conn.commit()
+            print("Database migrations completed successfully")
+            
+        except Exception as e:
+            # Table might not exist yet (first run) - that's OK, create_all will handle it
+            print(f"Migration check: {str(e)}")
 
 
 def create_admin_user():
@@ -66,6 +92,9 @@ async def lifespan(app: FastAPI):
         
         Base.metadata.create_all(bind=engine)
         print("Database tables created successfully")
+        
+        # Run any pending migrations for schema updates
+        run_migrations()
         
         # Create admin user
         create_admin_user()

@@ -7,7 +7,7 @@ import uuid
 import secrets
 from app.db.database import get_db
 from app.db.models import User, Paper, OnlineReview, Editor, ReviewerInvitation, Journal, ReviewSubmission, PaperPublished, UserRole
-from app.core.security import get_current_user
+from app.core.security import get_current_user, get_current_user_from_token_or_query
 from app.core.rate_limit import limiter
 from app.utils.auth_helpers import check_role, role_matches, get_editor_journal_ids, editor_has_journal_access
 from app.utils.email_service import send_reviewer_invitation
@@ -1841,4 +1841,132 @@ async def get_ready_to_publish(
         journal_id=journal_id,
         current_user=current_user,
         db=db
+    )
+
+
+# ============================================================================
+# EDITOR FILE VIEW ENDPOINTS
+# ============================================================================
+
+@router.get("/papers/{paper_id}/view-title-page")
+async def view_paper_title_page(
+    paper_id: int,
+    current_user: dict = Depends(get_current_user_from_token_or_query),
+    db: Session = Depends(get_db)
+):
+    """
+    View the title page file in browser.
+    
+    Args:
+        paper_id: Paper ID
+        
+    Returns:
+        Title page file for inline viewing
+    """
+    from fastapi.responses import FileResponse
+    from app.utils.file_handler import get_file_full_path
+    
+    if not check_role(current_user.get("role"), "editor"):
+        raise HTTPException(status_code=403, detail="Editor access required")
+    
+    # Verify editor has access to this paper's journal
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    editor_journal_ids = get_editor_journal_ids(current_user.get("email"), db)
+    if paper.journal not in editor_journal_ids:
+        raise HTTPException(status_code=403, detail="You don't have access to this paper's journal")
+    
+    # Use title_page if available, fall back to file
+    file_path = paper.title_page or paper.file
+    
+    if not file_path:
+        raise HTTPException(status_code=404, detail="Title page file not found")
+    
+    # Get full file path from relative path stored in DB
+    filepath = get_file_full_path(file_path)
+    
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Title page file not found on server")
+    
+    filename = filepath.name
+    
+    # Determine correct media type based on file extension
+    ext = filepath.suffix.lower()
+    media_types = {
+        '.pdf': 'application/pdf',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    }
+    media_type = media_types.get(ext, 'application/octet-stream')
+    
+    return FileResponse(
+        path=str(filepath),
+        filename=filename,
+        media_type=media_type,
+        headers={"Content-Disposition": f"inline; filename=\"{filename}\""}
+    )
+
+
+@router.get("/papers/{paper_id}/view-blinded-manuscript")
+async def view_paper_blinded_manuscript(
+    paper_id: int,
+    current_user: dict = Depends(get_current_user_from_token_or_query),
+    db: Session = Depends(get_db)
+):
+    """
+    View the blinded manuscript file in browser.
+    
+    Args:
+        paper_id: Paper ID
+        
+    Returns:
+        Blinded manuscript file for inline viewing
+    """
+    from fastapi.responses import FileResponse
+    from app.utils.file_handler import get_file_full_path
+    
+    if not check_role(current_user.get("role"), "editor"):
+        raise HTTPException(status_code=403, detail="Editor access required")
+    
+    # Verify editor has access to this paper's journal
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    editor_journal_ids = get_editor_journal_ids(current_user.get("email"), db)
+    if paper.journal not in editor_journal_ids:
+        raise HTTPException(status_code=403, detail="You don't have access to this paper's journal")
+    
+    # Use blinded_manuscript if available, fall back to file
+    file_path = paper.blinded_manuscript or paper.file
+    
+    if not file_path:
+        raise HTTPException(status_code=404, detail="Blinded manuscript file not found")
+    
+    # Get full file path from relative path stored in DB
+    filepath = get_file_full_path(file_path)
+    
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Blinded manuscript file not found on server")
+    
+    filename = filepath.name
+    
+    # Determine correct media type based on file extension
+    ext = filepath.suffix.lower()
+    media_types = {
+        '.pdf': 'application/pdf',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    }
+    media_type = media_types.get(ext, 'application/octet-stream')
+    
+    return FileResponse(
+        path=str(filepath),
+        filename=filename,
+        media_type=media_type,
+        headers={"Content-Disposition": f"inline; filename=\"{filename}\""}
     )

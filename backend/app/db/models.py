@@ -144,7 +144,9 @@ class Paper(Base):
     title = Column(String(500), nullable=False, default="")
     abstract = Column(String(1500), nullable=False, default="")
     keyword = Column(String(1000), nullable=False, default="")
-    file = Column(String(200), nullable=False, default="")
+    file = Column(String(200), nullable=False, default="")  # Legacy field - kept for backwards compatibility
+    title_page = Column(String(200), nullable=True, default="")  # Title page with author info
+    blinded_manuscript = Column(String(200), nullable=True, default="")  # Blinded manuscript for review
     added_on = Column(DateTime, nullable=False, default=datetime.utcnow)
     added_by = Column(String(100), nullable=False, default="")
     status = Column(String(50), nullable=False, default="submitted")
@@ -180,6 +182,8 @@ class Paper(Base):
             "abstract": self.abstract,
             "keywords": self.keyword,
             "file": self.file,
+            "title_page": self.title_page,
+            "blinded_manuscript": self.blinded_manuscript,
             "added_on": self.added_on.isoformat() if self.added_on else None,
             "added_by": self.added_by,
             "status": self.status,

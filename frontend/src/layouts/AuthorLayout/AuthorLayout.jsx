@@ -19,7 +19,8 @@ const AuthorLayout = () => {
     {
       title: 'Quick Links',
       items: [
-        { icon: 'add_circle', label: 'Submit Paper', path: '/submit' }
+        { icon: 'add_circle', label: 'Submit Paper', path: '/submit' },
+        { icon: 'menu_book', label: 'Author Guidelines', path: '/author/guidelines' }
       ]
     }
   ];

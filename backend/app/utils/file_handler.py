@@ -18,7 +18,7 @@ def ensure_upload_directory():
     UPLOAD_BASE_DIR.mkdir(parents=True, exist_ok=True)
 
 
-async def save_uploaded_file(file: UploadFile, user_id: int, paper_id: int) -> str:
+async def save_uploaded_file(file: UploadFile, user_id: int, paper_id: int, file_type: str = "paper") -> str:
     """
     Save uploaded file to disk.
     
@@ -26,6 +26,7 @@ async def save_uploaded_file(file: UploadFile, user_id: int, paper_id: int) -> s
         file: UploadFile object
         user_id: ID of uploading user
         paper_id: ID of paper
+        file_type: Type of file - "paper", "title_page", or "blinded_manuscript"
         
     Returns:
         Relative file path where file was saved
@@ -48,10 +49,10 @@ async def save_uploaded_file(file: UploadFile, user_id: int, paper_id: int) -> s
     # Reset file position
     await file.seek(0)
     
-    # Create timestamped filename
+    # Create timestamped filename with file type
     timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     original_name = Path(file.filename).stem  # Remove extension
-    filename = f"user_{user_id}_paper_{paper_id}_{timestamp}{file_ext}"
+    filename = f"user_{user_id}_paper_{paper_id}_{file_type}_{timestamp}{file_ext}"
     
     # Create user-specific subdirectory
     user_dir = UPLOAD_BASE_DIR / f"user_{user_id}"

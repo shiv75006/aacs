@@ -541,7 +541,8 @@ async def submit_paper(
     abstract: str = Form(...),
     keywords: str = Form(...),
     journal_id: int = Form(...),
-    file: UploadFile = File(...),
+    title_page: UploadFile = File(...),
+    blinded_manuscript: UploadFile = File(...),
     research_area: str = Form(default=""),
     message_to_editor: str = Form(default=""),
     terms_accepted: bool = Form(default=False),
@@ -559,7 +560,8 @@ async def submit_paper(
         abstract: Paper abstract (form field)
         keywords: Paper keywords (form field)
         journal_id: Target journal ID (form field)
-        file: Paper PDF file
+        title_page: Title page PDF file (with author information)
+        blinded_manuscript: Blinded manuscript PDF file (for blind review)
         research_area: Research area/field (optional)
         message_to_editor: Message to editor (optional)
         terms_accepted: Terms and conditions acceptance
@@ -572,7 +574,7 @@ async def submit_paper(
     import logging
     logger = logging.getLogger(__name__)
     
-    logger.info(f"Submit paper request received: title={title}, journal_id={journal_id}, file={file.filename}")
+    logger.info(f"Submit paper request received: title={title}, journal_id={journal_id}, title_page={title_page.filename}, blinded_manuscript={blinded_manuscript.filename}")
     
     if not check_role(current_user.get("role"), "author"):
         logger.error(f"Author access denied for user {current_user.get('id')}")
@@ -641,18 +643,29 @@ async def submit_paper(
         db.refresh(new_paper)
         logger.info(f"Paper created with ID: {new_paper.id}")
         
-        # Now save the file with the paper ID
-        file_path = await save_uploaded_file(
-            file=file,
+        # Save the title page file
+        title_page_path = await save_uploaded_file(
+            file=title_page,
             user_id=current_user.get("id"),
-            paper_id=new_paper.id
+            paper_id=new_paper.id,
+            file_type="title_page"
         )
         
-        # Update paper record with file path
-        new_paper.file = file_path
+        # Save the blinded manuscript file
+        blinded_manuscript_path = await save_uploaded_file(
+            file=blinded_manuscript,
+            user_id=current_user.get("id"),
+            paper_id=new_paper.id,
+            file_type="blinded_manuscript"
+        )
+        
+        # Update paper record with file paths
+        new_paper.title_page = title_page_path
+        new_paper.blinded_manuscript = blinded_manuscript_path
+        new_paper.file = title_page_path  # Keep legacy field for backwards compatibility
         db.commit()
         db.refresh(new_paper)
-        logger.info(f"File saved for paper {new_paper.id}: {file_path}")
+        logger.info(f"Files saved for paper {new_paper.id}: title_page={title_page_path}, blinded_manuscript={blinded_manuscript_path}")
         
         # Save co-authors
         for idx, co_author in enumerate(co_authors_data):
@@ -716,6 +729,8 @@ async def submit_paper(
             "title": new_paper.title,
             "status": new_paper.status,
             "file": new_paper.file,
+            "title_page": new_paper.title_page,
+            "blinded_manuscript": new_paper.blinded_manuscript,
             "submitted_date": new_paper.added_on.isoformat() if new_paper.added_on else None,
             "co_authors_count": len(co_authors_data),
             "email_notification_queued": email_queued

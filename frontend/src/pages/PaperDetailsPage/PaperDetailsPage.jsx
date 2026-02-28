@@ -530,6 +530,26 @@ const PaperDetailsPage = () => {
     }
   };
 
+  const handleViewTitlePage = () => {
+    if (paper?.id) {
+      const token = localStorage.getItem('authToken');
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const viewUrl = `${baseUrl}/api/v1/editor/papers/${paper.id}/view-title-page`;
+      window.open(`${viewUrl}?token=${token}`, '_blank');
+      info('Opening title page in new tab...', 2000);
+    }
+  };
+
+  const handleViewBlindedManuscript = () => {
+    if (paper?.id) {
+      const token = localStorage.getItem('authToken');
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const viewUrl = `${baseUrl}/api/v1/editor/papers/${paper.id}/view-blinded-manuscript`;
+      window.open(`${viewUrl}?token=${token}`, '_blank');
+      info('Opening blinded manuscript in new tab...', 2000);
+    }
+  };
+
   const handleViewReviewReport = (reviewId, e) => {
     e.stopPropagation(); // Prevent expanding/collapsing the review card
     if (paper?.id) {
@@ -663,10 +683,27 @@ const PaperDetailsPage = () => {
             
             {/* Action Buttons */}
             <div className={styles.headerActions}>
-              <button className={styles.btnOutline} onClick={handleViewPaper}>
-                <span className="material-symbols-rounded">visibility</span>
-                View PDF
-              </button>
+              {/* For authors - show single View PDF button */}
+              {isAuthor() && (
+                <button className={styles.btnOutline} onClick={handleViewPaper}>
+                  <span className="material-symbols-rounded">visibility</span>
+                  View PDF
+                </button>
+              )}
+              
+              {/* For editors/admins - show both title page and blinded manuscript buttons */}
+              {(isEditor() || isAdmin()) && (
+                <>
+                  <button className={styles.btnOutline} onClick={handleViewTitlePage}>
+                    <span className="material-symbols-rounded">article</span>
+                    Title Page
+                  </button>
+                  <button className={styles.btnOutline} onClick={handleViewBlindedManuscript}>
+                    <span className="material-symbols-rounded">description</span>
+                    Blinded Manuscript
+                  </button>
+                </>
+              )}
               
               {isAuthor() && (paper.status === 'correction' || paper.status === 'revision_requested') && (
                 <button className={styles.btnDark} onClick={() => setShowResubmitForm(!showResubmitForm)}>

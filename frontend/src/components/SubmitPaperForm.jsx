@@ -26,6 +26,8 @@ const EMPTY_CO_AUTHOR = {
   is_corresponding: false,
 };
 
+const MAX_CO_AUTHORS = 5;
+
 export const SubmitPaperForm = () => {
   const navigate = useNavigate();
   const { success, error: showError } = useToast();
@@ -59,8 +61,10 @@ export const SubmitPaperForm = () => {
     },
     coAuthors: [],
     // Step 3: File Upload
-    file: null,
-    filePreview: null,
+    titlePageFile: null,
+    titlePagePreview: null,
+    blindedManuscriptFile: null,
+    blindedManuscriptPreview: null,
     // Step 4: Terms
     termsAccepted: false,
   });
@@ -249,6 +253,10 @@ export const SubmitPaperForm = () => {
 
   // Co-author handling
   const addCoAuthor = () => {
+    if (formData.coAuthors.length >= MAX_CO_AUTHORS) {
+      showError(`Maximum ${MAX_CO_AUTHORS} co-authors allowed per paper`);
+      return;
+    }
     setFormData(prev => ({
       ...prev,
       coAuthors: [...prev.coAuthors, { ...EMPTY_CO_AUTHOR, author_order: prev.coAuthors.length + 2 }]
@@ -263,6 +271,23 @@ export const SubmitPaperForm = () => {
         author_order: idx + 2
       }))
     }));
+  };
+
+  // Move co-author up or down in the list (swap positions)
+  const moveCoAuthor = (index, direction) => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= formData.coAuthors.length) return;
+    
+    setFormData(prev => {
+      const newCoAuthors = [...prev.coAuthors];
+      // Swap the two co-authors
+      [newCoAuthors[index], newCoAuthors[newIndex]] = [newCoAuthors[newIndex], newCoAuthors[index]];
+      // Update author_order for all
+      return {
+        ...prev,
+        coAuthors: newCoAuthors.map((co, idx) => ({ ...co, author_order: idx + 2 }))
+      };
+    });
   };
 
   const updateCoAuthor = (index, field, value) => {
@@ -280,7 +305,7 @@ export const SubmitPaperForm = () => {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (fileType, e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -295,11 +320,19 @@ export const SubmitPaperForm = () => {
       return;
     }
 
-    setFormData(prev => ({
-      ...prev,
-      file,
-      filePreview: `${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`
-    }));
+    if (fileType === 'titlePage') {
+      setFormData(prev => ({
+        ...prev,
+        titlePageFile: file,
+        titlePagePreview: `${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`
+      }));
+    } else if (fileType === 'blindedManuscript') {
+      setFormData(prev => ({
+        ...prev,
+        blindedManuscriptFile: file,
+        blindedManuscriptPreview: `${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`
+      }));
+    }
   };
 
   const validateStep = (step) => {
@@ -390,8 +423,12 @@ export const SubmitPaperForm = () => {
         return isValid;
       },
       3: () => {
-        if (!formData.file) {
-          showError('Please upload your paper file');
+        if (!formData.titlePageFile) {
+          showError('Please upload the title page file');
+          return false;
+        }
+        if (!formData.blindedManuscriptFile) {
+          showError('Please upload the blinded manuscript file');
           return false;
         }
         return true;
@@ -427,7 +464,8 @@ export const SubmitPaperForm = () => {
         abstract: formData.abstract,
         keywords: formData.keywords,
         journal_id: parseInt(formData.journal_id),
-        file: formData.file,
+        title_page: formData.titlePageFile,
+        blinded_manuscript: formData.blindedManuscriptFile,
         research_area: formData.research_area,
         message_to_editor: formData.message_to_editor,
         terms_accepted: formData.termsAccepted,
@@ -777,27 +815,53 @@ export const SubmitPaperForm = () => {
                 <h3 className={styles.authorSectionTitle}>
                   <span className="material-symbols-rounded">group</span>
                   Co-Authors
+                  <span className={styles.coAuthorCount}>({formData.coAuthors.length}/{MAX_CO_AUTHORS})</span>
                 </h3>
-                <button type="button" onClick={addCoAuthor} className={styles.addCoAuthorBtn}>
+                <button 
+                  type="button" 
+                  onClick={addCoAuthor} 
+                  className={styles.addCoAuthorBtn}
+                  disabled={formData.coAuthors.length >= MAX_CO_AUTHORS}
+                >
                   <span className="material-symbols-rounded">add</span>
                   Add Co-Author
                 </button>
               </div>
 
               {formData.coAuthors.length === 0 ? (
-                <p className={styles.noCoAuthors}>No co-authors added. Click "Add Co-Author" to add one.</p>
+                <p className={styles.noCoAuthors}>No co-authors added. Click &quot;Add Co-Author&quot; to add one. (Max {MAX_CO_AUTHORS})</p>
               ) : (
                 formData.coAuthors.map((coAuthor, index) => (
                   <div key={index} className={styles.coAuthorCard}>
                     <div className={styles.coAuthorHeader}>
                       <span className={styles.coAuthorNumber}>Co-Author {index + 1}</span>
-                      <button 
-                        type="button" 
-                        onClick={() => removeCoAuthor(index)}
-                        className={styles.removeCoAuthorBtn}
-                      >
-                        <span className="material-symbols-rounded">close</span>
-                      </button>
+                      <div className={styles.coAuthorActions}>
+                        <button 
+                          type="button" 
+                          onClick={() => moveCoAuthor(index, 'up')}
+                          className={styles.moveCoAuthorBtn}
+                          disabled={index === 0}
+                          title="Move up"
+                        >
+                          <span className="material-symbols-rounded">arrow_upward</span>
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={() => moveCoAuthor(index, 'down')}
+                          className={styles.moveCoAuthorBtn}
+                          disabled={index === formData.coAuthors.length - 1}
+                          title="Move down"
+                        >
+                          <span className="material-symbols-rounded">arrow_downward</span>
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={() => removeCoAuthor(index)}
+                          className={styles.removeCoAuthorBtn}
+                        >
+                          <span className="material-symbols-rounded">close</span>
+                        </button>
+                      </div>
                     </div>
 
                     <div className={styles.fieldRow}>
@@ -940,37 +1004,124 @@ export const SubmitPaperForm = () => {
         {/* Step 3: File Upload */}
         {currentStep === 3 && (
           <div>
-            <h2>Step 3: Upload Paper File</h2>
-            <div className={styles.field}>
-              <label>Paper File (PDF or Word) *</label>
-              <div className={styles.uploadArea}>
-                <input
-                  id="file"
-                  type="file"
-                  onChange={handleFileChange}
-                  accept=".pdf,.doc,.docx"
-                  className={styles.hidden}
-                />
-                <div className={styles.uploadIcon}>📄</div>
-                <p className={styles.uploadText}>Drag and drop your paper file here</p>
-                <p className={styles.uploadOr}>or</p>
-                <label htmlFor="file" className={styles.browseBtn}>Browse Files</label>
-                <p className={styles.uploadHint}>
-                  Supported formats: PDF, DOC, DOCX<br />Maximum size: 50MB
-                </p>
+            <h2>Step 3: Upload Paper Files</h2>
+            
+            {/* Author Guidelines Box */}
+            <div className={styles.guidelinesBox}>
+              <div className={styles.guidelinesHeader}>
+                <span className="material-symbols-rounded">info</span>
+                <h3>Submission Guidelines</h3>
               </div>
-              {formData.filePreview && (
-                <div className={styles.filePreview}>
-                  <span className={styles.fileName}>{formData.filePreview}</span>
-                  <button
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, file: null, filePreview: null }))}
-                    className={styles.removeFile}
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
+              <ul className={styles.guidelinesList}>
+                <li><strong>Title Page:</strong> Must include paper title, all author names, affiliations, corresponding author email, and any acknowledgments.</li>
+                <li><strong>Blinded Manuscript:</strong> Must NOT contain any identifying information - remove author names, affiliations, and self-citations that reveal identity.</li>
+                <li><strong>File Format:</strong> PDF is preferred. Microsoft Word (.doc, .docx) is also accepted.</li>
+                <li><strong>File Size:</strong> Maximum 50MB per file.</li>
+                <li><strong>Page Limit:</strong> Research articles should not exceed 25 pages including references and figures.</li>
+                <li><strong>References:</strong> Use consistent citation style (APA, IEEE, or journal-specific format).</li>
+                <li><strong>Figures & Tables:</strong> Include high-resolution images (minimum 300 DPI) embedded in the manuscript.</li>
+              </ul>
+            </div>
+            
+            {/* Title Page Upload */}
+            <div className={styles.field}>
+              <label>Title Page (PDF or Word) *</label>
+              <p className={styles.fieldHint}>
+                This file should include the paper title, author names, affiliations, and contact information.
+              </p>
+              <div 
+                className={`${styles.uploadArea} ${formData.titlePagePreview ? styles.uploadAreaSuccess : ''}`}
+                onClick={() => document.getElementById('titlePageFile').click()}
+              >
+                <input
+                  id="titlePageFile"
+                  type="file"
+                  onChange={(e) => handleFileChange('titlePage', e)}
+                  accept=".pdf,.doc,.docx"
+                  className={styles.hiddenInput}
+                />
+                {formData.titlePagePreview ? (
+                  <div className={styles.uploadSuccess}>
+                    <span className={`material-symbols-rounded ${styles.successIcon}`}>check_circle</span>
+                    <p className={styles.uploadedFileName}>{formData.titlePagePreview}</p>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFormData(prev => ({ ...prev, titlePageFile: null, titlePagePreview: null }));
+                      }}
+                      className={styles.removeFileBtn}
+                    >
+                      <span className="material-symbols-rounded">delete</span>
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <span className={`material-symbols-rounded ${styles.uploadIconMaterial}`}>upload_file</span>
+                    <p className={styles.uploadText}>Drag and drop your title page here</p>
+                    <p className={styles.uploadOr}>or</p>
+                    <span className={styles.browseBtn}>
+                      <span className="material-symbols-rounded">folder_open</span>
+                      Browse Files
+                    </span>
+                    <p className={styles.uploadHint}>
+                      PDF, DOC, DOCX • Max 50MB
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Blinded Manuscript Upload */}
+            <div className={styles.field}>
+              <label>Blinded Manuscript (PDF or Word) *</label>
+              <p className={styles.fieldHint}>
+                This file should NOT contain any identifying information (no author names, affiliations, or acknowledgments). 
+                This version will be sent to reviewers for blind peer review.
+              </p>
+              <div 
+                className={`${styles.uploadArea} ${formData.blindedManuscriptPreview ? styles.uploadAreaSuccess : ''}`}
+                onClick={() => document.getElementById('blindedManuscriptFile').click()}
+              >
+                <input
+                  id="blindedManuscriptFile"
+                  type="file"
+                  onChange={(e) => handleFileChange('blindedManuscript', e)}
+                  accept=".pdf,.doc,.docx"
+                  className={styles.hiddenInput}
+                />
+                {formData.blindedManuscriptPreview ? (
+                  <div className={styles.uploadSuccess}>
+                    <span className={`material-symbols-rounded ${styles.successIcon}`}>check_circle</span>
+                    <p className={styles.uploadedFileName}>{formData.blindedManuscriptPreview}</p>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFormData(prev => ({ ...prev, blindedManuscriptFile: null, blindedManuscriptPreview: null }));
+                      }}
+                      className={styles.removeFileBtn}
+                    >
+                      <span className="material-symbols-rounded">delete</span>
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <span className={`material-symbols-rounded ${styles.uploadIconMaterial}`}>description</span>
+                    <p className={styles.uploadText}>Drag and drop your blinded manuscript here</p>
+                    <p className={styles.uploadOr}>or</p>
+                    <span className={styles.browseBtn}>
+                      <span className="material-symbols-rounded">folder_open</span>
+                      Browse Files
+                    </span>
+                    <p className={styles.uploadHint}>
+                      PDF, DOC, DOCX • Max 50MB
+                    </p>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -1057,10 +1208,11 @@ export const SubmitPaperForm = () => {
                 </div>
               )}
 
-              {/* File */}
+              {/* Files */}
               <div className={styles.reviewSection}>
-                <h3>Paper File</h3>
-                <p>{formData.filePreview || 'Not uploaded'}</p>
+                <h3>Paper Files</h3>
+                <p><strong>Title Page:</strong> {formData.titlePagePreview || 'Not uploaded'}</p>
+                <p><strong>Blinded Manuscript:</strong> {formData.blindedManuscriptPreview || 'Not uploaded'}</p>
               </div>
 
               {/* Message to Editor */}

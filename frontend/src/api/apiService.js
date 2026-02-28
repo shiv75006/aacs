@@ -174,25 +174,30 @@ export const acsApi = {
     listSubmissions: (skip = 0, limit = 20, statusFilter = '') =>
       apiService.get(`/api/v1/author/submissions?skip=${skip}&limit=${limit}${statusFilter ? `&status_filter=${statusFilter}` : ''}`),
     getSubmissionDetail: (paperId) => apiService.get(`/api/v1/author/submissions/${paperId}`),
-    submitPaper: ({ title, abstract, keywords, journal_id, file, research_area, message_to_editor, terms_accepted, author_details, co_authors }) => {
+    submitPaper: ({ title, abstract, keywords, journal_id, title_page, blinded_manuscript, research_area, message_to_editor, terms_accepted, author_details, co_authors }) => {
       console.log('submitPaper called with:', { 
         title, 
         abstract: abstract?.substring(0, 50) + '...', 
         keywords, 
         journal_id, 
-        fileName: file?.name,
-        fileSize: file?.size,
-        fileType: file?.type,
-        isFileObject: file instanceof File,
+        titlePageName: title_page?.name,
+        titlePageSize: title_page?.size,
+        blindedManuscriptName: blinded_manuscript?.name,
+        blindedManuscriptSize: blinded_manuscript?.size,
         research_area,
         terms_accepted,
         author_details,
         co_authors_count: co_authors?.length || 0
       });
       
-      if (!file || !(file instanceof File)) {
-        console.error('ERROR: file is not a valid File object!', file);
-        return Promise.reject(new Error('Invalid file - must be a File object'));
+      if (!title_page || !(title_page instanceof File)) {
+        console.error('ERROR: title_page is not a valid File object!', title_page);
+        return Promise.reject(new Error('Invalid title page file - must be a File object'));
+      }
+      
+      if (!blinded_manuscript || !(blinded_manuscript instanceof File)) {
+        console.error('ERROR: blinded_manuscript is not a valid File object!', blinded_manuscript);
+        return Promise.reject(new Error('Invalid blinded manuscript file - must be a File object'));
       }
       
       const formData = new FormData();
@@ -200,7 +205,8 @@ export const acsApi = {
       formData.append('abstract', abstract);
       formData.append('keywords', keywords);
       formData.append('journal_id', String(journal_id));
-      formData.append('file', file, file.name);
+      formData.append('title_page', title_page, title_page.name);
+      formData.append('blinded_manuscript', blinded_manuscript, blinded_manuscript.name);
       formData.append('research_area', research_area || '');
       formData.append('message_to_editor', message_to_editor || '');
       formData.append('terms_accepted', terms_accepted ? 'true' : 'false');

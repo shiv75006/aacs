@@ -37,6 +37,7 @@ import AdminRoleRequests from './pages/AdminRoleRequests/AdminRoleRequests.jsx';
 import AuthorLayout from './layouts/AuthorLayout/AuthorLayout.jsx';
 import AuthorDashboard from './pages/AuthorDashboard/AuthorDashboard.jsx';
 import AuthorSubmissions from './pages/AuthorSubmissions/AuthorSubmissions.jsx';
+import AuthorGuidelines from './pages/AuthorGuidelines/AuthorGuidelines.jsx';
 // Editor layouts and pages
 import EditorLayout from './layouts/EditorLayout/EditorLayout.jsx';
 import EditorDashboard from './pages/EditorDashboard/EditorDashboard.jsx';
@@ -230,6 +231,7 @@ function AppContent() {
               <Route path="" element={<AuthorDashboard />} />
               <Route path="submissions" element={<AuthorSubmissions />} />
               <Route path="submissions/:id" element={<PaperDetailsPage />} />
+              <Route path="guidelines" element={<AuthorGuidelines />} />
             </Route>
           </Route>
 
