@@ -6,8 +6,8 @@ These schemas handle:
 - Access type management (subscription/open)
 - DOI status tracking
 """
-from pydantic import BaseModel, Field, EmailStr
-from typing import Optional, List
+from pydantic import BaseModel, Field, EmailStr, field_validator, model_validator
+from typing import Optional, List, Union
 from datetime import datetime, date
 from enum import Enum
 
@@ -35,14 +35,34 @@ class AuthorInfo(BaseModel):
 
 class PublishPaperRequest(BaseModel):
     """Request schema for publishing an accepted paper"""
-    volume: str = Field(..., min_length=1, max_length=50, description="Volume number")
-    issue: str = Field(..., min_length=1, max_length=50, description="Issue number")
-    pages: str = Field(..., min_length=1, max_length=50, description="Page range (e.g., '1-14')")
+    volume: Union[str, int] = Field(..., description="Volume number")
+    issue: Union[str, int] = Field(..., description="Issue number")
+    pages: Optional[str] = Field(None, description="Page range (e.g., '1-14')")
+    page_start: Optional[int] = Field(None, description="Starting page number")
+    page_end: Optional[int] = Field(None, description="Ending page number")
+    doi_suffix: Optional[str] = Field(None, description="Custom DOI suffix")
     publication_date: Optional[date] = Field(None, description="Publication date (defaults to today)")
     language: str = Field("en", max_length=10, description="Language code")
     authors: Optional[List[AuthorInfo]] = Field(None, description="Author list with affiliations")
     references: Optional[str] = Field(None, description="References/citations text")
     paper_url: Optional[str] = Field(None, description="Full-text URL for Crossref")
+    
+    @field_validator('volume', 'issue', mode='before')
+    @classmethod
+    def convert_to_string(cls, v):
+        """Convert volume and issue to strings"""
+        return str(v) if v is not None else v
+    
+    @model_validator(mode='after')
+    def compute_pages(self):
+        """Compute pages from page_start and page_end if not provided"""
+        if not self.pages and self.page_start is not None and self.page_end is not None:
+            self.pages = f"{self.page_start}-{self.page_end}"
+        elif not self.pages and self.page_start is not None:
+            self.pages = str(self.page_start)
+        if not self.pages:
+            self.pages = "1"  # Default to page 1 if nothing provided
+        return self
     
     class Config:
         json_schema_extra = {

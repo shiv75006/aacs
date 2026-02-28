@@ -1606,7 +1606,7 @@ async def publish_paper_with_doi(
     published_paper = PaperPublished(
         title=paper.title,
         abstract=paper.abstract,
-        p_reference=publish_data.references,
+        p_reference=publish_data.references or "",  # Default to empty string if None
         author=author_string,
         journal=journal.fld_journal_name,
         journal_id=journal.fld_id,
