@@ -20,7 +20,7 @@ import { SignupPage } from './pages/SignupPage/SignupPage';
 import { DashboardPage } from './pages/DashboardPage/DashboardPage';
 import { SubmitPage } from './pages/SubmitPage/SubmitPage';
 import InvitationPage from './pages/InvitationPage/InvitationPage';
-// Journal pages (previously subdomain pages)
+// Journal pages (accessed via /j/:shortForm route)
 import JournalHomePage from './pages/JournalHomePage/JournalHomePage';
 import JournalAboutPage from './pages/JournalAboutPage/JournalAboutPage';
 import JournalArchivesPage from './pages/JournalArchivesPage/JournalArchivesPage';

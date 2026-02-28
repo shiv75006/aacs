@@ -10,7 +10,7 @@ const IssuePapersPage = () => {
   const { currentJournal, isJournalSite } = useJournalContext();
   const navigate = useNavigate();
   
-  // Use journal ID from URL params, or from context if on subdomain
+  // Use journal ID from URL params, or from context if on journal page route
   const journalId = urlJournalId || currentJournal?.id;
   
   const [journal, setJournal] = useState(null);
@@ -80,7 +80,7 @@ const IssuePapersPage = () => {
   // Get display name, handling different field names
   const journalName = journal?.name || journal?.fld_journal_name || journal?.short_form || 'Journal';
 
-  // Breadcrumbs - different for subdomain vs main site
+  // Breadcrumbs - different for journal page vs main site
   const breadcrumbItems = isJournalSite ? [
     { label: 'Home', path: '/' },
     { label: 'Archives', path: '/archives' },

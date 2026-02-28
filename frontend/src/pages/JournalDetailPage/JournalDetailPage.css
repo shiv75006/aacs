@@ -886,21 +886,21 @@
    END SEARCHABLE EDITOR DROPDOWN STYLES
    ========================================== */
 
-/* Subdomain Section Special Styling */
-.subdomain-section {
+/* Journal Page Section Special Styling */
+.journal-page-section {
   background: linear-gradient(180deg, #fefffe 0%, #f0fdf4 100%);
   border: 1px solid #bbf7d0;
 }
 
-.subdomain-section .section-header {
+.journal-page-section .section-header {
   border-bottom-color: #bbf7d0;
 }
 
-.subdomain-section .form-group label {
+.journal-page-section .form-group label {
   font-size: 15px;
 }
 
-.subdomain-section textarea {
+.journal-page-section textarea {
   min-height: 140px;
   background: white;
 }

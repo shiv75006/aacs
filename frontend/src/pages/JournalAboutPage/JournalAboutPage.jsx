@@ -1,7 +1,7 @@
 /**
  * JournalAboutPage Component
  * 
- * About page for journal-specific subdomain sites.
+ * About page for journal pages (accessed via /j/:shortForm route).
  * Displays journal details, scope, aim, editorial board, etc.
  */
 

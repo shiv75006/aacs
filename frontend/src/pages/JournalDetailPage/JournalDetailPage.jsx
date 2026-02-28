@@ -710,14 +710,14 @@ const JournalDetailPage = () => {
               </div>
             </section>
 
-            {/* Subdomain Content Section */}
-            <section className="form-section subdomain-section">
+            {/* Journal Page Content Section */}
+            <section className="form-section journal-page-section">
               <div className="section-header">
                 <span className="material-symbols-rounded">web</span>
-                <h3>Subdomain Website Content</h3>
+                <h3>Journal Page Content</h3>
               </div>
               <p className="section-description">
-                This content will be displayed on the journal's subdomain website (e.g., ijcs.breakthroughpublishers.com). HTML formatting is supported.
+                This content will be displayed on the journal's dedicated page (e.g., /j/ijcs). HTML formatting is supported.
               </p>
               
               <div className="form-grid single-column">

@@ -801,9 +801,9 @@ const AdminJournals = () => {
                 />
               </div>
 
-              {/* Journal Details - Content for Subdomain Pages */}
-              <h3 className={styles.sectionTitle}>Journal Content (for Subdomain Pages)</h3>
-              <p className={styles.sectionHint}>This content will be displayed on the journal's subdomain website.</p>
+              {/* Journal Details - Content for Journal Pages */}
+              <h3 className={styles.sectionTitle}>Journal Content (for Journal Pages)</h3>
+              <p className={styles.sectionHint}>This content will be displayed on the journal's dedicated page.</p>
               
               <div className={styles.formGroup}>
                 <label>About the Journal</label>

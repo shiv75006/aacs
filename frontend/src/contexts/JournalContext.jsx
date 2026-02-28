@@ -3,7 +3,7 @@
  * 
  * Provides journal context based on route parameters.
  * When accessing a journal via route (e.g., /j/ijest),
- * this context provides the journal data to all child components.
+ * this context fetches and provides journal data to all child components.
  */
 
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
@@ -45,7 +45,7 @@ export const JournalProvider = ({ children, shortForm }) => {
     try {
       setError(null);
       setLoading(true);
-      const response = await acsApi.journals.getBySubdomain(shortFormValue);
+      const response = await acsApi.journals.getByShortForm(shortFormValue);
       setCurrentJournal(response);
       setIsJournalSite(true);
       

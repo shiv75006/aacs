@@ -1,7 +1,7 @@
 /**
  * JournalGuidelinesPage Component
  * 
- * Guidelines page for journal-specific subdomain sites.
+ * Guidelines page for journal pages (accessed via /j/:shortForm route).
  * Displays submission guidelines, author instructions, etc.
  */
 

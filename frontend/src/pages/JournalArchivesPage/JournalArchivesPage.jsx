@@ -1,7 +1,7 @@
 /**
  * JournalArchivesPage Component
  * 
- * Archives page for journal-specific subdomain sites.
+ * Archives page for journal pages (accessed via /j/:shortForm route).
  * Displays volumes, issues, and published articles.
  */
 

@@ -1,7 +1,7 @@
 /**
  * JournalHomePage Component
  * 
- * Landing page for journal-specific subdomain sites.
+ * Landing page for journal pages (accessed via /j/:shortForm route).
  * Displays journal overview, latest articles, and key information.
  */
 
