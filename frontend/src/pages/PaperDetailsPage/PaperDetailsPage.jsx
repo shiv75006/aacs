@@ -818,9 +818,6 @@ const PaperDetailsPage = () => {
                       {/* Reviewer Header */}
                       <div className={styles.reviewerHeader}>
                         <div className={styles.reviewerInfo}>
-                          <div className={styles.reviewerAvatar}>
-                            {getInitials(review.reviewerName || `Reviewer ${idx + 1}`)}
-                          </div>
                           <span className={styles.reviewerName}>
                             {isEditor() || isAdmin() ? review.reviewerName : `Reviewer #${idx + 1}`}
                           </span>
@@ -1378,11 +1375,8 @@ const PaperDetailsPage = () => {
                   <div className={styles.currentReviewersList}>
                     {paper.reviews.map((review, idx) => (
                       <div key={review.id || idx} className={styles.currentReviewerItem}>
-                        <div className={styles.reviewerAvatarSmall}>
-                          {getInitials(review.reviewerName || `R${idx + 1}`)}
-                        </div>
                         <div className={styles.currentReviewerInfo}>
-                          <p className={styles.currentReviewerName}>{review.reviewerName || `Reviewer #${idx + 1}`}</p>
+                          <p className={styles.currentReviewerName}>Reviewer #{idx + 1}</p>
                           <p className={styles.currentReviewerStatus}>
                             {review.status === 'completed' ? '✓ Review Completed' : 
                              review.status === 'pending' ? '⋯ Review Pending' : 

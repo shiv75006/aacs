@@ -1065,8 +1065,6 @@ async def make_paper_decision(
     # Validate editor comments
     if not editor_comments or len(editor_comments.strip()) < 50:
         raise HTTPException(status_code=400, detail="Editor comments must be at least 50 characters")
-    if len(editor_comments) > 2000:
-        raise HTTPException(status_code=400, detail="Editor comments must not exceed 2000 characters")
     
     # Validate revision type for corrections
     if decision == "correction":

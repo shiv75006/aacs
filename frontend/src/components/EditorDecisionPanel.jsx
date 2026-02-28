@@ -77,8 +77,6 @@ export default function EditorDecisionPanel() {
       errors.editorComments = 'Editor comments are required';
     } else if (editorComments.length < 50) {
       errors.editorComments = 'Comments must be at least 50 characters';
-    } else if (editorComments.length > 2000) {
-      errors.editorComments = 'Comments must not exceed 2000 characters';
     }
 
     if (selectedDecision === 'correction' && !revisionType) {
@@ -397,7 +395,7 @@ export default function EditorDecisionPanel() {
             disabled={submitting}
           />
           <div className={styles.charCount}>
-            {editorComments.length} / 2000 characters
+            {editorComments.length} characters (minimum 50)
           </div>
         </div>
 
