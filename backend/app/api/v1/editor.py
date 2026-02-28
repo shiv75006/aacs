@@ -1,13 +1,15 @@
 """Editor API endpoints"""
 import os
-from fastapi import APIRouter, Depends, status, HTTPException, Query, Request, Body, BackgroundTasks
+import json
+from pathlib import Path
+from fastapi import APIRouter, Depends, status, HTTPException, Query, Request, Body, BackgroundTasks, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, or_, exists, and_
 from datetime import datetime, timedelta
 import uuid
 import secrets
 from app.db.database import get_db
-from app.db.models import User, Paper, OnlineReview, Editor, ReviewerInvitation, Journal, ReviewSubmission, PaperPublished, UserRole
+from app.db.models import User, Paper, OnlineReview, Editor, ReviewerInvitation, Journal, ReviewSubmission, PaperPublished, UserRole, PaperCoAuthor
 from app.core.security import get_current_user, get_current_user_from_token_or_query
 from app.core.rate_limit import limiter
 from app.utils.auth_helpers import check_role, role_matches, get_editor_journal_ids, editor_has_journal_access
@@ -1695,6 +1697,278 @@ async def publish_paper_with_doi(
         published_paper=published_response,
         doi_result=doi_response
     )
+
+
+# Published papers directory
+PUBLISHED_PAPERS_DIR = Path(__file__).parent.parent.parent.parent / "uploads" / "published"
+
+
+async def save_published_paper_file(file: UploadFile, paper_id: int, journal_id: int) -> str:
+    """Save the final published paper file"""
+    # Ensure directory exists
+    PUBLISHED_PAPERS_DIR.mkdir(parents=True, exist_ok=True)
+    
+    # Create journal-specific subdirectory
+    journal_dir = PUBLISHED_PAPERS_DIR / str(journal_id)
+    journal_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Generate filename
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    file_ext = Path(file.filename).suffix.lower()
+    filename = f"paper_{paper_id}_{timestamp}{file_ext}"
+    
+    # Save file
+    file_path = journal_dir / filename
+    contents = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(contents)
+    
+    # Return relative path for database
+    return f"published/{journal_id}/{filename}"
+
+
+@router.post("/papers/{paper_id}/publish-with-file")
+@limiter.limit("20/minute")
+async def publish_paper_with_file(
+    request: Request,
+    paper_id: int,
+    final_paper: UploadFile = File(..., description="Final paper PDF for publishing"),
+    volume: int = Form(...),
+    issue: int = Form(...),
+    page_start: int = Form(None),
+    page_end: int = Form(None),
+    doi_suffix: str = Form(None),
+    publication_date: str = Form(None),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Publish an accepted paper with editor-uploaded final paper file.
+    
+    This endpoint:
+    1. Validates paper status is 'accepted'
+    2. Saves the editor-uploaded final paper file
+    3. Extracts co-author information from original submission
+    4. Generates and registers DOI with Crossref
+    5. Creates PaperPublished record
+    6. Updates Paper status to 'published'
+    """
+    if not check_role(current_user.get("role"), ["editor", "admin"]):
+        raise HTTPException(status_code=403, detail="Editor or Admin access required")
+    
+    # Validate file type
+    if final_paper.content_type not in ["application/pdf"]:
+        raise HTTPException(status_code=400, detail="Only PDF files are allowed for publishing")
+    
+    # Get the paper
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    # Check journal access for editors
+    if check_role(current_user.get("role"), "editor"):
+        allowed_journals = get_editor_journal_ids(current_user.get("email"), db)
+        if allowed_journals and paper.journal and int(paper.journal) not in allowed_journals:
+            raise HTTPException(
+                status_code=403, 
+                detail="You don't have access to publish papers from this journal"
+            )
+    
+    # Validate paper status
+    if paper.status != "accepted":
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Only accepted papers can be published. Current status: {paper.status}"
+        )
+    
+    # Check if paper is already published
+    existing_published = db.query(PaperPublished).filter(
+        PaperPublished.paper_submission_id == paper_id
+    ).first()
+    if existing_published:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Paper already published with ID {existing_published.id}"
+        )
+    
+    # Get journal info
+    journal = None
+    if paper.journal:
+        journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
+    if not journal:
+        raise HTTPException(status_code=400, detail="Journal not found for this paper")
+    
+    # Get author info
+    author_user = None
+    if paper.added_by and paper.added_by.isdigit():
+        author_user = db.query(User).filter(User.id == int(paper.added_by)).first()
+    
+    # Get co-authors from original paper
+    co_authors = db.query(PaperCoAuthor).filter(
+        PaperCoAuthor.paper_id == paper_id
+    ).order_by(PaperCoAuthor.author_order).all()
+    
+    # Build structured author info with affiliations
+    authors_info = []
+    
+    # Primary author first
+    primary_name = paper.author or (f"{author_user.fname} {author_user.lname or ''}".strip() if author_user else "Unknown")
+    primary_affiliation = author_user.affiliation if author_user else None
+    authors_info.append({
+        "name": primary_name,
+        "affiliation": primary_affiliation,
+        "email": author_user.email if author_user else None,
+        "is_primary": True,
+        "is_corresponding": True
+    })
+    
+    # Add co-authors
+    for ca in co_authors:
+        full_name = f"{ca.salutation or ''} {ca.first_name} {ca.middle_name or ''} {ca.last_name}".strip()
+        full_name = " ".join(full_name.split())  # Normalize whitespace
+        authors_info.append({
+            "name": full_name,
+            "affiliation": ca.organisation,
+            "email": ca.email,
+            "is_primary": False,
+            "is_corresponding": ca.is_corresponding
+        })
+    
+    # Author string for display (all authors comma-separated)
+    author_string = ", ".join([a["name"] for a in authors_info])
+    
+    # Primary author info
+    primary_email = authors_info[0].get("email") if authors_info else None
+    primary_affiliation = authors_info[0].get("affiliation") if authors_info else None
+    
+    # Store co-authors JSON
+    co_authors_json_str = json.dumps(authors_info)
+    
+    # Determine publication date
+    pub_date = None
+    if publication_date:
+        try:
+            pub_date = datetime.strptime(publication_date, "%Y-%m-%d").date()
+        except:
+            pub_date = datetime.utcnow().date()
+    else:
+        pub_date = datetime.utcnow().date()
+    pub_datetime = datetime.combine(pub_date, datetime.min.time())
+    
+    # Calculate pages string
+    pages = None
+    if page_start and page_end:
+        pages = f"{page_start}-{page_end}"
+    elif page_start:
+        pages = str(page_start)
+    else:
+        pages = "1"
+    
+    # Save the uploaded file
+    try:
+        file_path = await save_published_paper_file(final_paper, paper_id, journal.fld_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
+    
+    # Count existing papers in this volume/issue for paper numbering
+    existing_count = db.query(func.count(PaperPublished.id)).filter(
+        PaperPublished.journal_id == journal.fld_id,
+        PaperPublished.volume == str(volume),
+        PaperPublished.issue == str(issue)
+    ).scalar() or 0
+    paper_num = existing_count + 1
+    
+    # Generate DOI
+    doi = generate_doi(
+        journal_short=journal.short_form,
+        year=pub_date.year,
+        volume=str(volume),
+        issue=str(issue),
+        paper_num=paper_num
+    )
+    
+    # Prepare data for Crossref
+    authors_list = [{"name": a["name"], "email": a.get("email"), "affiliation": a.get("affiliation")} for a in authors_info]
+    paper_url = f"https://aacsjournals.com/article/{doi}"
+    
+    paper_data = {
+        "title": paper.title,
+        "abstract": paper.abstract,
+        "authors": authors_list,
+        "publication_date": pub_datetime,
+        "pages": pages,
+        "url": paper_url,
+        "paper_num": paper_num
+    }
+    
+    journal_data = {
+        "name": journal.fld_journal_name,
+        "short_form": journal.short_form,
+        "issn_online": journal.issn_ol,
+        "issn_print": journal.issn_prt,
+        "volume": str(volume),
+        "issue": str(issue)
+    }
+    
+    # Register DOI with Crossref
+    crossref_service = CrossrefService()
+    doi_result = await crossref_service.register_doi(paper_data, journal_data, doi)
+    
+    # Determine DOI status
+    doi_status = "registered" if doi_result.success else "failed"
+    if doi_result.status == DOIStatus.PENDING:
+        doi_status = "pending"
+    
+    # Create PaperPublished record
+    published_paper = PaperPublished(
+        title=paper.title,
+        abstract=paper.abstract,
+        p_reference=paper.keyword,  # Using references from original paper if needed
+        author=author_string,
+        journal=journal.fld_journal_name,
+        journal_id=journal.fld_id,
+        volume=str(volume),
+        issue=str(issue),
+        date=pub_datetime,
+        pages=pages,
+        keyword=paper.keyword,
+        language="en",
+        paper=file_path,  # Use the uploaded file path
+        access_type="subscription",
+        email=primary_email,
+        affiliation=primary_affiliation,
+        co_authors_json=co_authors_json_str,
+        doi=doi,
+        doi_status=doi_status,
+        doi_registered_at=datetime.utcnow() if doi_result.success else None,
+        crossref_batch_id=doi_result.batch_id,
+        paper_submission_id=paper.id
+    )
+    
+    db.add(published_paper)
+    
+    # Update paper status
+    paper.status = "published"
+    
+    db.commit()
+    db.refresh(published_paper)
+    
+    return {
+        "success": True,
+        "message": f"Paper published successfully with DOI: {doi}",
+        "published_paper": {
+            "id": published_paper.id,
+            "title": published_paper.title,
+            "author": published_paper.author,
+            "journal": published_paper.journal,
+            "volume": published_paper.volume,
+            "issue": published_paper.issue,
+            "doi": published_paper.doi,
+            "doi_status": published_paper.doi_status,
+            "paper_file": published_paper.paper,
+            "co_authors": authors_info
+        }
+    }
 
 
 @router.get("/papers/{paper_id}/doi-status")

@@ -30,6 +30,7 @@ const EditorPublishing = () => {
     publication_date: new Date().toISOString().split('T')[0]
   });
   const [publishing, setPublishing] = useState(false);
+  const [finalPaperFile, setFinalPaperFile] = useState(null);
   
   const { success, error: showError, info } = useToast();
 
@@ -75,6 +76,7 @@ const EditorPublishing = () => {
       doi_suffix: paper.paperCode || paper.paper_code || `paper-${paper.id}`,
       publication_date: new Date().toISOString().split('T')[0]
     });
+    setFinalPaperFile(null);
     setShowPublishModal(true);
   };
 
@@ -89,6 +91,7 @@ const EditorPublishing = () => {
       doi_suffix: '',
       publication_date: new Date().toISOString().split('T')[0]
     });
+    setFinalPaperFile(null);
   };
 
   const handlePublish = async () => {
@@ -97,16 +100,25 @@ const EditorPublishing = () => {
       return;
     }
 
+    if (!finalPaperFile) {
+      showError('Please upload the final paper PDF for publishing', 3000);
+      return;
+    }
+
     try {
       setPublishing(true);
-      await acsApi.editor.publishPaper(selectedPaper.id, {
-        volume: parseInt(publishData.volume),
-        issue: parseInt(publishData.issue),
-        page_start: publishData.page_start ? parseInt(publishData.page_start) : null,
-        page_end: publishData.page_end ? parseInt(publishData.page_end) : null,
-        doi_suffix: publishData.doi_suffix,
-        publication_date: publishData.publication_date
-      });
+      
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('final_paper', finalPaperFile);
+      formData.append('volume', publishData.volume);
+      formData.append('issue', publishData.issue);
+      if (publishData.page_start) formData.append('page_start', publishData.page_start);
+      if (publishData.page_end) formData.append('page_end', publishData.page_end);
+      if (publishData.doi_suffix) formData.append('doi_suffix', publishData.doi_suffix);
+      if (publishData.publication_date) formData.append('publication_date', publishData.publication_date);
+      
+      await acsApi.editor.publishPaperWithFile(selectedPaper.id, formData);
       
       success(`Paper "${selectedPaper.title}" published successfully!`, 4000);
       closePublishModal();
@@ -280,6 +292,42 @@ const EditorPublishing = () => {
               <div className={styles.paperSummary}>
                 <h4>{selectedPaper.title}</h4>
                 <p>By {selectedPaper.author?.name || selectedPaper.authorName || 'Unknown Author'}</p>
+              </div>
+
+              {/* Final Paper Upload */}
+              <div className={styles.fileUploadSection}>
+                <label className={styles.fileUploadLabel}>
+                  <span className="material-symbols-rounded">upload_file</span>
+                  Final Paper PDF *
+                </label>
+                <div className={styles.fileUploadArea}>
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => setFinalPaperFile(e.target.files[0])}
+                    disabled={publishing}
+                    id="final-paper-upload"
+                  />
+                  {finalPaperFile ? (
+                    <div className={styles.selectedFile}>
+                      <span className="material-symbols-rounded">description</span>
+                      <span>{finalPaperFile.name}</span>
+                      <button 
+                        type="button"
+                        onClick={() => setFinalPaperFile(null)}
+                        className={styles.removeFileBtn}
+                      >
+                        <span className="material-symbols-rounded">close</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <label htmlFor="final-paper-upload" className={styles.uploadPlaceholder}>
+                      <span className="material-symbols-rounded">cloud_upload</span>
+                      <span>Click to upload the final formatted paper for publishing</span>
+                    </label>
+                  )}
+                </div>
+                <p className={styles.fileHint}>Upload the final formatted PDF that will be publicly available</p>
               </div>
 
               <div className={styles.formGrid}>

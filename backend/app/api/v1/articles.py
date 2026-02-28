@@ -94,6 +94,7 @@ class ArticleDetailResponse(BaseModel):
     email: Optional[str] = None
     affiliation: Optional[str] = None
     doi: Optional[str] = None
+    co_authors_json: Optional[str] = None  # JSON string of co-author details
     
     class Config:
         from_attributes = True
@@ -211,7 +212,8 @@ async def get_article(article_id: int, db: Session = Depends(get_db)):
         access_type=article.access_type,
         email=article.email,
         affiliation=strip_html_tags(article.affiliation),
-        doi=strip_html_tags(article.doi)
+        doi=strip_html_tags(article.doi),
+        co_authors_json=article.co_authors_json
     )
 
 

@@ -224,7 +224,9 @@ class PaperPublished(Base):
     # Access control - subscription by default, admin can change to open
     access_type = Column(String(20), nullable=False, default="subscription")  # subscription, open
     email = Column(String(100), nullable=True)  # Author email
-    affiliation = Column(String(100), nullable=True)  # Author affiliation
+    affiliation = Column(String(500), nullable=True)  # Author affiliation (increased size)
+    # Structured author information as JSON
+    co_authors_json = Column(Text, nullable=True)  # JSON array of {name, affiliation, is_corresponding, is_primary}
     # DOI fields
     doi = Column(String(100), nullable=True)  # DOI identifier (e.g., 10.58517/IJICM.2024.1101)
     doi_status = Column(String(50), nullable=False, default="pending")  # pending, registered, failed
@@ -253,6 +255,7 @@ class PaperPublished(Base):
             "access_type": self.access_type,
             "email": self.email,
             "affiliation": self.affiliation,
+            "co_authors_json": self.co_authors_json,
             "doi": self.doi,
             "doi_status": self.doi_status,
             "doi_registered_at": self.doi_registered_at.isoformat() if self.doi_registered_at else None,

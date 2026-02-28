@@ -315,6 +315,22 @@ export const acsApi = {
       apiService.get(`/api/v1/editor/ready-to-publish?skip=${skip}&limit=${limit}`),
     publishPaper: (paperId, publishData) =>
       apiService.post(`/api/v1/editor/papers/${paperId}/publish`, publishData),
+    publishPaperWithFile: async (paperId, formData) => {
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${baseUrl}/api/v1/editor/papers/${paperId}/publish-with-file`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw { response: { data: error } };
+      }
+      return response.json();
+    },
     checkDoiStatus: (paperId) =>
       apiService.get(`/api/v1/editor/papers/${paperId}/doi-status`),
     

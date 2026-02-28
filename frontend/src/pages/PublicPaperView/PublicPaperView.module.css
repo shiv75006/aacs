@@ -149,6 +149,93 @@
   font-size: 1rem;
 }
 
+/* Authors Section with Affiliations */
+.authorsSection {
+  margin-bottom: 1rem;
+}
+
+.authorCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border-left: 3px solid #64748b;
+}
+
+.authorCard.primaryAuthor {
+  background: #E8F5E9;
+  border-left-color: #0D4715;
+}
+
+.authorCard.coAuthor {
+  background: #f8fafc;
+  border-left-color: #41644A;
+}
+
+.authorName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.authorName .material-icons {
+  font-size: 18px;
+  color: #41644A;
+}
+
+.correspondingBadge {
+  color: #0D4715;
+  font-size: 18px;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.coAuthorBadge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  background: #41644A;
+  color: white;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.authorAffiliation {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #64748b;
+  padding-left: 26px;
+}
+
+.authorAffiliation .material-icons {
+  font-size: 14px;
+}
+
+.correspondingNote {
+  font-size: 12px;
+  color: #64748b;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+/* Primary Button Style */
+.primaryBtn {
+  background: #0D4715 !important;
+  color: white !important;
+}
+
+.primaryBtn:hover {
+  background: #0a3912 !important;
+}
+
 .pubInfo {
   display: flex;
   flex-wrap: wrap;

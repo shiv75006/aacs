@@ -43,6 +43,15 @@ const PublicPaperView = () => {
     return authorString.split(',').map(a => a.trim()).filter(a => a);
   };
 
+  const parseCoAuthorsJson = (jsonString) => {
+    if (!jsonString) return null;
+    try {
+      return JSON.parse(jsonString);
+    } catch {
+      return null;
+    }
+  };
+
   const parseKeywords = (keywordString) => {
     if (!keywordString) return [];
     return keywordString.split(',').map(k => k.trim()).filter(k => k);
@@ -87,8 +96,15 @@ const PublicPaperView = () => {
   }
 
   const authors = parseAuthors(article?.author);
+  const structuredAuthors = parseCoAuthorsJson(article?.co_authors_json);
   const keywords = parseKeywords(article?.keyword);
   const isOpenAccess = article?.access_type === 'open';
+
+  // Handle PDF download for open access
+  const handleDownloadPdf = () => {
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    window.open(`${baseUrl}/api/v1/articles/${article.id}/pdf`, '_blank');
+  };
 
   return (
     <div className={styles.container}>
@@ -122,8 +138,32 @@ const PublicPaperView = () => {
 
         <h1 className={styles.title}>{article?.title}</h1>
 
-        {/* Authors */}
-        {authors.length > 0 && (
+        {/* Authors with Affiliations */}
+        {structuredAuthors && structuredAuthors.length > 0 ? (
+          <div className={styles.authorsSection}>
+            {structuredAuthors.map((author, idx) => (
+              <div key={idx} className={`${styles.authorCard} ${author.is_primary ? styles.primaryAuthor : styles.coAuthor}`}>
+                <div className={styles.authorName}>
+                  <span className="material-icons">{author.is_primary ? 'person' : 'group'}</span>
+                  <span>{author.name}</span>
+                  {author.is_corresponding && (
+                    <span className={styles.correspondingBadge} title="Corresponding Author">*</span>
+                  )}
+                  {!author.is_primary && (
+                    <span className={styles.coAuthorBadge}>Co-Author</span>
+                  )}
+                </div>
+                {author.affiliation && (
+                  <div className={styles.authorAffiliation}>
+                    <span className="material-icons">business</span>
+                    <span>{author.affiliation}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+            <p className={styles.correspondingNote}>* Corresponding Author</p>
+          </div>
+        ) : authors.length > 0 ? (
           <div className={styles.authors}>
             {authors.map((author, idx) => (
               <span key={idx} className={styles.author}>
@@ -132,10 +172,10 @@ const PublicPaperView = () => {
               </span>
             ))}
           </div>
-        )}
+        ) : null}
 
-        {/* Affiliation */}
-        {article?.affiliation && (
+        {/* Legacy Affiliation (if no structured authors) */}
+        {!structuredAuthors && article?.affiliation && (
           <p className={styles.affiliation}>
             <span className="material-icons">business</span>
             {article.affiliation}
@@ -186,6 +226,15 @@ const PublicPaperView = () => {
 
       {/* Action Buttons */}
       <div className={styles.actions}>
+        {isOpenAccess && (
+          <button 
+            onClick={handleDownloadPdf}
+            className={`${styles.actionBtn} ${styles.primaryBtn}`}
+          >
+            <span className="material-icons">picture_as_pdf</span>
+            Download Full PDF
+          </button>
+        )}
         <button 
           onClick={() => navigator.clipboard.writeText(window.location.href)}
           className={styles.actionBtn}
