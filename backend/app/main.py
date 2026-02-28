@@ -40,6 +40,13 @@ def run_migrations():
                 conn.execute(text("ALTER TABLE papers ADD COLUMN blinded_manuscript VARCHAR(200) DEFAULT '' AFTER title_page"))
                 print("Migration: Added 'blinded_manuscript' column to papers table")
             
+            # Migration: Increase abstract column size to 2500 characters
+            result = conn.execute(text("SHOW COLUMNS FROM papers WHERE Field = 'abstract'"))
+            col_info = result.fetchone()
+            if col_info and 'varchar(1500)' in str(col_info).lower():
+                conn.execute(text("ALTER TABLE papers MODIFY COLUMN abstract VARCHAR(2500) NOT NULL DEFAULT ''"))
+                print("Migration: Increased 'abstract' column size to 2500 characters")
+            
             conn.commit()
             print("Database migrations completed successfully")
             

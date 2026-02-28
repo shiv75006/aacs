@@ -142,7 +142,7 @@ class Paper(Base):
     paper_code = Column(String(200), nullable=False, default="")
     journal = Column(Integer, nullable=True)  # Journal ID as INT
     title = Column(String(500), nullable=False, default="")
-    abstract = Column(String(1500), nullable=False, default="")
+    abstract = Column(String(2500), nullable=False, default="")
     keyword = Column(String(1000), nullable=False, default="")
     file = Column(String(200), nullable=False, default="")  # Legacy field - kept for backwards compatibility
     title_page = Column(String(200), nullable=True, default="")  # Title page with author info
