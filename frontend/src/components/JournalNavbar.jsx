@@ -1,23 +1,26 @@
 /**
  * JournalNavbar Component
  * 
- * Navigation bar for journal-specific subdomain sites.
+ * Navigation bar for journal-specific pages.
  * Displays journal branding and navigation links.
  */
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { getMainSiteUrl } from '../utils/subdomain';
 import './JournalNavbar.css';
 
 const JournalNavbar = ({ journal }) => {
   const { isAuthenticated, user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  
+  // Get the base path for this journal
+  const journalBasePath = `/j/${journal?.short_form}`;
 
   const isActive = (path) => {
-    return location.pathname === path;
+    const fullPath = path === '/' ? journalBasePath : `${journalBasePath}${path}`;
+    return location.pathname === fullPath;
   };
 
   const handleLogout = async () => {
@@ -37,7 +40,7 @@ const JournalNavbar = ({ journal }) => {
       <div className="journal-navbar-container">
         {/* Journal Logo and Name */}
         <div className="journal-navbar-brand">
-          <Link to="/" className="journal-logo-link">
+          <Link to={journalBasePath} className="journal-logo-link">
             {journal?.journal_logo && (
               <img 
                 src={`https://static.aacsjournals.com/images/${journal.journal_logo}`} 
@@ -69,7 +72,7 @@ const JournalNavbar = ({ journal }) => {
             {navLinks.map((link) => (
               <li key={link.path}>
                 <Link 
-                  to={link.path}
+                  to={link.path === '/' ? journalBasePath : `${journalBasePath}${link.path}`}
                   className={`journal-nav-link ${isActive(link.path) ? 'active' : ''}`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -97,15 +100,13 @@ const JournalNavbar = ({ journal }) => {
           </div>
 
           {/* Main Site Link */}
-          <a 
-            href={getMainSiteUrl()} 
+          <Link 
+            to="/" 
             className="main-site-link"
-            target="_blank"
-            rel="noopener noreferrer"
           >
             <span className="material-symbols-rounded">home</span>
             Breakthrough Publishers India
-          </a>
+          </Link>
         </div>
       </div>
 
