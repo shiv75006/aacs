@@ -1180,6 +1180,31 @@ async def make_paper_decision(
                 paper.revision_deadline.strftime('%B %d, %Y') if paper.revision_deadline else None
             )
             email_sent = True
+            
+            # If paper is accepted, create copyright form and send notification
+            if decision == "accepted":
+                try:
+                    copyright_form = create_copyright_form_for_paper(
+                        db=db,
+                        paper_id=paper.id,
+                        author_id=int(paper.added_by)
+                    )
+                    # Send copyright form notification email
+                    background_tasks.add_task(
+                        send_copyright_form_email,
+                        author.email,
+                        author_name,
+                        paper.title,
+                        journal_name,
+                        paper.id,
+                        copyright_form.deadline,
+                        False,  # is_reminder
+                        0  # reminder_number
+                    )
+                except Exception as e:
+                    # Log but don't fail the decision
+                    import logging
+                    logging.error(f"Failed to create copyright form: {str(e)}")
     
     return {
         "success": True,
