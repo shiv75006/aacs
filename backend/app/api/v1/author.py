@@ -546,6 +546,7 @@ async def submit_paper(
     research_area: str = Form(default=""),
     message_to_editor: str = Form(default=""),
     terms_accepted: bool = Form(default=False),
+    paper_type: str = Form(default="Full Length Article"),
     author_details: str = Form(...),  # JSON string with primary author details
     co_authors: str = Form(default="[]"),  # JSON string array of co-authors
     background_tasks: BackgroundTasks = None,
@@ -635,7 +636,8 @@ async def submit_paper(
             added_on=datetime.utcnow(),
             research_area=research_area or None,
             message_to_editor=message_to_editor or None,
-            terms_accepted=terms_accepted
+            terms_accepted=terms_accepted,
+            paper_type=paper_type or "Full Length Article"
         )
         
         db.add(new_paper)

@@ -47,6 +47,7 @@ export const SubmitPaperForm = () => {
     abstract: '',
     keywords: '',
     research_area: '',
+    paper_type: 'Full Length Article',
     message_to_editor: '',
     journal_id: '',
     // Step 2: Author Details
@@ -467,6 +468,7 @@ export const SubmitPaperForm = () => {
         title_page: formData.titlePageFile,
         blinded_manuscript: formData.blindedManuscriptFile,
         research_area: formData.research_area,
+        paper_type: formData.paper_type,
         message_to_editor: formData.message_to_editor,
         terms_accepted: formData.termsAccepted,
         author_details: formData.authorDetails,
@@ -666,6 +668,24 @@ export const SubmitPaperForm = () => {
                 {touched.journal_id && fieldErrors.journal_id && (
                   <span className={styles.errorText}>{fieldErrors.journal_id}</span>
                 )}
+              </div>
+            </div>
+
+            <div className={styles.fieldRow}>
+              <div className={styles.field}>
+                <label htmlFor="paper_type">Paper Type *</label>
+                <select
+                  id="paper_type"
+                  value={formData.paper_type}
+                  onChange={(e) => handleInputChange('paper_type', e.target.value)}
+                  className={styles.select}
+                >
+                  <option value="Full Length Article">Full Length Article</option>
+                  <option value="Review Paper">Review Paper</option>
+                  <option value="Short Communication">Short Communication</option>
+                  <option value="Case Study">Case Study</option>
+                  <option value="Technical Note">Technical Note</option>
+                </select>
               </div>
             </div>
 

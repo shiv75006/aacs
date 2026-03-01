@@ -90,7 +90,7 @@ export const DashboardPage = () => {
                   <span className="material-icons">upload_file</span>
                   Submit Manuscript
                 </Link>
-                <Link to="/author-guidelines" className={styles.ctaBtnSecondary}>
+                <Link to="/guidelines" className={styles.ctaBtnSecondary}>
                   Author Guidelines
                 </Link>
               </div>
