@@ -16,8 +16,8 @@ class Settings(BaseSettings):
     # JWT Configuration
     JWT_SECRET_KEY: str = "your-secret-key-change-this-in-production"
     JWT_ALGORITHM: str = "HS256"
-    JWT_EXPIRATION_HOURS: int = 24
-    REFRESH_TOKEN_EXPIRATION_DAYS: int = 7
+    JWT_EXPIRATION_HOURS: int = 1
+    REFRESH_TOKEN_EXPIRATION_HOURS: int = 24
     
     # API Configuration
     API_TITLE: str = "Breakthrough Publishers India Backend API"

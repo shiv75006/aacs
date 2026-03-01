@@ -51,7 +51,7 @@ async def login(request: Request, credentials: UserLogin, db: Session = Depends(
         raise InvalidCredentialsException()
     
     # Create tokens
-    access_token_expires = timedelta(hours=24)
+    access_token_expires = timedelta(hours=1)
     access_token = create_access_token(
         data={"sub": str(user.id), "email": user.email},
         expires_delta=access_token_expires
@@ -64,7 +64,7 @@ async def login(request: Request, credentials: UserLogin, db: Session = Depends(
         access_token=access_token,
         refresh_token=refresh_token,
         token_type="bearer",
-        expires_in=86400,  # 24 hours in seconds
+        expires_in=3600,  # 1 hour in seconds
         id=user.id,
         email=user.email,
         role=user.role,
@@ -123,7 +123,7 @@ async def signup(request: Request, data: SignupRequest, db: Session = Depends(ge
     db.refresh(new_user)
     
     # Create tokens for newly registered user
-    access_token_expires = timedelta(hours=24)
+    access_token_expires = timedelta(hours=1)
     access_token = create_access_token(
         data={"sub": str(new_user.id), "email": new_user.email},
         expires_delta=access_token_expires
@@ -136,7 +136,7 @@ async def signup(request: Request, data: SignupRequest, db: Session = Depends(ge
         access_token=access_token,
         refresh_token=refresh_token,
         token_type="bearer",
-        expires_in=86400,  # 24 hours in seconds
+        expires_in=3600,  # 1 hour in seconds
         id=new_user.id,
         email=new_user.email,
         role=new_user.role,
@@ -179,7 +179,7 @@ async def refresh_token(http_request: Request, request: RefreshTokenRequest, db:
         raise UserNotFoundException()
     
     # Create new access token
-    access_token_expires = timedelta(hours=24)
+    access_token_expires = timedelta(hours=1)
     access_token = create_access_token(
         data={"sub": str(user.id), "email": user.email},
         expires_delta=access_token_expires
@@ -189,7 +189,7 @@ async def refresh_token(http_request: Request, request: RefreshTokenRequest, db:
         access_token=access_token,
         refresh_token=request.refresh_token,  # Return same refresh token
         token_type="bearer",
-        expires_in=86400
+        expires_in=3600  # 1 hour in seconds
     )
 
 
