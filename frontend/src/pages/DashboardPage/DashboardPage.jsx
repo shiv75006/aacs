@@ -60,14 +60,12 @@ export const DashboardPage = () => {
                     <p className={styles.journalCardDescription}>
                       {journal.description || journal.about || 'Dedicated to publishing high-quality peer-reviewed research in specialized fields.'}
                     </p>
-                    <a
-                      href={`https://aacs-woad.vercel.app/j/${journal.short_form || 'TEST'}`}
+                    <Link
+                      to={`/j/${journal.short_form || 'TEST'}`}
                       className={styles.journalCardBtn}
-                      target="_blank"
-                      rel="noopener noreferrer"
                     >
                       View Journal
-                    </a>
+                    </Link>
                   </div>
                 ))
               ) : (
