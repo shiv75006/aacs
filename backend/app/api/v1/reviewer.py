@@ -220,13 +220,9 @@ async def accept_invitation(
         
         # Notify editor that reviewer accepted
         if paper:
-            # Get editor email (invited_by stores user ID)
+            # Find editor from journal's editor assignment
             editor = None
-            if invitation.invited_by:
-                editor = db.query(User).filter(User.id == invitation.invited_by).first()
-            
-            # Also try to find editor from journal's editor assignment
-            if not editor and paper.journal:
+            if paper.journal:
                 editor_record = db.query(Editor).filter(Editor.journal_id == paper.journal).first()
                 if editor_record:
                     editor = db.query(User).filter(User.email == editor_record.email).first()
