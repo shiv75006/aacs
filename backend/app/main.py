@@ -72,6 +72,12 @@ def run_migrations():
             except Exception:
                 pass  # Table may not exist yet
             
+            # Migration: Add paper_type column to paper table
+            result = conn.execute(text("SHOW COLUMNS FROM paper LIKE 'paper_type'"))
+            if not result.fetchone():
+                conn.execute(text("ALTER TABLE paper ADD COLUMN paper_type VARCHAR(50) DEFAULT 'Full Length Article'"))
+                print("Migration: Added 'paper_type' column to paper table")
+            
             conn.commit()
             print("Database migrations completed successfully")
             

@@ -973,7 +973,8 @@ async def resubmit_paper(
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
     
-    if paper.status != "correction":
+    # Allow resubmission for both "correction" and "revision_requested" statuses
+    if paper.status not in ["correction", "revision_requested"]:
         raise HTTPException(status_code=400, detail="This paper does not require revision")
     
     # Validate all files - only .docx allowed for revisions
