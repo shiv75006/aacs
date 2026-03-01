@@ -9,13 +9,14 @@ from datetime import datetime, timedelta
 import uuid
 import secrets
 from app.db.database import get_db
-from app.db.models import User, Paper, OnlineReview, Editor, ReviewerInvitation, Journal, ReviewSubmission, PaperPublished, UserRole, PaperCoAuthor
+from app.db.models import User, Paper, OnlineReview, Editor, ReviewerInvitation, Journal, ReviewSubmission, PaperPublished, UserRole, PaperCoAuthor, CopyrightForm
 from app.core.security import get_current_user, get_current_user_from_token_or_query
 from app.core.rate_limit import limiter
 from app.utils.auth_helpers import check_role, role_matches, get_editor_journal_ids, editor_has_journal_access
 from app.utils.email_service import send_reviewer_invitation
 from app.services.crossref_service import CrossrefService, generate_doi, DOIStatus
 from app.services.correspondence_service import create_and_send_correspondence
+from app.api.v1.copyright import create_copyright_form_for_paper, send_copyright_form_email
 from app.schemas.publish import (
     PublishPaperRequest, PublishPaperResponse, DOIResponse, 
     PublishedPaperResponse, AccessType
@@ -1040,6 +1041,31 @@ async def update_paper_status(
                 paper.revision_deadline.strftime('%B %d, %Y') if paper.revision_deadline else None
             )
             email_sent = True
+            
+            # If paper is accepted, create copyright form and send notification
+            if status == "accepted":
+                try:
+                    copyright_form = create_copyright_form_for_paper(
+                        db=db,
+                        paper_id=paper.id,
+                        author_id=int(paper.added_by)
+                    )
+                    # Send copyright form notification email
+                    background_tasks.add_task(
+                        send_copyright_form_email,
+                        author.email,
+                        author_name,
+                        paper.title,
+                        journal_name,
+                        paper.id,
+                        copyright_form.deadline,
+                        False,  # is_reminder
+                        0  # reminder_number
+                    )
+                except Exception as e:
+                    # Log but don't fail the status update
+                    import logging
+                    logging.error(f"Failed to create copyright form: {str(e)}")
     
     return {
         "id": paper.id,

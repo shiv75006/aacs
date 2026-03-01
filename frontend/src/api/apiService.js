@@ -280,6 +280,13 @@ export const acsApi = {
       }),
   },
 
+  // Copyright Transfer Form endpoints
+  copyright: {
+    getPending: () => apiService.get('/api/v1/copyright/pending'),
+    getForm: (paperId) => apiService.get(`/api/v1/copyright/${paperId}`),
+    submitForm: (paperId, formData) => apiService.post(`/api/v1/copyright/${paperId}/submit`, formData),
+  },
+
   // Editor endpoints
   editor: {
     getDashboardStats: () => apiService.get('/api/v1/editor/dashboard/stats'),

@@ -11,7 +11,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy import text
 from app.config import settings
-from app.api.v1 import auth, journals, admin, author, editor, reviewer, articles, roles, webhooks
+from app.api.v1 import auth, journals, admin, author, editor, reviewer, articles, roles, webhooks, copyright
 from app.core.rate_limit import limiter, get_rate_limit_key
 from app.scheduler.tasks import start_scheduler, shutdown_scheduler
 from app.db.database import engine, Base, SessionLocal
@@ -245,6 +245,7 @@ app.include_router(editor.router)
 app.include_router(reviewer.router)
 app.include_router(roles.router)
 app.include_router(webhooks.router)
+app.include_router(copyright.router)
 
 
 @app.exception_handler(Exception)

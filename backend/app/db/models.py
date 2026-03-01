@@ -817,3 +817,72 @@ class News(Base):
             "journal_id": self.journal_id,
             "journal_name": self.journal.fld_journal_name if self.journal else None,
         }
+
+
+# ============================================================================
+# COPYRIGHT TRANSFER FORM MODEL
+# ============================================================================
+
+class CopyrightForm(Base):
+    """
+    Model for copyright transfer forms required after paper acceptance.
+    Authors must complete this form within 48 hours of acceptance.
+    """
+    __tablename__ = "copyright_form"
+    __table_args__ = {"mysql_engine": "InnoDB"}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    paper_id = Column(Integer, ForeignKey("paper.id", ondelete="CASCADE"), nullable=False, index=True)
+    author_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # Status tracking
+    status = Column(String(20), nullable=False, default="pending")  # pending, completed, expired
+    
+    # Deadline and reminders
+    deadline = Column(DateTime, nullable=False)  # 48 hours from acceptance
+    reminder_count = Column(Integer, nullable=False, default=0)  # 0, 1, 2
+    last_reminder_at = Column(DateTime, nullable=True)
+    
+    # Form data (stored as JSON)
+    author_name = Column(String(255), nullable=True)
+    author_affiliation = Column(String(500), nullable=True)
+    co_authors_consent = Column(Boolean, nullable=True, default=False)  # Confirms co-authors agreed
+    copyright_agreed = Column(Boolean, nullable=True, default=False)  # Agrees to transfer
+    signature = Column(String(255), nullable=True)  # Digital signature (typed name)
+    signed_date = Column(DateTime, nullable=True)
+    
+    # Additional declarations
+    original_work = Column(Boolean, nullable=True, default=False)  # Work is original
+    no_conflict = Column(Boolean, nullable=True, default=False)  # No conflict of interest
+    rights_transfer = Column(Boolean, nullable=True, default=False)  # Agrees to rights transfer
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    completed_at = Column(DateTime, nullable=True)
+    
+    # Relationships
+    paper = relationship("Paper", backref="copyright_form")
+    author = relationship("User", backref="copyright_forms")
+    
+    def to_dict(self):
+        """Convert model to dictionary"""
+        return {
+            "id": self.id,
+            "paper_id": self.paper_id,
+            "author_id": self.author_id,
+            "status": self.status,
+            "deadline": self.deadline.isoformat() if self.deadline else None,
+            "reminder_count": self.reminder_count,
+            "last_reminder_at": self.last_reminder_at.isoformat() if self.last_reminder_at else None,
+            "author_name": self.author_name,
+            "author_affiliation": self.author_affiliation,
+            "co_authors_consent": self.co_authors_consent,
+            "copyright_agreed": self.copyright_agreed,
+            "signature": self.signature,
+            "signed_date": self.signed_date.isoformat() if self.signed_date else None,
+            "original_work": self.original_work,
+            "no_conflict": self.no_conflict,
+            "rights_transfer": self.rights_transfer,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+        }

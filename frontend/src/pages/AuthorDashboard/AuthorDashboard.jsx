@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import acsApi from '../../api/apiService.js';
+import CopyrightForm from '../../components/CopyrightForm';
 import styles from './AuthorDashboard.module.css';
 
 export const AuthorDashboard = () => {
@@ -11,6 +12,9 @@ export const AuthorDashboard = () => {
     under_review: 0,
   });
   const [recentSubmissions, setRecentSubmissions] = useState([]);
+  const [pendingCopyrightForms, setPendingCopyrightForms] = useState([]);
+  const [copyrightModalOpen, setCopyrightModalOpen] = useState(false);
+  const [selectedCopyrightPaperId, setSelectedCopyrightPaperId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -41,6 +45,16 @@ export const AuthorDashboard = () => {
           setRecentSubmissions([]);
         }
         
+        // Fetch pending copyright forms
+        try {
+          const copyrightData = await acsApi.copyright.getPending();
+          console.log('Copyright forms received:', copyrightData);
+          setPendingCopyrightForms(copyrightData?.forms || []);
+        } catch (copyrightErr) {
+          console.warn('Failed to fetch copyright forms:', copyrightErr);
+          setPendingCopyrightForms([]);
+        }
+        
         setLoading(false);
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
@@ -59,6 +73,32 @@ export const AuthorDashboard = () => {
     if (statusLower.includes('accept') || statusLower.includes('publish')) return 'Emerald';
     if (statusLower.includes('reject')) return 'Rose';
     return 'Slate';
+  };
+
+  const getTimeRemaining = (deadline) => {
+    const deadlineDate = new Date(deadline);
+    const now = new Date();
+    const diff = deadlineDate - now;
+    
+    if (diff <= 0) return { text: 'Expired', urgent: true };
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return {
+      text: `${hours}h ${minutes}m remaining`,
+      urgent: hours < 12
+    };
+  };
+
+  const openCopyrightModal = (paperId) => {
+    setSelectedCopyrightPaperId(paperId);
+    setCopyrightModalOpen(true);
+  };
+
+  const handleCopyrightSuccess = () => {
+    // Remove the completed form from the list
+    setPendingCopyrightForms(forms => forms.filter(f => f.paper_id !== selectedCopyrightPaperId));
   };
 
   if (loading) {
@@ -81,6 +121,44 @@ export const AuthorDashboard = () => {
 
   return (
     <div className={styles.authorDashboard}>
+      {/* Copyright Transfer Form Banner */}
+      {pendingCopyrightForms.length > 0 && (
+        <div className={styles.copyrightBanner}>
+          <div className={styles.copyrightBannerIcon}>
+            <span className="material-symbols-rounded">contract</span>
+          </div>
+          <div className={styles.copyrightBannerContent}>
+            <h3>Action Required: Copyright Transfer Form</h3>
+            <p>You have {pendingCopyrightForms.length} accepted paper{pendingCopyrightForms.length > 1 ? 's' : ''} requiring copyright transfer agreement.</p>
+            <div className={styles.copyrightFormsList}>
+              {pendingCopyrightForms.map((form) => {
+                const timeRemaining = getTimeRemaining(form.deadline);
+                return (
+                  <button
+                    key={form.paper_id}
+                    className={styles.copyrightFormItem}
+                    onClick={() => openCopyrightModal(form.paper_id)}
+                  >
+                    <span className={styles.copyrightFormTitle}>{form.paper_title}</span>
+                    <span className={`${styles.copyrightDeadline} ${timeRemaining.urgent ? styles.urgent : ''}`}>
+                      {timeRemaining.text}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Copyright Form Modal */}
+      <CopyrightForm
+        isOpen={copyrightModalOpen}
+        onClose={() => setCopyrightModalOpen(false)}
+        paperId={selectedCopyrightPaperId}
+        onSuccess={handleCopyrightSuccess}
+      />
+
       {/* Stats Grid */}
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>

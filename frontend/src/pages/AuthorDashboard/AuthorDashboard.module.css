@@ -368,3 +368,121 @@
     padding: 20px;
   }
 }
+
+/* Copyright Transfer Form Banner */
+.copyrightBanner {
+  display: flex;
+  gap: 16px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+}
+
+.copyrightBannerIcon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background: #f59e0b;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.copyrightBannerIcon .material-symbols-rounded {
+  font-size: 24px;
+}
+
+.copyrightBannerContent {
+  flex: 1;
+}
+
+.copyrightBannerContent h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.copyrightBannerContent p {
+  margin: 0 0 12px 0;
+  color: #a16207;
+  font-size: 0.9rem;
+}
+
+.copyrightFormsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.copyrightFormItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.copyrightFormItem:hover {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  transform: translateX(4px);
+}
+
+.copyrightFormTitle {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copyrightDeadline {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.copyrightDeadline.urgent {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+@media (max-width: 640px) {
+  .copyrightBanner {
+    flex-direction: column;
+    padding: 16px;
+  }
+  
+  .copyrightBannerIcon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .copyrightFormItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .copyrightFormTitle {
+    white-space: normal;
+  }
+}
