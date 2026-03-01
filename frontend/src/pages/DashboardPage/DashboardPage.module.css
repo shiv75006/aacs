@@ -151,6 +151,11 @@
   margin-bottom: 32px;
   line-height: 1.75;
   flex-grow: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .journalCardBtn {
@@ -328,5 +333,88 @@
 
   .ctaDescription {
     font-size: 1rem;
+  }
+}
+
+/* Small screen adjustments */
+@media (max-width: 480px) {
+  .heroSection {
+    min-height: 320px;
+    padding: 24px 12px;
+  }
+
+  .heroCard {
+    padding: 20px 16px;
+  }
+
+  .heroTitle {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+
+  .heroDescription {
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+
+  .journalsSection {
+    padding: 40px 12px;
+  }
+
+  .journalsTitle {
+    font-size: 1.75rem;
+    margin-bottom: 16px;
+  }
+
+  .journalsGrid {
+    gap: 16px;
+  }
+
+  .journalCard {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .journalCardTitle {
+    font-size: 1.25rem;
+    margin-bottom: 12px;
+  }
+
+  .journalCardDescription {
+    font-size: 0.875rem;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .journalCardBtn {
+    padding: 8px 14px;
+    font-size: 13px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .ctaSection {
+    padding: 40px 12px;
+  }
+
+  .ctaTitle {
+    font-size: 1.5rem;
+  }
+
+  .ctaDescription {
+    font-size: 0.875rem;
+  }
+
+  .ctaButtons {
+    gap: 12px;
+    padding-top: 12px;
+  }
+
+  .ctaBtnPrimary,
+  .ctaBtnSecondary {
+    padding: 10px 16px;
+    font-size: 13px;
+    width: 100%;
+    justify-content: center;
   }
 }

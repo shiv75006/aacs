@@ -12,7 +12,7 @@ export const DashboardPage = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const journalsData = await acsApi.journals.listJournals(0, 6);
+        const journalsData = await acsApi.journals.listJournals(0, 3);
         const journalsList = journalsData?.journals || journalsData || [];
         setJournals(Array.isArray(journalsList) ? journalsList : []);
       } catch (err) {
@@ -90,7 +90,7 @@ export const DashboardPage = () => {
                   <span className="material-icons">upload_file</span>
                   Submit Manuscript
                 </Link>
-                <Link to="/guidelines" className={styles.ctaBtnSecondary}>
+                <Link to="/author/guidelines" className={styles.ctaBtnSecondary}>
                   Author Guidelines
                 </Link>
               </div>
