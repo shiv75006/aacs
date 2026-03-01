@@ -56,12 +56,12 @@ class Settings(BaseSettings):
     CROSSREF_TEST_MODE: bool = True  # Set to False for production
     
     # SMTP Email Configuration
-    SMTP_SERVER: str = "mail.breakthroughpublishers.com"
+    SMTP_SERVER: str = "mail.aacsjournals.com"
     SMTP_PORT: int = 587
-    SMTP_USERNAME: str = "info@breakthroughpublishers.com"
+    SMTP_USERNAME: str = "info@aacsjournals.com"
     SMTP_PASSWORD: str = "Aacs@2020"
-    EMAIL_FROM: str = "info@breakthroughpublishers.com"
-    EMAIL_FROM_NAME: str = "Breakthrough Publishers India Journal Management System"
+    EMAIL_FROM: str = "info@aacsjournals.com"
+    EMAIL_FROM_NAME: str = "AACS Journal Management System"
     
     class Config:
         env_file = ".env"

@@ -12,11 +12,11 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # SMTP Configuration (same as existing service)
-SMTP_SERVER = "mail.breakthroughpublishers.com"
+SMTP_SERVER = "mail.aacsjournals.com"
 SMTP_PORT = 587
-SMTP_USERNAME = "info@breakthroughpublishers.com"
+SMTP_USERNAME = "info@aacsjournals.com"
 SMTP_PASSWORD = "Aacs@2020"
-EMAIL_FROM = "info@breakthroughpublishers.com"
+EMAIL_FROM = "info@aacsjournals.com"
 EMAIL_FROM_NAME = "Breakthrough Publishers India Journal Management System"
 
 # Base URL for webhooks (configure based on environment)
