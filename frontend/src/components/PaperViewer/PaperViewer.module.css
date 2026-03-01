@@ -113,6 +113,66 @@
   font-size: 18px;
 }
 
+/* Document Actions Container */
+.documentActions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Revision Files Section */
+.revisionFiles {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.revisionFilesTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 12px 0;
+}
+
+.revisionFilesTitle span {
+  font-size: 18px;
+}
+
+.revisionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.revisionBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.revisionBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.revisionBtn span {
+  font-size: 16px;
+}
+
 /* Paper Content */
 .paperContent {
   flex: 1;

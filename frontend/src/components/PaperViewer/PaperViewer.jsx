@@ -13,17 +13,44 @@ const PaperViewer = ({ paper, reviewId }) => {
     );
   }
 
+  const getAuthToken = () => localStorage.getItem('authToken');
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
   const handleViewPaper = () => {
-    // Get token from localStorage for authentication
-    const token = localStorage.getItem('authToken');
+    const token = getAuthToken();
     if (reviewId && token) {
-      // Open the paper in a new browser tab using the reviewer view endpoint
-      const viewUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/reviewer/assignments/${reviewId}/view-paper?token=${token}`;
+      const viewUrl = `${baseUrl}/api/v1/reviewer/assignments/${reviewId}/view-paper?token=${token}`;
       window.open(viewUrl, '_blank');
     } else if (!token) {
       alert('Please log in to view the paper');
     }
   };
+
+  const handleViewTrackChanges = () => {
+    const token = getAuthToken();
+    if (reviewId && token) {
+      const viewUrl = `${baseUrl}/api/v1/reviewer/assignments/${reviewId}/view-track-changes?token=${token}`;
+      window.open(viewUrl, '_blank');
+    }
+  };
+
+  const handleViewCleanManuscript = () => {
+    const token = getAuthToken();
+    if (reviewId && token) {
+      const viewUrl = `${baseUrl}/api/v1/reviewer/assignments/${reviewId}/view-clean-manuscript?token=${token}`;
+      window.open(viewUrl, '_blank');
+    }
+  };
+
+  const handleViewResponseToReviewer = () => {
+    const token = getAuthToken();
+    if (reviewId && token) {
+      const viewUrl = `${baseUrl}/api/v1/reviewer/assignments/${reviewId}/view-response-to-reviewer?token=${token}`;
+      window.open(viewUrl, '_blank');
+    }
+  };
+
+  const isResubmission = paper.is_resubmission || paper.version_number > 1;
 
   return (
     <div className={styles.paperViewer}>
@@ -54,12 +81,45 @@ const PaperViewer = ({ paper, reviewId }) => {
           </div>
         </div>
 
-        {reviewId && (
-          <button className={styles.downloadBtn} onClick={handleViewPaper} title="View paper in new tab">
-            <span className="material-symbols-rounded">open_in_new</span>
-            View Paper
-          </button>
-        )}
+        {/* Document Actions */}
+        <div className={styles.documentActions}>
+          {reviewId && (
+            <button className={styles.downloadBtn} onClick={handleViewPaper} title="View paper in new tab">
+              <span className="material-symbols-rounded">open_in_new</span>
+              View Paper
+            </button>
+          )}
+          
+          {/* Resubmission Files - only shown for revised papers */}
+          {isResubmission && reviewId && (
+            <div className={styles.revisionFiles}>
+              <h4 className={styles.revisionFilesTitle}>
+                <span className="material-symbols-rounded">replay</span>
+                Revision Documents
+              </h4>
+              <div className={styles.revisionButtons}>
+                {paper.revised_track_changes && (
+                  <button className={styles.revisionBtn} onClick={handleViewTrackChanges} title="View manuscript with track changes">
+                    <span className="material-symbols-rounded">track_changes</span>
+                    Track Changes
+                  </button>
+                )}
+                {paper.revised_clean && (
+                  <button className={styles.revisionBtn} onClick={handleViewCleanManuscript} title="View clean revised manuscript">
+                    <span className="material-symbols-rounded">article</span>
+                    Clean Manuscript
+                  </button>
+                )}
+                {paper.response_to_reviewer && (
+                  <button className={styles.revisionBtn} onClick={handleViewResponseToReviewer} title="View author's response to reviewer comments">
+                    <span className="material-symbols-rounded">quick_reply</span>
+                    Response Letter
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Paper Content */}

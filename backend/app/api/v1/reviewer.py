@@ -606,7 +606,11 @@ async def get_review_detail(
                 "submitted_date": paper.added_on.isoformat() if paper.added_on else None,
                 "file": paper.file,
                 "version_number": current_version,
-                "is_resubmission": current_version > 1
+                "is_resubmission": current_version > 1,
+                # Resubmission files (only populated for revised papers)
+                "revised_track_changes": paper.revised_track_changes if current_version > 1 else None,
+                "revised_clean": paper.revised_clean if current_version > 1 else None,
+                "response_to_reviewer": paper.response_to_reviewer if current_version > 1 else None
             },
             "assignment": {
                 "id": assignment.id,
@@ -674,6 +678,183 @@ async def view_paper_file(
     filename = filepath.name
     
     # Determine correct media type based on file extension
+    ext = filepath.suffix.lower()
+    media_types = {
+        '.pdf': 'application/pdf',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    }
+    media_type = media_types.get(ext, 'application/octet-stream')
+    
+    return FileResponse(
+        path=str(filepath),
+        filename=filename,
+        media_type=media_type,
+        headers={"Content-Disposition": f"inline; filename=\"{filename}\""}
+    )
+
+
+@router.get("/assignments/{review_id}/view-track-changes")
+async def view_track_changes_file(
+    review_id: int,
+    current_user: dict = Depends(get_current_user_from_token_or_query),
+    db: Session = Depends(get_db)
+):
+    """
+    View the track changes file for a resubmission.
+    
+    Args:
+        review_id: Review assignment ID
+        
+    Returns:
+        Track changes file for inline viewing
+    """
+    from app.utils.file_handler import get_file_full_path
+    
+    if not check_role(current_user.get("role"), "reviewer"):
+        raise HTTPException(status_code=403, detail="Reviewer access required")
+    
+    reviewer_id = str(current_user.get("id"))
+    
+    assignment = db.query(OnlineReview).filter(
+        OnlineReview.id == review_id,
+        OnlineReview.reviewer_id == reviewer_id
+    ).first()
+    
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    
+    paper = db.query(Paper).filter(Paper.id == assignment.paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    if not paper.revised_track_changes:
+        raise HTTPException(status_code=404, detail="Track changes file not found")
+    
+    filepath = get_file_full_path(paper.revised_track_changes)
+    
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Track changes file not found on server")
+    
+    filename = filepath.name
+    ext = filepath.suffix.lower()
+    media_types = {
+        '.pdf': 'application/pdf',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    }
+    media_type = media_types.get(ext, 'application/octet-stream')
+    
+    return FileResponse(
+        path=str(filepath),
+        filename=filename,
+        media_type=media_type,
+        headers={"Content-Disposition": f"inline; filename=\"{filename}\""}
+    )
+
+
+@router.get("/assignments/{review_id}/view-clean-manuscript")
+async def view_clean_manuscript_file(
+    review_id: int,
+    current_user: dict = Depends(get_current_user_from_token_or_query),
+    db: Session = Depends(get_db)
+):
+    """
+    View the clean revised manuscript for a resubmission.
+    
+    Args:
+        review_id: Review assignment ID
+        
+    Returns:
+        Clean revised manuscript for inline viewing
+    """
+    from app.utils.file_handler import get_file_full_path
+    
+    if not check_role(current_user.get("role"), "reviewer"):
+        raise HTTPException(status_code=403, detail="Reviewer access required")
+    
+    reviewer_id = str(current_user.get("id"))
+    
+    assignment = db.query(OnlineReview).filter(
+        OnlineReview.id == review_id,
+        OnlineReview.reviewer_id == reviewer_id
+    ).first()
+    
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    
+    paper = db.query(Paper).filter(Paper.id == assignment.paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    if not paper.revised_clean:
+        raise HTTPException(status_code=404, detail="Clean manuscript file not found")
+    
+    filepath = get_file_full_path(paper.revised_clean)
+    
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Clean manuscript file not found on server")
+    
+    filename = filepath.name
+    ext = filepath.suffix.lower()
+    media_types = {
+        '.pdf': 'application/pdf',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    }
+    media_type = media_types.get(ext, 'application/octet-stream')
+    
+    return FileResponse(
+        path=str(filepath),
+        filename=filename,
+        media_type=media_type,
+        headers={"Content-Disposition": f"inline; filename=\"{filename}\""}
+    )
+
+
+@router.get("/assignments/{review_id}/view-response-to-reviewer")
+async def view_response_to_reviewer_file(
+    review_id: int,
+    current_user: dict = Depends(get_current_user_from_token_or_query),
+    db: Session = Depends(get_db)
+):
+    """
+    View the author's response to reviewer comments for a resubmission.
+    
+    Args:
+        review_id: Review assignment ID
+        
+    Returns:
+        Response to reviewer file for inline viewing
+    """
+    from app.utils.file_handler import get_file_full_path
+    
+    if not check_role(current_user.get("role"), "reviewer"):
+        raise HTTPException(status_code=403, detail="Reviewer access required")
+    
+    reviewer_id = str(current_user.get("id"))
+    
+    assignment = db.query(OnlineReview).filter(
+        OnlineReview.id == review_id,
+        OnlineReview.reviewer_id == reviewer_id
+    ).first()
+    
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    
+    paper = db.query(Paper).filter(Paper.id == assignment.paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    if not paper.response_to_reviewer:
+        raise HTTPException(status_code=404, detail="Response to reviewer file not found")
+    
+    filepath = get_file_full_path(paper.response_to_reviewer)
+    
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Response to reviewer file not found on server")
+    
+    filename = filepath.name
     ext = filepath.suffix.lower()
     media_types = {
         '.pdf': 'application/pdf',
