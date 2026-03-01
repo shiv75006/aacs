@@ -220,6 +220,7 @@ function AppContent() {
               <Route path="journals" element={<AdminJournals />} />
               <Route path="submissions" element={<AdminSubmissions />} />
               <Route path="submissions/:id" element={<PaperDetailsPage />} />
+              <Route path="submissions/:paperId/decision" element={<EditorDecisionPanel />} />
               <Route path="role-requests" element={<AdminRoleRequests />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>

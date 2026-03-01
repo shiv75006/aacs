@@ -224,8 +224,8 @@ async def accept_invitation(
             editor = None
             if paper.journal:
                 editor_record = db.query(Editor).filter(Editor.journal_id == paper.journal).first()
-                if editor_record:
-                    editor = db.query(User).filter(User.email == editor_record.email).first()
+                if editor_record and editor_record.editor_email:
+                    editor = db.query(User).filter(User.email == editor_record.editor_email).first()
             
             if editor and editor.email:
                 journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
@@ -330,8 +330,8 @@ async def decline_invitation(
             # Find editor from paper's journal
             if paper.journal:
                 editor_record = db.query(Editor).filter(Editor.journal_id == paper.journal).first()
-                if editor_record:
-                    editor = db.query(User).filter(User.email == editor_record.email).first()
+                if editor_record and editor_record.editor_email:
+                    editor = db.query(User).filter(User.email == editor_record.editor_email).first()
             
             if editor and editor.email:
                 journal = db.query(Journal).filter(Journal.fld_id == paper.journal).first()
@@ -1083,8 +1083,8 @@ async def submit_review_complete(
         editor = None
         if paper.journal:
             editor_record = db.query(Editor).filter(Editor.journal_id == paper.journal).first()
-            if editor_record:
-                editor = db.query(User).filter(User.email == editor_record.email).first()
+            if editor_record and editor_record.editor_email:
+                editor = db.query(User).filter(User.email == editor_record.editor_email).first()
         
         if editor and editor.email:
             async def send_editor_notification():

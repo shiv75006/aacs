@@ -112,7 +112,7 @@ const PaperViewer = ({ paper, reviewId }) => {
                 )}
                 {paper.response_to_reviewer && (
                   <button className={styles.revisionBtn} onClick={handleViewResponseToReviewer} title="View author's response to reviewer comments">
-                    <span className="material-symbols-rounded">quick_reply</span>
+                    <span className="material-symbols-rounded">rate_review</span>
                     Response Letter
                   </button>
                 )}

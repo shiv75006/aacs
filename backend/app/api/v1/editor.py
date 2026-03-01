@@ -1079,8 +1079,8 @@ async def make_paper_decision(
     Returns:
         Decision result with paper details
     """
-    if not check_role(current_user.get("role"), "editor"):
-        raise HTTPException(status_code=403, detail="Editor access required")
+    if not check_role(current_user.get("role"), ["editor", "admin"]):
+        raise HTTPException(status_code=403, detail="Editor or Admin access required")
     
     # Validate decision
     allowed_decisions = ["accepted", "correction", "rejected"]
@@ -1182,8 +1182,8 @@ async def get_paper_decision(
     Returns:
         Paper status, revision details, and editor comments
     """
-    if not check_role(current_user.get("role"), "editor"):
-        raise HTTPException(status_code=403, detail="Editor access required")
+    if not check_role(current_user.get("role"), ["editor", "admin"]):
+        raise HTTPException(status_code=403, detail="Editor or Admin access required")
     
     paper = db.query(Paper).filter(Paper.id == paper_id).first()
     if not paper:
@@ -1228,8 +1228,8 @@ async def get_paper_reviews(
     Returns:
         Paper details, reviews with reviewer info, and statistics
     """
-    if not check_role(current_user.get("role"), "editor"):
-        raise HTTPException(status_code=403, detail="Editor access required")
+    if not check_role(current_user.get("role"), ["editor", "admin"]):
+        raise HTTPException(status_code=403, detail="Editor or Admin access required")
     
     # Get paper details
     paper = db.query(Paper).filter(Paper.id == paper_id).first()

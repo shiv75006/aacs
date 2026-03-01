@@ -1021,12 +1021,17 @@ async def resubmit_paper(
         with open(response_path, 'wb') as f:
             f.write(file_contents["Response to reviewer file"])
         
+        # Store relative paths (without 'uploads/' prefix for compatibility with get_file_full_path)
+        track_changes_relative = f"papers/user_{user_id}/{track_changes_filename}"
+        clean_relative = f"papers/user_{user_id}/{clean_filename}"
+        response_relative = f"papers/user_{user_id}/{response_filename}"
+        
         # Create version record (using clean file as primary)
         total_size = sum(len(c) for c in file_contents.values())
         version_record = PaperVersion(
             paper_id=paper_id,
             version_number=new_version,
-            file=clean_path,
+            file=clean_relative,
             file_size=total_size,
             revision_reason=revision_reason,
             change_summary=change_summary,
@@ -1038,10 +1043,10 @@ async def resubmit_paper(
         old_status = paper.status
         paper.version_number = new_version
         paper.revision_count += 1
-        paper.file = clean_path  # Legacy field uses clean version
-        paper.revised_track_changes = track_changes_path
-        paper.revised_clean = clean_path
-        paper.response_to_reviewer = response_path
+        paper.file = clean_relative  # Legacy field uses clean version
+        paper.revised_track_changes = track_changes_relative
+        paper.revised_clean = clean_relative
+        paper.response_to_reviewer = response_relative
         paper.status = "under_review"  # Changed from "resubmitted" to allow re-review
         
         db.add(version_record)
@@ -1113,8 +1118,8 @@ async def resubmit_paper(
                 editor = None
                 if paper.journal:
                     editor_record = db.query(Editor).filter(Editor.journal_id == paper.journal).first()
-                    if editor_record:
-                        editor = db.query(User).filter(User.email == editor_record.email).first()
+                    if editor_record and editor_record.editor_email:
+                        editor = db.query(User).filter(User.email == editor_record.editor_email).first()
                 
                 if editor and editor.email:
                     async def send_editor_notification():

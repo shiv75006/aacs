@@ -134,7 +134,7 @@ const PaperDetailsPage = () => {
             icon: 'gavel',
             title: 'Decision Required',
             message: `${submittedReviews.length} review(s) submitted. Ready for editorial decision.`,
-            action: () => navigate(`/editor/papers/${paper.id}/decision`),
+            action: () => navigate(isAdmin() ? `/admin/submissions/${paper.id}/decision` : `/editor/papers/${paper.id}/decision`),
             actionText: 'Make Decision'
           });
         }
@@ -407,27 +407,60 @@ const PaperDetailsPage = () => {
 
   // Handle paper resubmission
   const handleResubmit = async () => {
+    // Validate track changes file
     if (!trackChangesFile) {
-      showError('Please upload the manuscript with track changes', 3000);
+      showError('Please upload the manuscript with track changes', 4000);
       return;
     }
+    
+    // Validate clean file
     if (!cleanFile) {
-      showError('Please upload the clean revised manuscript', 3000);
+      showError('Please upload the clean revised manuscript', 4000);
       return;
     }
+    
+    // Validate response file
     if (!responseFile) {
-      showError('Please upload your response to reviewer comments', 3000);
+      showError('Please upload your response to reviewer comments', 4000);
       return;
     }
+    
+    // Validate revision reason
     if (!revisionReason.trim()) {
-      showError('Please provide a reason/summary for your revisions', 3000);
+      showError('Please provide a summary of your revisions', 4000);
       return;
     }
+    
+    if (revisionReason.trim().length < 20) {
+      showError('Revision summary must be at least 20 characters', 4000);
+      return;
+    }
+    
+    // File type validation - only .docx allowed
+    const allowedTypes = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const docxExtension = '.docx';
+    
+    const validateFile = (file, label) => {
+      if (!file.name.toLowerCase().endsWith(docxExtension) && !allowedTypes.includes(file.type)) {
+        showError(`${label}: Only .docx (Word) documents are allowed`, 4000);
+        return false;
+      }
+      // 50MB limit
+      if (file.size > 50 * 1024 * 1024) {
+        showError(`${label}: File size must be less than 50MB`, 4000);
+        return false;
+      }
+      return true;
+    };
+    
+    if (!validateFile(trackChangesFile, 'Track changes file')) return;
+    if (!validateFile(cleanFile, 'Clean manuscript')) return;
+    if (!validateFile(responseFile, 'Response to reviewer')) return;
 
     try {
       setResubmitting(true);
       await acsApi.author.resubmitPaper(paper.id, trackChangesFile, cleanFile, responseFile, revisionReason, changeSummary);
-      success('Paper resubmitted successfully!', 4000);
+      success('Paper resubmitted successfully! Reviewers have been notified.', 5000);
       setShowResubmitForm(false);
       setTrackChangesFile(null);
       setCleanFile(null);
@@ -438,7 +471,7 @@ const PaperDetailsPage = () => {
       await fetchPaperDetails();
     } catch (err) {
       console.error('Error resubmitting paper:', err);
-      const errorMsg = err.response?.data?.detail || 'Failed to resubmit paper';
+      const errorMsg = err.response?.data?.detail || 'Failed to resubmit paper. Please try again.';
       showError(errorMsg, 5000);
     } finally {
       setResubmitting(false);
@@ -753,7 +786,7 @@ const PaperDetailsPage = () => {
               )}
               
               {(isEditor() || isAdmin()) && !['accepted', 'rejected', 'published'].includes(paper.status) && (
-                <button className={styles.btnPrimary} onClick={() => navigate(`/editor/papers/${paper.id}/decision`)}>
+                <button className={styles.btnPrimary} onClick={() => navigate(isAdmin() ? `/admin/submissions/${paper.id}/decision` : `/editor/papers/${paper.id}/decision`)}>
                   <span className="material-symbols-rounded">gavel</span>
                   Make Decision
                 </button>
@@ -1026,7 +1059,7 @@ const PaperDetailsPage = () => {
                   {/* Response to Reviewer File */}
                   <div className={styles.formGroup}>
                     <label htmlFor="responseFile">
-                      <span className="material-symbols-rounded" style={{verticalAlign: 'middle', marginRight: '6px', fontSize: '18px'}}>quick_reply</span>
+                      <span className="material-symbols-rounded" style={{verticalAlign: 'middle', marginRight: '6px', fontSize: '18px'}}>rate_review</span>
                       Response to Reviewer Comments *
                     </label>
                     <p className={styles.fileHint}>Upload a detailed response letter addressing each reviewer comment point-by-point (.docx only)</p>
@@ -1047,7 +1080,7 @@ const PaperDetailsPage = () => {
                   </div>
 
                   <div className={styles.formGroup}>
-                    <label htmlFor="revisionReason">Revision Summary *</label>
+                    <label htmlFor="revisionReason">Revision Summary * <span style={{fontSize: '12px', color: '#666', fontWeight: 'normal'}}>(min 20 characters)</span></label>
                     <textarea
                       id="revisionReason"
                       value={revisionReason}
@@ -1057,6 +1090,9 @@ const PaperDetailsPage = () => {
                       disabled={resubmitting}
                       className={styles.textarea}
                     />
+                    <p className={styles.charCount} style={{fontSize: '12px', color: revisionReason.trim().length < 20 ? '#e74c3c' : '#27ae60', marginTop: '4px'}}>
+                      {revisionReason.trim().length}/20 characters minimum
+                    </p>
                   </div>
 
                   <div className={styles.formGroup}>
@@ -1076,7 +1112,7 @@ const PaperDetailsPage = () => {
                     <button
                       className={styles.btnPrimary}
                       onClick={handleResubmit}
-                      disabled={resubmitting || !trackChangesFile || !cleanFile || !responseFile || !revisionReason.trim()}
+                      disabled={resubmitting || !trackChangesFile || !cleanFile || !responseFile || revisionReason.trim().length < 20}
                     >
                       {resubmitting ? 'Resubmitting...' : 'Submit Revision'}
                     </button>

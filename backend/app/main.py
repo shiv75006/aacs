@@ -166,7 +166,13 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Add rate limiting middleware
+# Add trusted host middleware (runs third)
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["localhost", "127.0.0.1", "*.aacsjournals.com", "*.railway.app", "*.up.railway.app", "*.vercel.app"]
+)
+
+# Add rate limiting middleware (runs second)
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 
@@ -181,7 +187,7 @@ async def rate_limit_exception_handler(request, exc):
         }
     )
 
-# Add CORS middleware
+# Add CORS middleware LAST so it runs FIRST (handles OPTIONS preflight)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -190,12 +196,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["Content-Disposition"],
-)
-
-# Add trusted host middleware
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.aacsjournals.com", "*.railway.app", "*.up.railway.app", "*.vercel.app"]
 )
 
 

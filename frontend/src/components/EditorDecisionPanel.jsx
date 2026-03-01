@@ -111,7 +111,7 @@ export default function EditorDecisionPanel() {
       setSuccessMessage(`Decision recorded: ${response.decision.toUpperCase()}`);
       
       setTimeout(() => {
-        navigate('/editor-dashboard');
+        navigate(-1); // Go back to previous page (works for both admin and editor)
       }, 2000);
     } catch (err) {
       setError(
@@ -174,7 +174,7 @@ export default function EditorDecisionPanel() {
             Editorial Decision Panel
           </h1>
         </div>
-        <button onClick={() => navigate('/editor-dashboard')} className={styles.backBtn}>
+        <button onClick={() => navigate(-1)} className={styles.backBtn}>
           <span className="material-symbols-rounded">arrow_back</span>
           Back
         </button>
