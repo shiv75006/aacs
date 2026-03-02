@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import acsApi from '../../api/apiService.js';
 import { formatDateIST } from '../../utils/dateUtils';
 import styles from './EditorDashboard.module.css';
 
 export const EditorDashboard = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     total_papers: 0,
     pending_review: 0,
@@ -170,7 +172,7 @@ export const EditorDashboard = () => {
         </div>
       </div>
 
-      {/* Main Content Grid */}
+      {/* Main Content */}
       <div className={styles.dashboardGrid}>
         {/* Paper Queue Section */}
         <div className={`${styles.dashboardCard} ${styles.papersCard}`}>
@@ -217,7 +219,11 @@ export const EditorDashboard = () => {
                 </thead>
                 <tbody>
                   {filteredPapers.map((paper, index) => (
-                    <tr key={paper.id || index}>
+                    <tr 
+                      key={paper.id || index} 
+                      onClick={() => navigate(`/editor/papers/${paper.id}`)}
+                      className={styles.clickableRow}
+                    >
                       <td className={styles.titleCell}>{paper.title || paper.name || 'Untitled'}</td>
                       <td>{paper.author_name || (typeof paper.author === 'object' ? paper.author?.name : paper.author) || 'N/A'}</td>
                       <td>{paper.journal_name || (typeof paper.journal === 'object' ? paper.journal?.name : paper.journal) || 'N/A'}</td>
@@ -237,51 +243,6 @@ export const EditorDashboard = () => {
                 <p>No papers found</p>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <div className={styles.dashboardSidebar}>
-          {/* Pending Actions */}
-          <div className={`${styles.dashboardCard} ${styles.actionsCard}`}>
-            <h3>Pending Actions</h3>
-            <div className={styles.actionsList}>
-              <div className={styles.actionItem}>
-                <span className={`${styles.actionDot} ${styles.actionDotWarning}`}></span>
-                <span>{stats.pending_review || 0} papers need reviewer assignment</span>
-              </div>
-              <div className={styles.actionItem}>
-                <span className={`${styles.actionDot} ${styles.actionDotError}`}></span>
-                <span>Check overdue reviews</span>
-              </div>
-              <div className={styles.actionItem}>
-                <span className={`${styles.actionDot} ${styles.actionDotSuccess}`}></span>
-                <span>{stats.ready_for_publish || 0} papers ready for publication</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Links */}
-          <div className={`${styles.dashboardCard} ${styles.quickLinksCard}`}>
-            <h3>Quick Links</h3>
-            <div className={styles.quickLinksGrid}>
-              <button className={styles.quickLink}>
-                <span className={`material-symbols-rounded ${styles.quickLinkBlue}`}>description</span>
-                <span>View Guidelines</span>
-              </button>
-              <button className={styles.quickLink}>
-                <span className={`material-symbols-rounded ${styles.quickLinkEmerald}`}>schedule</span>
-                <span>Publication Timeline</span>
-              </button>
-              <button className={styles.quickLink}>
-                <span className={`material-symbols-rounded ${styles.quickLinkAmber}`}>person</span>
-                <span>Manage Reviewers</span>
-              </button>
-              <button className={styles.quickLink}>
-                <span className={`material-symbols-rounded ${styles.quickLinkPurple}`}>settings</span>
-                <span>Journal Settings</span>
-              </button>
-            </div>
           </div>
         </div>
       </div>

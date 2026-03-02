@@ -163,13 +163,6 @@
   gap: 32px;
 }
 
-@media (min-width: 1100px) {
-  .dashboardGrid {
-    grid-template-columns: 2fr 1fr;
-    gap: 32px;
-  }
-}
-
 @media (max-width: 1024px) {
   .dashboardGrid {
     gap: 24px;
@@ -179,12 +172,6 @@
 @media (max-width: 640px) {
   .dashboardGrid {
     gap: 16px;
-  }
-}
-
-@media (min-width: 1100px) {
-  .dashboardGrid {
-    grid-template-columns: 2fr 1fr;
   }
 }
 
@@ -280,6 +267,15 @@
 
 .papersTable tbody tr:hover {
   background: #f8fafc;
+}
+
+.clickableRow {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.clickableRow:hover {
+  background: #e0f2fe !important;
 }
 
 .titleCell {
