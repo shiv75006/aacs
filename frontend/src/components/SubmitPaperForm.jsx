@@ -30,7 +30,7 @@ const MAX_CO_AUTHORS = 5;
 
 export const SubmitPaperForm = () => {
   const navigate = useNavigate();
-  const { success, error: showError } = useToast();
+  const { success, error: showError, warning: showWarning } = useToast();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -38,6 +38,7 @@ export const SubmitPaperForm = () => {
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordChips, setKeywordChips] = useState([]);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [hasReadTerms, setHasReadTerms] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [touched, setTouched] = useState({});
   
@@ -435,6 +436,10 @@ export const SubmitPaperForm = () => {
         return true;
       },
       4: () => {
+        if (!hasReadTerms) {
+          showWarning('Please open and read the terms and conditions');
+          return false;
+        }
         if (!formData.termsAccepted) {
           showError('Please accept the terms and conditions');
           return false;
@@ -1249,7 +1254,13 @@ export const SubmitPaperForm = () => {
                   <input
                     type="checkbox"
                     checked={formData.termsAccepted}
-                    onChange={(e) => handleInputChange('termsAccepted', e.target.checked)}
+                    onChange={(e) => {
+                      if (!hasReadTerms && e.target.checked) {
+                        showWarning('Please open and read the terms and conditions');
+                        return;
+                      }
+                      handleInputChange('termsAccepted', e.target.checked);
+                    }}
                   />
                   <span>
                     I agree to the{' '}
@@ -1300,7 +1311,7 @@ export const SubmitPaperForm = () => {
         ) : (
           <button
             onClick={handleSubmit}
-            disabled={loading || !formData.termsAccepted}
+            disabled={loading || !formData.termsAccepted || !hasReadTerms}
             className={`${styles.btn} ${styles.btnSuccess}`}
           >
             {loading ? 'Submitting...' : 'Submit Paper'}
@@ -1395,7 +1406,10 @@ export const SubmitPaperForm = () => {
             <div className={styles.modalFooter}>
               <button 
                 className={`${styles.btn} ${styles.btnPrimary}`}
-                onClick={() => setShowTermsModal(false)}
+                onClick={() => {
+                  setHasReadTerms(true);
+                  setShowTermsModal(false);
+                }}
               >
                 I Understand
               </button>
