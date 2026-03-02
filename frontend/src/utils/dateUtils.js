@@ -15,12 +15,21 @@ const parseDate = (dateStr) => {
   if (!dateStr) return null;
   if (dateStr instanceof Date) return dateStr;
   
-  // If the date string doesn't have timezone info, treat it as UTC
-  const str = String(dateStr);
-  if (!str.includes('Z') && !str.includes('+') && !str.includes('-', 10)) {
+  let str = String(dateStr).trim();
+  
+  // Check if already has timezone info
+  const hasTimezone = str.includes('Z') || 
+                      str.includes('+') || 
+                      /T\d{2}:\d{2}:\d{2}[+-]/.test(str) ||
+                      /\d{2}:\d{2}:\d{2}[+-]/.test(str);
+  
+  if (!hasTimezone) {
+    // Replace space with 'T' for ISO compatibility (e.g., "2026-03-02 08:12:00" -> "2026-03-02T08:12:00")
+    str = str.replace(' ', 'T');
     // Append 'Z' to treat as UTC
-    return new Date(str + 'Z');
+    str = str + 'Z';
   }
+  
   return new Date(str);
 };
 
