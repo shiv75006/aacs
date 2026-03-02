@@ -625,7 +625,8 @@ async def get_paper_detail(
         "revision_type": paper.revision_type,
         "editor_comments": paper.editor_comments,
         "research_area": paper.research_area,
-        "message_to_editor": paper.message_to_editor
+        "message_to_editor": paper.message_to_editor,
+        "accepted_on": paper.accepted_on.isoformat() if paper.accepted_on else None
     }
 
 
@@ -993,6 +994,10 @@ async def update_paper_status(
     
     old_status = paper.status
     paper.status = status
+    
+    # Set accepted_on timestamp when paper is accepted
+    if status == "accepted" and not paper.accepted_on:
+        paper.accepted_on = datetime.utcnow()
     
     # Set revision deadline if provided
     if revision_deadline and status == "correction":

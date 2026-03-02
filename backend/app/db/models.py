@@ -173,6 +173,8 @@ class Paper(Base):
     message_to_editor = Column(Text, nullable=True)
     terms_accepted = Column(Boolean, nullable=False, default=False)
     paper_type = Column(String(50), nullable=True, default="Full Length Article")  # Full Length Article, Review Paper, Short Communication, Case Study, Technical Note
+    # Decision tracking
+    accepted_on = Column(DateTime, nullable=True)  # When paper was accepted
     
     # Relationship to co-authors
     co_authors = relationship("PaperCoAuthor", back_populates="paper", cascade="all, delete-orphan")
@@ -200,7 +202,8 @@ class Paper(Base):
             "research_area": self.research_area,
             "message_to_editor": self.message_to_editor,
             "terms_accepted": self.terms_accepted,
-            "paper_type": self.paper_type
+            "paper_type": self.paper_type,
+            "accepted_on": self.accepted_on.isoformat() if self.accepted_on else None
         }
 
 

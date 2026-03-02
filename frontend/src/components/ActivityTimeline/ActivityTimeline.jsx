@@ -59,7 +59,7 @@ const ActivityTimeline = ({ events = [] }) => {
               <div className={styles.content}>
                 <p className={styles.eventTitle}>{event.title}</p>
                 <p className={styles.eventTime}>
-                  {formatRelativeDate(event.date)} • {formatTimeIST(event.date)}
+                  {event.date ? `${formatRelativeDate(event.date)} • ${formatTimeIST(event.date)}` : ''}
                 </p>
               </div>
             </div>

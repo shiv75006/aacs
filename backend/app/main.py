@@ -87,6 +87,12 @@ def run_migrations():
             except Exception:
                 pass  # Table may not exist yet
             
+            # Migration: Add accepted_on column to paper table
+            result = conn.execute(text("SHOW COLUMNS FROM paper LIKE 'accepted_on'"))
+            if not result.fetchone():
+                conn.execute(text("ALTER TABLE paper ADD COLUMN accepted_on DATETIME NULL"))
+                print("Migration: Added 'accepted_on' column to paper table")
+            
             conn.commit()
             print("Database migrations completed successfully")
             

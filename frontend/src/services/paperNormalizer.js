@@ -134,6 +134,7 @@ export const paperNormalizer = {
       editorComments: data.editor_comments,
       researchArea: data.research_area,
       messageToEditor: data.message_to_editor,
+      acceptedOn: data.accepted_on,
       
       // Reviewer-specific fields
       reviewId: data.review_id,

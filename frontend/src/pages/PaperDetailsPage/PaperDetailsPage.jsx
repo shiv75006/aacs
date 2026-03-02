@@ -270,7 +270,7 @@ const PaperDetailsPage = () => {
         iconColor: 'iconGreen',
         title: 'Paper Accepted',
         description: 'Your paper has been accepted for publication',
-        date: paper._raw?.accepted_on ? new Date(paper._raw.accepted_on) : new Date(),
+        date: paper.acceptedOn || paper.accepted_on || paper._raw?.accepted_on || null,
         showToAll: true
       });
     } else if (paper.status === 'rejected') {
