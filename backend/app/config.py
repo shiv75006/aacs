@@ -63,6 +63,10 @@ class Settings(BaseSettings):
     EMAIL_FROM: str = "info@aacsjournals.com"
     EMAIL_FROM_NAME: str = "AACS Journal Management System"
     
+    # Resend Email API (used when SMTP is blocked, e.g., on Railway)
+    RESEND_API_KEY: str = ""  # Get from https://resend.com/api-keys
+    USE_RESEND: bool = True  # Set to True to use Resend API instead of SMTP
+    
     class Config:
         env_file = ".env"
         case_sensitive = True

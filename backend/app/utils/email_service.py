@@ -20,12 +20,56 @@ SMTP_PASSWORD = settings.SMTP_PASSWORD
 EMAIL_FROM = settings.EMAIL_FROM
 EMAIL_FROM_NAME = settings.EMAIL_FROM_NAME
 
+# Resend Configuration
+RESEND_API_KEY = settings.RESEND_API_KEY
+USE_RESEND = settings.USE_RESEND
+
 
 class EmailService:
     """Service for sending emails"""
     
     @staticmethod
-    def _send_email(
+    def _send_via_resend(
+        to_emails: List[str],
+        subject: str,
+        html_content: str,
+        text_content: Optional[str] = None,
+        cc: Optional[List[str]] = None,
+        bcc: Optional[List[str]] = None,
+    ) -> bool:
+        """
+        Send email via Resend API.
+        """
+        try:
+            import resend
+            resend.api_key = RESEND_API_KEY
+            
+            params = {
+                "from": f"{EMAIL_FROM_NAME} <{EMAIL_FROM}>",
+                "to": to_emails,
+                "subject": subject,
+                "html": html_content,
+            }
+            
+            if text_content:
+                params["text"] = text_content
+            if cc:
+                params["cc"] = cc
+            if bcc:
+                params["bcc"] = bcc
+            
+            logger.debug(f"Sending email via Resend to {to_emails}")
+            email = resend.Emails.send(params)
+            logger.info(f"Email sent via Resend successfully to {to_emails}, id: {email.get('id', 'unknown')}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Resend API error: {str(e)}")
+            logger.error(traceback.format_exc())
+            return False
+    
+    @staticmethod
+    def _send_via_smtp(
         to_emails: List[str],
         subject: str,
         html_content: str,
@@ -35,17 +79,6 @@ class EmailService:
     ) -> bool:
         """
         Send email via SMTP.
-        
-        Args:
-            to_emails: List of recipient email addresses
-            subject: Email subject
-            html_content: HTML email body
-            text_content: Plain text email body (fallback)
-            cc: List of CC addresses
-            bcc: List of BCC addresses
-            
-        Returns:
-            True if sent successfully, False otherwise
         """
         try:
             # Create message
@@ -77,12 +110,11 @@ class EmailService:
                 server.sendmail(EMAIL_FROM, recipients, msg.as_string())
                 logger.debug("Email sent")
             
-            logger.info(f"Email sent successfully to {to_emails}")
+            logger.info(f"Email sent successfully via SMTP to {to_emails}")
             return True
             
         except smtplib.SMTPAuthenticationError as auth_err:
             logger.error(f"SMTP Authentication failed: {str(auth_err)}")
-            logger.error(f"Username: {SMTP_USERNAME}")
             logger.error(traceback.format_exc())
             return False
         except smtplib.SMTPException as smtp_err:
@@ -90,9 +122,45 @@ class EmailService:
             logger.error(traceback.format_exc())
             return False
         except Exception as e:
-            logger.error(f"Failed to send email: {str(e)}")
+            logger.error(f"Failed to send email via SMTP: {str(e)}")
             logger.error(traceback.format_exc())
             return False
+    
+    @staticmethod
+    def _send_email(
+        to_emails: List[str],
+        subject: str,
+        html_content: str,
+        text_content: Optional[str] = None,
+        cc: Optional[List[str]] = None,
+        bcc: Optional[List[str]] = None,
+    ) -> bool:
+        """
+        Send email via configured provider (Resend API or SMTP).
+        
+        Args:
+            to_emails: List of recipient email addresses
+            subject: Email subject
+            html_content: HTML email body
+            text_content: Plain text email body (fallback)
+            cc: List of CC addresses
+            bcc: List of BCC addresses
+            
+        Returns:
+            True if sent successfully, False otherwise
+        """
+        # Use Resend API if configured
+        if USE_RESEND and RESEND_API_KEY:
+            logger.debug("Using Resend API for email delivery")
+            return EmailService._send_via_resend(
+                to_emails, subject, html_content, text_content, cc, bcc
+            )
+        
+        # Fall back to SMTP
+        logger.debug("Using SMTP for email delivery")
+        return EmailService._send_via_smtp(
+            to_emails, subject, html_content, text_content, cc, bcc
+        )
     
     @staticmethod
     def send_submission_confirmation(

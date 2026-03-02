@@ -147,14 +147,14 @@ async def signup(request: Request, data: SignupRequest, db: Session = Depends(ge
 
 @router.post("/refresh", response_model=TokenResponse, status_code=status.HTTP_200_OK)
 @limiter.limit("10/minute")
-async def refresh_token(http_request: Request, request: RefreshTokenRequest, db: Session = Depends(get_db)):
+async def refresh_token(request: Request, body: RefreshTokenRequest, db: Session = Depends(get_db)):
     """
     Refresh access token endpoint.
     
     Uses refresh token to generate a new access token.
     
     Args:
-        request: RefreshTokenRequest with refresh_token
+        body: RefreshTokenRequest with refresh_token
         db: Database session
         
     Returns:
@@ -163,7 +163,7 @@ async def refresh_token(http_request: Request, request: RefreshTokenRequest, db:
     Raises:
         HTTPException: If refresh token is invalid or expired
     """
-    payload = verify_token(request.refresh_token)
+    payload = verify_token(body.refresh_token)
     
     if payload is None or payload.get("type") != "refresh":
         raise HTTPException(
@@ -187,7 +187,7 @@ async def refresh_token(http_request: Request, request: RefreshTokenRequest, db:
     
     return TokenResponse(
         access_token=access_token,
-        refresh_token=request.refresh_token,  # Return same refresh token
+        refresh_token=body.refresh_token,  # Return same refresh token
         token_type="bearer",
         expires_in=3600  # 1 hour in seconds
     )

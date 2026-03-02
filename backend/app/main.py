@@ -78,6 +78,15 @@ def run_migrations():
                 conn.execute(text("ALTER TABLE paper ADD COLUMN paper_type VARCHAR(50) DEFAULT 'Full Length Article'"))
                 print("Migration: Added 'paper_type' column to paper table")
             
+            # Migration: Add co_authors_json column to paper_published table
+            try:
+                result = conn.execute(text("SHOW COLUMNS FROM paper_published LIKE 'co_authors_json'"))
+                if not result.fetchone():
+                    conn.execute(text("ALTER TABLE paper_published ADD COLUMN co_authors_json TEXT NULL"))
+                    print("Migration: Added 'co_authors_json' column to paper_published table")
+            except Exception:
+                pass  # Table may not exist yet
+            
             conn.commit()
             print("Database migrations completed successfully")
             
