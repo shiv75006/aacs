@@ -1,4 +1,4 @@
-import apiClient from './axios';
+import apiClient, { API_BASE_URL } from './axios';
 
 // Export the API client instance
 export const getApiClient = () => apiClient;
@@ -343,9 +343,8 @@ export const acsApi = {
     publishPaper: (paperId, publishData) =>
       apiService.post(`/api/v1/editor/papers/${paperId}/publish`, publishData),
     publishPaperWithFile: async (paperId, formData) => {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`${baseUrl}/api/v1/editor/papers/${paperId}/publish-with-file`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/editor/papers/${paperId}/publish-with-file`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

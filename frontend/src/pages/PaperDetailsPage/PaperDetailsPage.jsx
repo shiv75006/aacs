@@ -4,6 +4,7 @@ import { useRole } from '../../hooks/useRole';
 import { useToast } from '../../hooks/useToast';
 import { useModal } from '../../hooks/useModal';
 import acsApi from '../../api/apiService';
+import { API_BASE_URL } from '../../api/axios';
 import paperNormalizer from '../../services/paperNormalizer';
 import FileViewer from '../../components/FileViewer/FileViewer';
 import StatusChips from '../../components/StatusChips/StatusChips';
@@ -615,16 +616,15 @@ const PaperDetailsPage = () => {
     if (paper?.id) {
       // Get token for authentication (stored as 'authToken' in localStorage)
       const token = localStorage.getItem('authToken');
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       
       // Use different endpoint based on role
       let viewUrl;
       if (isAdmin()) {
-        viewUrl = `${baseUrl}/api/v1/admin/papers/${paper.id}/view`;
+        viewUrl = `${API_BASE_URL}/api/v1/admin/papers/${paper.id}/view`;
       } else if (isEditor()) {
-        viewUrl = `${baseUrl}/api/v1/editor/papers/${paper.id}/view`;
+        viewUrl = `${API_BASE_URL}/api/v1/editor/papers/${paper.id}/view`;
       } else {
-        viewUrl = `${baseUrl}/api/v1/author/submissions/${paper.id}/view`;
+        viewUrl = `${API_BASE_URL}/api/v1/author/submissions/${paper.id}/view`;
       }
       
       // Open with token in URL for authentication
@@ -636,11 +636,10 @@ const PaperDetailsPage = () => {
   const handleViewTitlePage = () => {
     if (paper?.id) {
       const token = localStorage.getItem('authToken');
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       // Authors use author endpoint, editors/admins use editor endpoint
       const viewUrl = isAuthor() 
-        ? `${baseUrl}/api/v1/author/submissions/${paper.id}/view-title-page`
-        : `${baseUrl}/api/v1/editor/papers/${paper.id}/view-title-page`;
+        ? `${API_BASE_URL}/api/v1/author/submissions/${paper.id}/view-title-page`
+        : `${API_BASE_URL}/api/v1/editor/papers/${paper.id}/view-title-page`;
       window.open(`${viewUrl}?token=${token}`, '_blank');
       info('Opening title page in new tab...', 2000);
     }
@@ -649,11 +648,10 @@ const PaperDetailsPage = () => {
   const handleViewBlindedManuscript = () => {
     if (paper?.id) {
       const token = localStorage.getItem('authToken');
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       // Authors use author endpoint, editors/admins use editor endpoint
       const viewUrl = isAuthor() 
-        ? `${baseUrl}/api/v1/author/submissions/${paper.id}/view-blinded-manuscript`
-        : `${baseUrl}/api/v1/editor/papers/${paper.id}/view-blinded-manuscript`;
+        ? `${API_BASE_URL}/api/v1/author/submissions/${paper.id}/view-blinded-manuscript`
+        : `${API_BASE_URL}/api/v1/editor/papers/${paper.id}/view-blinded-manuscript`;
       window.open(`${viewUrl}?token=${token}`, '_blank');
       info('Opening blinded manuscript in new tab...', 2000);
     }
@@ -663,8 +661,7 @@ const PaperDetailsPage = () => {
     e.stopPropagation(); // Prevent expanding/collapsing the review card
     if (paper?.id) {
       const token = localStorage.getItem('authToken');
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const viewUrl = `${baseUrl}/api/v1/author/submissions/${paper.id}/reviews/${reviewId}/view-report`;
+      const viewUrl = `${API_BASE_URL}/api/v1/author/submissions/${paper.id}/reviews/${reviewId}/view-report`;
       window.open(`${viewUrl}?token=${token}`, '_blank');
       info('Opening review report in new tab...', 2000);
     }

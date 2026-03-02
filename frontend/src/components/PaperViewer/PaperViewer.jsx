@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatDateIST } from '../../utils/dateUtils';
+import { API_BASE_URL } from '../../api/axios';
 import styles from './PaperViewer.module.css';
 
 const PaperViewer = ({ paper, reviewId }) => {
@@ -15,7 +16,7 @@ const PaperViewer = ({ paper, reviewId }) => {
   }
 
   const getAuthToken = () => localStorage.getItem('authToken');
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const baseUrl = API_BASE_URL;
 
   const handleViewPaper = () => {
     const token = getAuthToken();

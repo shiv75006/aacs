@@ -1,9 +1,12 @@
 import axios from 'axios';
 import toast from '../utils/toast';
 
+// Export base URL for use in other parts of the app
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 // Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', // FastAPI backend URL
+  baseURL: API_BASE_URL, // FastAPI backend URL
   timeout: 300000, // 5 minutes timeout for file uploads
   headers: {
     'Content-Type': 'application/json',

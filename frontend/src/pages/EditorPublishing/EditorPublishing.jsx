@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import acsApi from '../../api/apiService';
+import { API_BASE_URL } from '../../api/axios';
 import Pagination from '../../components/pagination/Pagination';
 import StatusChips from '../../components/StatusChips/StatusChips';
 import { useToast } from '../../hooks/useToast';
@@ -136,8 +137,7 @@ const EditorPublishing = () => {
 
   const handleViewPaper = (paperId) => {
     const token = localStorage.getItem('authToken');
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    window.open(`${baseUrl}/api/v1/editor/papers/${paperId}/view?token=${token}`, '_blank');
+    window.open(`${API_BASE_URL}/api/v1/editor/papers/${paperId}/view?token=${token}`, '_blank');
     info('Opening paper in new tab...', 2000);
   };
 

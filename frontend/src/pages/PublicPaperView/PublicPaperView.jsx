@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import acsApi from '../../api/apiService';
+import { API_BASE_URL } from '../../api/axios';
 import { formatDateIST } from '../../utils/dateUtils';
 import styles from './PublicPaperView.module.css';
 
@@ -97,8 +98,7 @@ const PublicPaperView = () => {
 
   // Handle PDF download for open access
   const handleDownloadPdf = () => {
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    window.open(`${baseUrl}/api/v1/articles/${article.id}/pdf`, '_blank');
+    window.open(`${API_BASE_URL}/api/v1/articles/${article.id}/pdf`, '_blank');
   };
 
   return (
