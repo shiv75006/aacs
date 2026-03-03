@@ -1,0 +1,103 @@
+flowchart TB
+    subgraph Users["User Roles"]
+        AUTHOR["Author<br/>Submit Papers<br/>Track Status<br/>Revise Work"]
+        REVIEWER["Reviewer<br/>Evaluate Papers<br/>Submit Reviews<br/>Rate Quality"]
+        EDITOR["Editor<br/>Manage Queue<br/>Assign Reviews<br/>Make Decisions"]
+        ADMIN["Admin<br/>System Config<br/>User Management<br/>Analytics"]
+    end
+
+    subgraph CoreFeatures["Core Features"]
+        subgraph Auth["Authentication System"]
+            JWT["JWT Tokens<br/>Access + Refresh"]
+            MULTI_ROLE["Multi-Role System<br/>User can have multiple roles"]
+            ROLE_REQ["Role Requests<br/>Author → Request Reviewer"]
+        end
+
+        subgraph Submission["Paper Submission System"]
+            SUBMIT["Submit Paper<br/>Two-File System<br/>Title Page + Blinded"]
+            COAUTH["Co-Author System<br/>Structured Author Data"]
+            TRACKING["Status Tracking<br/>10+ Status States"]
+            VERSION["Version Control<br/>Revision History"]
+        end
+
+        subgraph Review["Peer Review System"]
+            INVITE["Invitation System<br/>Magic Link Tokens<br/>Accept/Decline"]
+            ASSIGN["Assignment System<br/>Due Dates"]
+            EVALUATE["Evaluation Form<br/>5-Point Ratings<br/>4 Criteria"]
+            RECOMMEND["Recommendations<br/>Accept/Minor/Major/Reject"]
+        end
+
+        subgraph Editorial["Editorial Workflow"]
+            QUEUE["Paper Queue<br/>By Status Filter"]
+            DECISION["Decision Panel<br/>View All Reviews<br/>Make Decision"]
+            CORRESPOND["Correspondence<br/>Email History<br/>Templates"]
+        end
+
+        subgraph Publishing["Publishing System"]
+            PUBLISH["Publish Paper<br/>Volume/Issue/Pages"]
+            DOI_REG["DOI Registration<br/>Crossref Integration"]
+            ACCESS["Access Control<br/>Open/Subscription"]
+            COPYRIGHT["Copyright Transfer<br/>48hr Deadline<br/>Reminders"]
+        end
+    end
+
+    subgraph Storage["Data & Storage"]
+        MYSQL[("MySQL Database<br/>18 Tables")]
+        FILES[("File Storage<br/>papers/user_*/<br/>reviews/reviewer_*/")]
+    end
+
+    subgraph External["External Services"]
+        RESEND["Resend API<br/>Email Delivery<br/>Webhook Tracking"]
+        CROSSREF["Crossref API<br/>DOI Registration"]
+        ROR["ROR API<br/>Institution Search"]
+    end
+
+    subgraph Notifications["Notification System"]
+        EMAIL_TYPES["Email Types:<br/>• Submission Confirmed<br/>• Under Review<br/>• Reviewer Invited<br/>• Review Submitted<br/>• Decision Made<br/>• Revision Required<br/>• Paper Accepted<br/>• Paper Published<br/>• Copyright Reminder"]
+        TEMPLATES["Email Templates<br/>Customizable<br/>Placeholders"]
+    end
+
+    subgraph Analytics["Analytics & Reports"]
+        STATS["Dashboard Stats<br/>By Role"]
+        TRENDS["Submission Trends<br/>Over Time"]
+        REVIEW_METRICS["Review Metrics<br/>Avg Time, Completion"]
+        JOURNAL_STATS["Journal Stats<br/>Papers per Journal"]
+    end
+
+    %% User connections
+    AUTHOR --> Submission
+    REVIEWER --> Review
+    EDITOR --> Editorial
+    EDITOR --> Publishing
+    ADMIN --> Analytics
+    ADMIN --> Auth
+
+    %% Feature connections
+    Submission --> MYSQL
+    Submission --> FILES
+    Review --> MYSQL
+    Editorial --> MYSQL
+    Publishing --> MYSQL
+    Publishing --> FILES
+
+    %% External service connections
+    CORRESPOND --> RESEND
+    INVITE --> RESEND
+    COPYRIGHT --> RESEND
+    DOI_REG --> CROSSREF
+    COAUTH --> ROR
+
+    %% Notification flows
+    Submission -.-> EMAIL_TYPES
+    Review -.-> EMAIL_TYPES
+    Editorial -.-> EMAIL_TYPES
+    Publishing -.-> EMAIL_TYPES
+    EMAIL_TYPES --> TEMPLATES
+    TEMPLATES --> RESEND
+
+    style Users fill:#e1f5fe
+    style CoreFeatures fill:#ffffff
+    style Storage fill:#f3e5f5
+    style External fill:#e8f5e9
+    style Notifications fill:#fff3e0
+    style Analytics fill:#fce4ec

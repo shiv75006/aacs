@@ -1,0 +1,115 @@
+flowchart TB
+    subgraph SubmissionPhase["1. Paper Submission Phase"]
+        START((Author))
+        S1["Select Journal"]
+        S2["Fill Paper Details<br/>Title, Abstract, Keywords<br/>Research Area, Paper Type"]
+        S3["Add Co-Authors<br/>Name, Email, Affiliation<br/>Order, Corresponding"]
+        S4["Upload Files<br/>Title Page with Authors<br/>Blinded Manuscript"]
+        S5["Accept Terms<br/>Message to Editor"]
+        S6["Submit Paper"]
+        S7["Generate Paper Code<br/>e.g., IJICM-2024-0001"]
+        S8["Send Confirmation Email<br/>To Author"]
+        S9[("Save to Database<br/>Status: submitted")]
+    end
+
+    subgraph ReviewAssignPhase["2. Review Assignment Phase"]
+        E1((Editor))
+        E2["View Paper Queue<br/>Filter: submitted"]
+        E3["Review Paper Details<br/>Abstract, Files"]
+        E4["Search Reviewers<br/>By Specialization"]
+        E5["Send Invitation Email<br/>Magic Link Token"]
+        E6["Reviewer Receives Email"]
+        E7{"Accept or<br/>Decline?"}
+        E8["Decline with Reason"]
+        E9["Accept Invitation<br/>Create Assignment"]
+        E10["Update Status<br/>under_review"]
+        E11[("Create online_review<br/>+ reviewer_invitation")]
+    end
+
+    subgraph ReviewPhase["3. Peer Review Phase"]
+        R1((Reviewer))
+        R2["View Assignment<br/>Paper Details"]
+        R3["Download/View<br/>Blinded Manuscript"]
+        R4["Evaluate Paper<br/>Read & Analyze"]
+        R5["Fill Review Form<br/>Technical Quality 1-5<br/>Clarity 1-5<br/>Originality 1-5<br/>Significance 1-5<br/>Overall 1-5"]
+        R6["Write Comments<br/>For Authors<br/>Confidential for Editor"]
+        R7["Select Recommendation<br/>Accept/Minor/Major/Reject"]
+        R8["Upload Review Report<br/>Optional PDF"]
+        R9["Submit Review"]
+        R10[("Save review_submission<br/>Status: submitted")]
+    end
+
+    subgraph DecisionPhase["4. Editorial Decision Phase"]
+        D1((Editor))
+        D2["View All Reviews<br/>Ratings Summary"]
+        D3["Compare Recommendations"]
+        D4{"Make Decision"}
+        D5["Accept Paper"]
+        D6["Request Minor Revision<br/>Set Deadline"]
+        D7["Request Major Revision<br/>Set Deadline"]
+        D8["Reject Paper"]
+        D9["Add Editor Comments"]
+        D10["Send Decision Email<br/>To Author"]
+        D11[("Update paper.status<br/>+ editor_comments")]
+    end
+
+    subgraph RevisionPhase["5. Revision Phase"]
+        REV1((Author))
+        REV2["Receive Decision Email"]
+        REV3["View Reviews<br/>Anonymized Ratings"]
+        REV4["Prepare Revision<br/>Address Comments"]
+        REV5["Upload Revision Files<br/>Track Changes MS<br/>Clean MS<br/>Response to Reviewers"]
+        REV6["Submit Revision"]
+        REV7["Increment Version<br/>Reset to under_review"]
+        REV8[("Create paper_version<br/>Update files")]
+    end
+
+    subgraph PublishPhase["6. Publishing Phase"]
+        P1((Editor))
+        P2["View Ready to Publish<br/>Status: accepted"]
+        P3["Trigger Copyright Form"]
+        P4["Author Completes<br/>Copyright Transfer"]
+        P5["Prepare Publication<br/>Assign Volume/Issue<br/>Page Numbers"]
+        P6["Upload Final PDF<br/>Publisher Version"]
+        P7["Register DOI<br/>Crossref API"]
+        P8["Publish Paper"]
+        P9[("Create paper_published<br/>doi_status: registered")]
+        P10["Paper Live<br/>Open/Subscription"]
+    end
+
+    START --> S1 --> S2 --> S3 --> S4 --> S5 --> S6
+    S6 --> S7 --> S8 --> S9
+    
+    S9 -.-> E1
+    E1 --> E2 --> E3 --> E4 --> E5 --> E6 --> E7
+    E7 -->|Decline| E8
+    E7 -->|Accept| E9 --> E10 --> E11
+    
+    E11 -.-> R1
+    R1 --> R2 --> R3 --> R4 --> R5 --> R6 --> R7 --> R8 --> R9 --> R10
+    
+    R10 -.-> D1
+    D1 --> D2 --> D3 --> D4
+    D4 -->|Accept| D5
+    D4 -->|Minor| D6
+    D4 -->|Major| D7
+    D4 -->|Reject| D8
+    D5 --> D9 --> D10 --> D11
+    D6 --> D9
+    D7 --> D9
+    D8 --> D9
+    
+    D6 -.-> REV1
+    D7 -.-> REV1
+    REV1 --> REV2 --> REV3 --> REV4 --> REV5 --> REV6 --> REV7 --> REV8
+    REV8 -.-> E1
+    
+    D5 -.-> P1
+    P1 --> P2 --> P3 --> P4 --> P5 --> P6 --> P7 --> P8 --> P9 --> P10
+
+    style SubmissionPhase fill:#e8f5e9
+    style ReviewAssignPhase fill:#fff3e0
+    style ReviewPhase fill:#e3f2fd
+    style DecisionPhase fill:#fce4ec
+    style RevisionPhase fill:#fff8e1
+    style PublishPhase fill:#f3e5f5

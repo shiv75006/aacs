@@ -1,0 +1,109 @@
+flowchart TB
+    subgraph PublicFeatures["Public Features - No Login Required"]
+        HOME["Landing Page<br/>Browse Journals"]
+        JOURNAL_LIST["Journal Listing<br/>Search & Filter"]
+        JOURNAL_VIEW["Journal Details<br/>About, Guidelines, Scope"]
+        ARCHIVES["Archives Browser<br/>Volumes, Issues"]
+        PAPER_VIEW["Paper Viewer<br/>Open Access Papers"]
+        SIGNUP["User Registration<br/>Create Account"]
+        LOGIN["Login<br/>JWT Authentication"]
+        INVITATION["Reviewer Invitation<br/>Accept/Decline via Link"]
+    end
+
+    subgraph AuthorFeatures["Author Features"]
+        direction TB
+        A_DASH["Author Dashboard<br/>Stats, Recent Activity"]
+        A_SUBMIT["Paper Submission<br/>Title, Abstract, Keywords<br/>Upload: Title Page + Blinded MS"]
+        A_COAUTH["Co-Author Management<br/>Add Multiple Authors<br/>Mark Corresponding"]
+        A_TRACK["Submission Tracking<br/>View Status Changes"]
+        A_VIEW["View Submissions<br/>Filter by Status"]
+        A_REVIEWS["View Anonymized Reviews<br/>Ratings & Comments"]
+        A_RESUBMIT["Revision Resubmit<br/>Track Changes + Clean + Response"]
+        A_CORRESP["Correspondence History<br/>View Emails from Editorial"]
+        A_CONTACT["Contact Editorial<br/>Send Inquiries"]
+        A_COPYRIGHT["Copyright Form<br/>Transfer Agreement"]
+        A_PROFILE["Author Profile<br/>Update Info, Affiliation"]
+    end
+
+    subgraph ReviewerFeatures["Reviewer Features"]
+        direction TB
+        R_DASH["Reviewer Dashboard<br/>Pending, Completed Stats"]
+        R_INVITES["Pending Invitations<br/>Accept/Decline"]
+        R_ASSIGN["Active Assignments<br/>Sort by Due Date"]
+        R_PAPER["View Paper<br/>Blinded Manuscript"]
+        R_SUBMIT["Submit Review<br/>Ratings 1-5 Scale<br/>Technical, Clarity, Originality<br/>Significance, Overall"]
+        R_COMMENTS["Review Comments<br/>For Authors + Confidential"]
+        R_RECOMMEND["Recommendation<br/>Accept/Minor/Major/Reject"]
+        R_UPLOAD["Upload Review Report<br/>PDF/Word File"]
+        R_HISTORY["Review History<br/>Past Completed Reviews"]
+        R_PROFILE["Reviewer Profile<br/>Specialization Areas"]
+    end
+
+    subgraph EditorFeatures["Editor Features"]
+        direction TB
+        E_DASH["Editor Dashboard<br/>Queue Stats, Pending Actions"]
+        E_QUEUE["Paper Queue<br/>Filter by Status"]
+        E_DETAIL["Paper Details<br/>View Full Submission"]
+        E_INVITE["Invite Reviewers<br/>Search by Specialty<br/>Send Email Invitation"]
+        E_ASSIGN["Assign Reviewers<br/>Select from Users"]
+        E_TRACK["Review Tracking<br/>Monitor Progress"]
+        E_VIEW_REV["View Reviews<br/>All Ratings & Comments"]
+        E_DECISION["Make Decision<br/>Accept/Minor/Major/Reject<br/>Add Comments"]
+        E_PUBLISH["Publish Paper<br/>Assign Volume/Issue/Pages<br/>Upload Final PDF"]
+        E_DOI["DOI Registration<br/>Crossref Integration"]
+        E_CORRESP["Send Correspondence<br/>Email Templates<br/>Custom Messages"]
+        E_JOURNALS["Manage Journals<br/>Edit Journal Details"]
+    end
+
+    subgraph AdminFeatures["Admin Features"]
+        direction TB
+        AD_DASH["Admin Dashboard<br/>System-wide Stats"]
+        AD_USERS["User Management<br/>List, Search, Edit<br/>Delete Users"]
+        AD_ROLES["Role Management<br/>Approve/Reject Requests<br/>Assign/Revoke Roles"]
+        AD_JOURNALS["Journal Management<br/>Create/Edit Journals"]
+        AD_EDITORS["Editor Management<br/>Assign Chief/Section<br/>To Journals"]
+        AD_PAPERS["All Submissions<br/>View Any Paper"]
+        AD_NEWS["News Management<br/>Create Announcements"]
+        AD_TEMPLATES["Email Templates<br/>Manage Templates"]
+        AD_ANALYTICS["Analytics Dashboard<br/>Submission Trends<br/>User Growth<br/>Review Metrics"]
+    end
+
+    HOME --> JOURNAL_LIST
+    JOURNAL_LIST --> JOURNAL_VIEW
+    JOURNAL_VIEW --> ARCHIVES
+    ARCHIVES --> PAPER_VIEW
+    SIGNUP --> LOGIN
+    LOGIN --> A_DASH
+    INVITATION --> R_INVITES
+    
+    A_DASH --> A_SUBMIT
+    A_SUBMIT --> A_COAUTH
+    A_COAUTH --> A_TRACK
+    A_TRACK --> A_REVIEWS
+    A_REVIEWS --> A_RESUBMIT
+    A_TRACK --> A_CORRESP
+    A_TRACK --> A_COPYRIGHT
+    
+    R_DASH --> R_INVITES
+    R_INVITES --> R_ASSIGN
+    R_ASSIGN --> R_PAPER
+    R_PAPER --> R_SUBMIT
+    R_SUBMIT --> R_COMMENTS
+    R_COMMENTS --> R_RECOMMEND
+    R_RECOMMEND --> R_UPLOAD
+    R_UPLOAD --> R_HISTORY
+    
+    E_DASH --> E_QUEUE
+    E_QUEUE --> E_DETAIL
+    E_DETAIL --> E_INVITE
+    E_INVITE --> E_TRACK
+    E_TRACK --> E_VIEW_REV
+    E_VIEW_REV --> E_DECISION
+    E_DECISION --> E_PUBLISH
+    E_PUBLISH --> E_DOI
+
+    style PublicFeatures fill:#e3f2fd
+    style AuthorFeatures fill:#e8f5e9
+    style ReviewerFeatures fill:#fff3e0
+    style EditorFeatures fill:#fce4ec
+    style AdminFeatures fill:#f3e5f5
