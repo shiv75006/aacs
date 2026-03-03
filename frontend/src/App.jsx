@@ -61,6 +61,8 @@ import EditorDecisionPanel from './components/EditorDecisionPanel.jsx';
 import PaperDetailsPage from './pages/PaperDetailsPage/PaperDetailsPage.jsx';
 // Editor Publishing Page
 import EditorPublishing from './pages/EditorPublishing/EditorPublishing.jsx';
+// Editor Guidelines Page
+import EditorGuidelines from './pages/EditorGuidelines/EditorGuidelines.jsx';
 // Public Paper View Page
 import PublicPaperView from './pages/PublicPaperView/PublicPaperView.jsx';
 // Issue Papers Page
@@ -250,6 +252,7 @@ function AppContent() {
               <Route path="papers/:paperId/decision" element={<EditorDecisionPanel />} />
               <Route path="publishing" element={<EditorPublishing />} />
               <Route path="reviewers" element={<EditorReviewerList />} />
+              <Route path="guidelines" element={<EditorGuidelines />} />
             </Route>
           </Route>
 

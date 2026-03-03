@@ -27,7 +27,8 @@ const EditorLayout = () => {
     {
       title: 'Team',
       items: [
-        { icon: 'group', label: 'Reviewers', path: '/editor/reviewers' }
+        { icon: 'group', label: 'Reviewers', path: '/editor/reviewers' },
+        { icon: 'help', label: 'Guidelines', path: '/editor/guidelines' }
       ]
     }
   ];
