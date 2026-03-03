@@ -339,10 +339,10 @@ const PaperDetailsPage = () => {
     try {
       setLoadingReviewers(true);
       setShowReviewerDropdown(true); // Show dropdown immediately while loading
-      // Use appropriate API based on role
+      // Use appropriate API based on role, pass paper.id for recommendation scoring
       const response = isAdmin() 
-        ? await acsApi.admin.listReviewers(0, 100)
-        : await acsApi.editor.listReviewers(0, 100);
+        ? await acsApi.admin.listReviewers(0, 100, '', paper?.id)
+        : await acsApi.editor.listReviewers(0, 100, '', paper?.id);
       
       console.log('Reviewers API response:', response);
       
@@ -1553,16 +1553,27 @@ const PaperDetailsPage = () => {
                             filteredReviewers.map((reviewer) => (
                               <div
                                 key={reviewer.id}
-                                className={styles.dropdownItem}
+                                className={`${styles.dropdownItem} ${reviewer.is_recommended ? styles.dropdownItemRecommended : ''}`}
                                 onClick={() => handleSelectReviewer(reviewer)}
                               >
                                 <div className={styles.reviewerAvatarSmall}>
                                   {getInitials(reviewer.name)}
                                 </div>
                                 <div className={styles.dropdownItemContent}>
-                                  <p className={styles.dropdownItemName}>{reviewer.name}</p>
+                                  <div className={styles.dropdownItemNameRow}>
+                                    <p className={styles.dropdownItemName}>{reviewer.name}</p>
+                                    {reviewer.is_recommended && (
+                                      <span className={styles.recommendedChip}>
+                                        <span className="material-symbols-rounded">star</span>
+                                        Recommended
+                                      </span>
+                                    )}
+                                  </div>
                                   <p className={styles.dropdownItemEmail}>{reviewer.email}</p>
-                                  {reviewer.specialization && (
+                                  {reviewer.match_reason && (
+                                    <p className={styles.dropdownItemMatchReason}>{reviewer.match_reason}</p>
+                                  )}
+                                  {reviewer.specialization && !reviewer.match_reason && (
                                     <p className={styles.dropdownItemSpec}>{reviewer.specialization}</p>
                                   )}
                                 </div>

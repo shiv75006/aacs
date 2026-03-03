@@ -130,8 +130,8 @@ export const acsApi = {
     // Admin can also invite reviewers using the editor endpoint (which accepts both roles)
     inviteReviewer: (paperId, reviewerEmail, dueDays = 14) =>
       apiService.post(`/api/v1/editor/papers/${paperId}/invite-reviewer?reviewer_email=${encodeURIComponent(reviewerEmail)}&due_days=${dueDays}`),
-    listReviewers: (skip = 0, limit = 50, search = '') =>
-      apiService.get(`/api/v1/editor/reviewers?skip=${skip}&limit=${limit}${search ? `&search=${search}` : ''}`),
+    listReviewers: (skip = 0, limit = 50, search = '', paperId = null) =>
+      apiService.get(`/api/v1/editor/reviewers?skip=${skip}&limit=${limit}${search ? `&search=${search}` : ''}${paperId ? `&paper_id=${paperId}` : ''}`),
     
     // Editor Management
     listEditors: (skip = 0, limit = 50, journalId = null, editorType = null, search = '') =>
@@ -316,8 +316,8 @@ export const acsApi = {
     updatePaperStatus: (paperId, status, comments = '') =>
       apiService.post(`/api/v1/editor/papers/${paperId}/status`, { status, comments }),
     getPaperReviews: (paperId) => apiService.get(`/api/v1/editor/papers/${paperId}/reviews`),
-    listReviewers: (skip = 0, limit = 50, search = '') =>
-      apiService.get(`/api/v1/editor/reviewers?skip=${skip}&limit=${limit}${search ? `&search=${search}` : ''}`),
+    listReviewers: (skip = 0, limit = 50, search = '', paperId = null) =>
+      apiService.get(`/api/v1/editor/reviewers?skip=${skip}&limit=${limit}${search ? `&search=${search}` : ''}${paperId ? `&paper_id=${paperId}` : ''}`),
     getPendingActions: () => apiService.get('/api/v1/editor/pending-actions'),
     // Invitation endpoints
     inviteReviewer: (paperId, reviewerEmail, dueDays = 14) =>

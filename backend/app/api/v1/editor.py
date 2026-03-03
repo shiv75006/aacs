@@ -1382,6 +1382,7 @@ async def list_available_reviewers(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     search: str = Query(None),
+    paper_id: int = Query(None, description="Optional paper ID for recommendation scoring"),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -1392,9 +1393,10 @@ async def list_available_reviewers(
         skip: Number of records to skip
         limit: Number of records to return
         search: Search by name or email
+        paper_id: Optional paper ID to compute recommendation scores
         
     Returns:
-        List of available reviewers
+        List of available reviewers with recommendation data if paper_id provided
     """
     if not check_role(current_user.get("role"), ["editor", "admin"]):
         raise HTTPException(status_code=403, detail="Editor or Admin access required")
@@ -1434,8 +1436,25 @@ async def list_available_reviewers(
             "name": f"{reviewer.fname} {reviewer.lname or ''}".strip(),
             "email": reviewer.email,
             "specialization": reviewer.specialization,
-            "affiliation": reviewer.affiliation
+            "affiliation": reviewer.affiliation,
+            "is_recommended": False,
+            "recommendation_score": 0.0,
+            "match_reason": ""
         })
+    
+    # If paper_id provided, enrich with recommendation scores
+    if paper_id:
+        try:
+            from app.services.recommendation_service import RecommendationService
+            rec_service = RecommendationService(db)
+            reviewers_list = rec_service.enrich_reviewers_with_recommendations(
+                paper_id, 
+                reviewers_list
+            )
+        except Exception as e:
+            import logging
+            logging.error(f"Error computing recommendations: {e}")
+            # Continue without recommendations - list already has default values
     
     return {
         "total": total,
