@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useRole } from '../../hooks/useRole';
 import acsApi from '../../api/apiService.js';
 import styles from './AdminDashboard.module.css';
 
 export const AdminDashboard = () => {
   const { user } = useRole();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     total_users: 0,
     total_journals: 0,
@@ -158,7 +159,12 @@ export const AdminDashboard = () => {
           <div className={styles.submissionsList}>
             {recentPapers.length > 0 ? (
               recentPapers.map((paper, index) => (
-                <div key={paper.id || index} className={styles.submissionItem}>
+                <div 
+                  key={paper.id || index} 
+                  className={styles.submissionItem}
+                  onClick={() => navigate(`/admin/submissions/${paper.id}`)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className={styles.submissionContent}>
                     <div className={`${styles.submissionIcon} ${styles[`submissionIcon${getStatusColorClass(paper.status)}`]}`}>
                       <span className="material-symbols-rounded">{getStatusIcon(paper.status)}</span>
@@ -179,9 +185,6 @@ export const AdminDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <button className={styles.moreBtn}>
-                    <span className="material-symbols-rounded">more_vert</span>
-                  </button>
                 </div>
               ))
             ) : (

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import acsApi from '../../api/apiService.js';
 import CopyrightForm from '../../components/CopyrightForm';
 import styles from './AuthorDashboard.module.css';
 
 export const AuthorDashboard = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     total_submissions: 0,
     accepted_papers: 0,
@@ -237,7 +238,11 @@ export const AuthorDashboard = () => {
                 </thead>
                 <tbody>
                   {recentSubmissions.map((paper, index) => (
-                    <tr key={paper.id || index}>
+                    <tr 
+                      key={paper.id || index}
+                      onClick={() => navigate(`/author/submissions/${paper.id}`)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <td className={styles.titleCell}>
                         <span className={styles.paperTitle}>{paper.title || paper.name || 'Untitled Paper'}</span>
                       </td>

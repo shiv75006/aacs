@@ -21,6 +21,7 @@ const PaperCard = ({ paper, actions = 'minimal', onManage, onView, role }) => {
   const dateValue = paper.added_on || paper.submitted_date;
   const date = formatDateIST(dateValue);
   const paperType = paper.paper_type || 'Full Length Article';
+  const journalName = paper.journal_name || (typeof paper.journal === 'string' ? paper.journal : paper.journal?.name) || null;
 
   const handleManage = () => {
     // Navigate to details page for admin/editor, use callback for others
@@ -64,10 +65,10 @@ const PaperCard = ({ paper, actions = 'minimal', onManage, onView, role }) => {
               <span className="material-symbols-rounded">calendar_today</span>
               {date}
             </span>
-            {paper.journal_name && (
+            {journalName && (
               <span className={styles.metaItem}>
                 <span className="material-symbols-rounded">book</span>
-                {paper.journal_name}
+                {journalName}
               </span>
             )}
             <div className={styles.chipsGroup}>
