@@ -1,0 +1,105 @@
+flowchart TB
+    subgraph Client["Client Layer"]
+        BROWSER["Browser / Client"]
+    end
+
+    subgraph FastAPI["FastAPI Application"]
+        MAIN["main.py<br/>Application Entry"]
+        
+        subgraph Middleware["Middleware Layer"]
+            CORS["CORS Middleware"]
+            TRUSTED["TrustedHost Middleware"]
+            RATELIMIT["SlowAPI Rate Limiter"]
+        end
+        
+        subgraph API["API Layer - /api/v1"]
+            AUTH_API["auth.py<br/>Login, Register, Tokens"]
+            JOURNALS_API["journals.py<br/>Journal CRUD"]
+            ADMIN_API["admin.py<br/>Admin Operations"]
+            AUTHOR_API["author.py<br/>Paper Submissions"]
+            EDITOR_API["editor.py<br/>Editor Workflow"]
+            REVIEWER_API["reviewer.py<br/>Review Management"]
+            ARTICLES_API["articles.py<br/>Published Papers"]
+            ROLES_API["roles.py<br/>Role Management"]
+            COPYRIGHT_API["copyright.py<br/>Copyright Forms"]
+            WEBHOOKS_API["webhooks.py<br/>Email Webhooks"]
+        end
+        
+        subgraph Core["Core Layer"]
+            AUTH_CORE["auth.py<br/>JWT, Password Hashing"]
+            RATE_CORE["rate_limit.py<br/>Rate Limiting Logic"]
+            SECURITY["security.py<br/>Security Utils"]
+        end
+        
+        subgraph Services["Services Layer"]
+            CROSSREF["crossref_service.py<br/>DOI Registration"]
+            RECOMMEND["recommendation_service.py<br/>Reviewer Matching"]
+            CORRESPOND["correspondence_service.py<br/>Email Management"]
+        end
+        
+        subgraph Schemas["Pydantic Schemas"]
+            USER_SCHEMA["user.py"]
+            JOURNAL_SCHEMA["journal.py"]
+            PUBLISH_SCHEMA["publish.py"]
+            ROLES_SCHEMA["roles.py"]
+            COPYRIGHT_SCHEMA["copyright.py"]
+        end
+        
+        subgraph Utils["Utilities"]
+            EMAIL_UTIL["email_service.py<br/>SMTP / Resend API"]
+            FILE_UTIL["file_handler.py<br/>File Upload/Storage"]
+            TOKEN_UTIL["token_utils.py<br/>Token Generation"]
+            EXCEPTIONS["exceptions.py<br/>Custom Errors"]
+            SCHEDULER_EMAIL["reviewer_email_scheduler.py"]
+        end
+        
+        subgraph Scheduler["Background Scheduler"]
+            TASKS["tasks.py<br/>APScheduler Jobs"]
+        end
+    end
+    
+    subgraph Database["Database Layer"]
+        DB_MODULE["database.py<br/>SQLAlchemy Engine"]
+        MODELS["models.py<br/>ORM Models"]
+        MYSQL[("MySQL Database")]
+    end
+    
+    subgraph External["External Services"]
+        RESEND["Resend API<br/>Email Delivery"]
+        CROSSREF_API["Crossref API<br/>DOI Registration"]
+        ROR_API["ROR API<br/>Institution Lookup"]
+    end
+    
+    subgraph Storage["File Storage"]
+        UPLOADS["uploads/<br/>papers/, reviews/"]
+    end
+
+    BROWSER --> CORS
+    CORS --> TRUSTED
+    TRUSTED --> RATELIMIT
+    RATELIMIT --> API
+    
+    AUTH_API --> AUTH_CORE
+    AUTH_API --> USER_SCHEMA
+    
+    JOURNALS_API --> JOURNAL_SCHEMA
+    AUTHOR_API --> PUBLISH_SCHEMA
+    EDITOR_API --> CORRESPOND
+    REVIEWER_API --> RECOMMEND
+    ARTICLES_API --> CROSSREF
+    COPYRIGHT_API --> COPYRIGHT_SCHEMA
+    ROLES_API --> ROLES_SCHEMA
+    
+    API --> Services
+    Services --> DB_MODULE
+    Core --> DB_MODULE
+    
+    DB_MODULE --> MODELS
+    MODELS --> MYSQL
+    
+    EMAIL_UTIL --> RESEND
+    CROSSREF --> CROSSREF_API
+    FILE_UTIL --> UPLOADS
+    
+    TASKS --> EMAIL_UTIL
+    TASKS --> DB_MODULE

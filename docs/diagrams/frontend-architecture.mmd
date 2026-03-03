@@ -1,0 +1,141 @@
+flowchart TB
+    subgraph Entry["Application Entry"]
+        MAIN_JSX["main.jsx<br/>React DOM Root"]
+        APP["App.jsx<br/>Router Configuration"]
+    end
+    
+    subgraph Router["React Router"]
+        PUBLIC_ROUTES["Public Routes<br/>/, /journals, /login"]
+        PROTECTED_ROUTES["Protected Routes<br/>Dashboard, Submit, Review"]
+    end
+    
+    subgraph Layouts["Layout Components"]
+        MAIN_LAYOUT["MainLayout<br/>Header, Footer, Navigation"]
+        DASHBOARD_LAYOUT["Dashboard Layout<br/>Sidebar, Content Area"]
+        JOURNAL_LAYOUT["Journal Layout<br/>Journal-specific UI"]
+    end
+    
+    subgraph Pages["Page Components"]
+        subgraph PublicPages["Public Pages"]
+            LANDING["LandingPage"]
+            JOURNALS["JournalsPage"]
+            JOURNAL_HOME["JournalHomePage"]
+            JOURNAL_DETAIL["JournalDetailPage"]
+            JOURNAL_ARCHIVES["JournalArchivesPage"]
+            LOGIN["LoginPage"]
+            SIGNUP["SignupPage"]
+            PUBLIC_PAPER["PublicPaperView"]
+        end
+        
+        subgraph AuthorPages["Author Pages"]
+            AUTHOR_DASH["AuthorDashboard"]
+            AUTHOR_SUBMISSIONS["AuthorSubmissions"]
+            SUBMIT["SubmitPage"]
+            AUTHOR_GUIDE["AuthorGuidelines"]
+        end
+        
+        subgraph EditorPages["Editor Pages"]
+            EDITOR_DASH["EditorDashboard"]
+            EDITOR_QUEUE["EditorPaperQueue"]
+            EDITOR_DECISION["EditorDecisionPage"]
+            EDITOR_REVIEWER["EditorReviewerList"]
+            EDITOR_PUBLISH["EditorPublishing"]
+        end
+        
+        subgraph ReviewerPages["Reviewer Pages"]
+            REVIEWER_DASH["ReviewerDashboard"]
+            REVIEWER_ASSIGN["ReviewerAssignments"]
+            REVIEWER_INVITE["ReviewerInvitations"]
+            REVIEW_SUBMIT["ReviewSubmissionPage"]
+        end
+        
+        subgraph AdminPages["Admin Pages"]
+            ADMIN_DASH["AdminDashboard"]
+            ADMIN_USERS["AdminUsers"]
+            ADMIN_JOURNALS["AdminJournals"]
+            ADMIN_SUBMISSIONS["AdminSubmissions"]
+            ADMIN_ANALYTICS["AdminAnalytics"]
+            ADMIN_ROLES["AdminRoleRequests"]
+        end
+    end
+    
+    subgraph Components["Shared Components"]
+        subgraph UI["UI Components"]
+            NAVBAR["JournalNavbar"]
+            SIDEBAR["CollapsibleSidebar"]
+            FOOTER["Footer"]
+            CAROUSEL["Carousel"]
+            BREADCRUMBS["Breadcrumbs"]
+            TIMELINE["ActivityTimeline"]
+        end
+        
+        subgraph Forms["Form Components"]
+            SUBMIT_FORM["SubmitPaperForm"]
+            REVIEW_FORM["ReviewSubmissionForm"]
+            COPYRIGHT_FORM["CopyrightForm"]
+            DECISION_PANEL["EditorDecisionPanel"]
+        end
+        
+        subgraph Modals["Modal Components"]
+            AUTHOR_CONTACT["AuthorContactModal"]
+            EDITORIAL_CONTACT["ContactEditorialModal"]
+            FILE_VIEWER["FileViewer"]
+        end
+        
+        subgraph Auth["Auth Components"]
+            AUTH_GUARD["Protected Route Guard"]
+            ROLE_CHECK["Role-based Access"]
+        end
+    end
+    
+    subgraph State["State Management"]
+        subgraph Contexts["React Contexts"]
+            AUTH_CTX["AuthContext<br/>User, Token, Roles"]
+            THEME_CTX["ThemeContext"]
+        end
+        
+        subgraph Hooks["Custom Hooks"]
+            USE_AUTH["useAuth"]
+            USE_API["useApi"]
+            USE_TOAST["useToast"]
+        end
+    end
+    
+    subgraph API_Layer["API Layer"]
+        AXIOS["axios.js<br/>HTTP Client Config"]
+        API_SERVICE["apiService.js<br/>API Endpoints"]
+        ROR_SERVICE["rorService.js<br/>Institution Search"]
+    end
+    
+    subgraph Utils_FE["Utilities"]
+        TOAST["toast.js<br/>Notifications"]
+        VALIDATORS["validators.js"]
+        FORMATTERS["formatters.js"]
+    end
+    
+    subgraph Assets["Static Assets"]
+        STYLES["styles/<br/>CSS Modules"]
+        IMAGES["assets/<br/>Images, Icons"]
+    end
+
+    MAIN_JSX --> APP
+    APP --> Router
+    
+    PUBLIC_ROUTES --> PublicPages
+    PROTECTED_ROUTES --> AUTH_GUARD
+    AUTH_GUARD --> AuthorPages
+    AUTH_GUARD --> EditorPages
+    AUTH_GUARD --> ReviewerPages
+    AUTH_GUARD --> AdminPages
+    
+    Pages --> Layouts
+    Pages --> Components
+    
+    Components --> State
+    Pages --> State
+    
+    State --> API_Layer
+    API_Layer --> Utils_FE
+    
+    Components --> Assets
+    Layouts --> Assets

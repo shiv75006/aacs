@@ -1,0 +1,167 @@
+erDiagram
+    USER ||--o{ USER_ROLE : "has"
+    USER ||--o{ ROLE_REQUEST : "requests"
+    USER ||--o{ PAPER : "submits"
+    USER ||--o{ PAPER_CORRESPONDENCE : "sends"
+    USER ||--o{ COPYRIGHT_FORM : "signs"
+    
+    JOURNAL ||--o{ PAPER : "contains"
+    JOURNAL ||--o{ JOURNAL_DETAILS : "has"
+    JOURNAL ||--o{ EDITOR : "managed_by"
+    JOURNAL ||--o{ VOLUME : "has"
+    JOURNAL ||--o{ NEWS : "publishes"
+    
+    PAPER ||--o{ PAPER_CO_AUTHOR : "has"
+    PAPER ||--o{ PAPER_VERSION : "has_versions"
+    PAPER ||--o{ PAPER_COMMENT : "receives"
+    PAPER ||--o{ ONLINE_REVIEW : "assigned_to"
+    PAPER ||--o{ REVIEWER_INVITATION : "invites"
+    PAPER ||--o{ REVIEW_SUBMISSION : "receives"
+    PAPER ||--o{ PAPER_CORRESPONDENCE : "has"
+    PAPER ||--o{ COPYRIGHT_FORM : "requires"
+    PAPER ||--o| PAPER_PUBLISHED : "becomes"
+    
+    VOLUME ||--o{ ISSUE : "contains"
+    
+    ONLINE_REVIEW }o--|| REVIEWER_INVITATION : "created_from"
+    ONLINE_REVIEW ||--o| REVIEW_SUBMISSION : "results_in"
+    
+    EMAIL_TEMPLATE ||--o{ PAPER_CORRESPONDENCE : "used_in"
+    
+    USER_ROLE }o--|| USER : "approved_by"
+    ROLE_REQUEST }o--|| USER : "processed_by"
+
+    USER {
+        int id PK
+        string email UK
+        string password
+        string role
+        string fname
+        string lname
+        string mname
+        string title
+        string affiliation
+        text specialization
+        string contact
+        text address
+        datetime added_on
+        string salutation
+        string designation
+        string department
+        string organisation
+    }
+    
+    JOURNAL {
+        int fld_id PK
+        string fld_journal_name
+        string freq
+        string issn_ol
+        string issn_prt
+        string cheif_editor
+        string co_editor
+        string password
+        string abs_ind
+        string short_form
+        string journal_image
+        string journal_logo
+        text description
+        date added_on
+    }
+    
+    PAPER {
+        int id PK
+        string paper_code
+        int journal FK
+        string title
+        string abstract
+        string keyword
+        string file
+        string title_page
+        string blinded_manuscript
+        datetime added_on
+        string added_by
+        string status
+        int version_number
+        int revision_count
+        string paper_type
+    }
+    
+    PAPER_PUBLISHED {
+        int id PK
+        string title
+        string abstract
+        string author
+        int journal_id FK
+        string volume
+        string issue
+        datetime date
+        string doi
+        string doi_status
+        int paper_submission_id FK
+    }
+    
+    PAPER_CO_AUTHOR {
+        int id PK
+        int paper_id FK
+        string first_name
+        string last_name
+        string email
+        int author_order
+        boolean is_corresponding
+    }
+    
+    ONLINE_REVIEW {
+        int id PK
+        int paper_id FK
+        string reviewer_id FK
+        date assigned_on
+        datetime submitted_on
+        string review_status
+        int invitation_id FK
+    }
+    
+    REVIEWER_INVITATION {
+        int id PK
+        int paper_id FK
+        int reviewer_id FK
+        string reviewer_email
+        string invitation_token UK
+        string status
+        datetime invited_on
+    }
+    
+    REVIEW_SUBMISSION {
+        int id PK
+        int paper_id FK
+        string reviewer_id FK
+        int assignment_id FK
+        int paper_version
+        string recommendation
+        string status
+        datetime submitted_at
+    }
+    
+    USER_ROLE {
+        int id PK
+        int user_id FK
+        string role
+        string status
+        int approved_by FK
+        int journal_id FK
+    }
+    
+    VOLUME {
+        int id PK
+        string journal FK
+        int volume_no
+        string year
+    }
+    
+    ISSUE {
+        int id PK
+        int volume FK
+        int journal FK
+        int issue_no
+        string month
+        string pages
+    }

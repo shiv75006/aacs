@@ -1,0 +1,247 @@
+classDiagram
+    class User {
+        +int id
+        +string email
+        +string password
+        +string role
+        +string fname
+        +string lname
+        +string mname
+        +string title
+        +string affiliation
+        +text specialization
+        +string contact
+        +text address
+        +datetime added_on
+        +string salutation
+        +string designation
+        +string department
+        +string organisation
+        +to_dict() dict
+    }
+    
+    class Journal {
+        +int fld_id
+        +string fld_journal_name
+        +string freq
+        +string issn_ol
+        +string issn_prt
+        +string cheif_editor
+        +string co_editor
+        +string password
+        +string abs_ind
+        +string short_form
+        +string journal_image
+        +string journal_logo
+        +text description
+        +date added_on
+        +to_dict() dict
+    }
+    
+    class JournalDetails {
+        +int id
+        +string journal_id
+        +text about_journal
+        +text cheif_say
+        +text aim_objective
+        +text criteria
+        +text scope
+        +text guidelines
+        +text readings
+        +datetime added_on
+        +to_dict() dict
+    }
+    
+    class Paper {
+        +int id
+        +string paper_code
+        +int journal
+        +string title
+        +string abstract
+        +string keyword
+        +string file
+        +string title_page
+        +string blinded_manuscript
+        +string revised_track_changes
+        +string revised_clean
+        +string response_to_reviewer
+        +datetime added_on
+        +string added_by
+        +string status
+        +int version_number
+        +int revision_count
+        +datetime revision_deadline
+        +text revision_notes
+        +string paper_type
+        +datetime accepted_on
+        +to_dict() dict
+    }
+    
+    class PaperPublished {
+        +int id
+        +string title
+        +string abstract
+        +text p_reference
+        +string author
+        +string journal
+        +int journal_id
+        +string volume
+        +string issue
+        +datetime date
+        +string pages
+        +string keyword
+        +string paper
+        +string access_type
+        +string doi
+        +string doi_status
+        +datetime doi_registered_at
+        +int paper_submission_id
+        +to_dict() dict
+    }
+    
+    class PaperCoAuthor {
+        +int id
+        +int paper_id
+        +string salutation
+        +string first_name
+        +string middle_name
+        +string last_name
+        +string email
+        +string designation
+        +string department
+        +string organisation
+        +int author_order
+        +boolean is_corresponding
+        +to_dict() dict
+    }
+    
+    class Editor {
+        +int id
+        +string editor_name
+        +string editor_email
+        +string editor_address
+        +string editor_contact
+        +string editor_affiliation
+        +string editor_department
+        +string editor_college
+        +string password
+        +int journal_id
+        +string role
+        +string editor_type
+        +datetime added_on
+        +to_dict() dict
+    }
+    
+    class ReviewerInvitation {
+        +int id
+        +int paper_id
+        +int reviewer_id
+        +string reviewer_email
+        +string reviewer_name
+        +string journal_id
+        +string invitation_token
+        +datetime token_expiry
+        +string status
+        +datetime invited_on
+        +datetime accepted_on
+        +datetime declined_on
+        +text invitation_message
+        +text decline_reason
+        +boolean is_external
+        +to_dict() dict
+    }
+    
+    class OnlineReview {
+        +int id
+        +int paper_id
+        +string reviewer_id
+        +date assigned_on
+        +datetime submitted_on
+        +string review_status
+        +int review_submission_id
+        +int invitation_id
+        +datetime due_date
+        +to_dict() dict
+    }
+    
+    class ReviewSubmission {
+        +int id
+        +int paper_id
+        +string reviewer_id
+        +int assignment_id
+        +int paper_version
+        +int technical_quality
+        +int clarity
+        +int originality
+        +int significance
+        +int overall_rating
+        +text author_comments
+        +text confidential_comments
+        +string recommendation
+        +string review_report_file
+        +string status
+        +datetime submitted_at
+        +to_dict() dict
+    }
+    
+    class UserRole {
+        +int id
+        +int user_id
+        +string role
+        +string status
+        +datetime requested_at
+        +int approved_by
+        +datetime approved_at
+        +text rejected_reason
+        +int journal_id
+        +string editor_type
+        +to_dict() dict
+    }
+    
+    class RoleRequest {
+        +int id
+        +int user_id
+        +string requested_role
+        +string status
+        +text reason
+        +datetime requested_at
+        +int processed_by
+        +datetime processed_at
+        +text admin_notes
+        +to_dict() dict
+    }
+    
+    class CopyrightForm {
+        +int id
+        +int paper_id
+        +int author_id
+        +string status
+        +datetime deadline
+        +int reminder_count
+        +boolean copyright_agreed
+        +string signature
+        +datetime signed_date
+        +boolean original_work
+        +boolean no_conflict
+        +boolean rights_transfer
+        +to_dict() dict
+    }
+
+    User "1" --> "*" UserRole : has
+    User "1" --> "*" RoleRequest : requests
+    User "1" --> "*" Paper : submits
+    User "1" --> "*" CopyrightForm : signs
+    
+    Journal "1" --> "*" Paper : contains
+    Journal "1" --> "1" JournalDetails : has
+    Journal "1" --> "*" Editor : managed_by
+    
+    Paper "1" --> "*" PaperCoAuthor : has
+    Paper "1" --> "*" ReviewerInvitation : invites
+    Paper "1" --> "*" OnlineReview : assigned_to
+    Paper "1" --> "*" ReviewSubmission : receives
+    Paper "1" --> "0..1" PaperPublished : becomes
+    Paper "1" --> "0..1" CopyrightForm : requires
+    
+    OnlineReview "*" --> "1" ReviewerInvitation : created_from
+    OnlineReview "1" --> "0..1" ReviewSubmission : results_in

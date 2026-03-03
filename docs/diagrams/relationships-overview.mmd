@@ -1,0 +1,65 @@
+flowchart TB
+    subgraph UserManagement["User Management"]
+        USER["USER<br/>id, email, password<br/>role, fname, lname<br/>affiliation, department"]
+        USER_ROLE["USER_ROLE<br/>user_id - USER<br/>role: author/reviewer/editor/admin<br/>status: pending/approved<br/>journal_id, editor_type"]
+        ROLE_REQUEST["ROLE_REQUEST<br/>user_id - USER<br/>requested_role<br/>status, reason"]
+    end
+
+    subgraph JournalSystem["Journal System"]
+        JOURNAL["JOURNAL<br/>fld_id, fld_journal_name<br/>issn_ol, issn_prt<br/>cheif_editor, short_form"]
+        JOURNAL_DETAILS["JOURNAL_DETAILS<br/>journal_id - JOURNAL<br/>about_journal, scope<br/>guidelines, criteria"]
+        EDITOR["EDITOR<br/>journal_id - JOURNAL<br/>editor_name, email<br/>editor_type: chief/section"]
+        VOLUME["VOLUME<br/>journal - JOURNAL<br/>volume_no, year"]
+        ISSUE["ISSUE<br/>volume - VOLUME<br/>journal - JOURNAL<br/>issue_no, pages, month"]
+        NEWS["NEWS<br/>journal_id - JOURNAL<br/>title, description"]
+    end
+
+    subgraph PaperSubmission["Paper Submission"]
+        PAPER["PAPER<br/>id, paper_code, title<br/>journal - JOURNAL<br/>added_by - USER<br/>status, version_number<br/>paper_type, files"]
+        PAPER_CO_AUTHOR["PAPER_CO_AUTHOR<br/>paper_id - PAPER<br/>first_name, last_name<br/>author_order<br/>is_corresponding"]
+        PAPER_VERSION["PAPER_VERSION<br/>paper_id - PAPER<br/>version_number<br/>file, uploaded_on"]
+        PAPER_COMMENT["PAPER_COMMENT<br/>paper_id - PAPER<br/>comment_by, comment_text"]
+    end
+
+    subgraph ReviewProcess["Review Process"]
+        REVIEWER_INVITATION["REVIEWER_INVITATION<br/>paper_id - PAPER<br/>reviewer_id - USER<br/>reviewer_email<br/>invitation_token<br/>status: pending/accepted/declined"]
+        ONLINE_REVIEW["ONLINE_REVIEW<br/>paper_id - PAPER<br/>reviewer_id - USER<br/>invitation_id - REVIEWER_INVITATION<br/>review_status, due_date"]
+        REVIEW_SUBMISSION["REVIEW_SUBMISSION<br/>paper_id - PAPER<br/>assignment_id - ONLINE_REVIEW<br/>ratings: technical, clarity<br/>originality, significance<br/>recommendation, status"]
+    end
+
+    subgraph PublishingFlow["Publishing and Copyright"]
+        PAPER_PUBLISHED["PAPER_PUBLISHED<br/>paper_submission_id - PAPER<br/>journal_id - JOURNAL<br/>doi, doi_status<br/>volume, issue, pages"]
+        COPYRIGHT_FORM["COPYRIGHT_FORM<br/>paper_id - PAPER<br/>author_id - USER<br/>status, deadline<br/>signature, declarations"]
+    end
+
+    subgraph Correspondence["Email System"]
+        EMAIL_TEMPLATE["EMAIL_TEMPLATE<br/>slug, subject<br/>body_template<br/>category, placeholders"]
+        PAPER_CORRESPONDENCE["PAPER_CORRESPONDENCE<br/>paper_id - PAPER<br/>sender_id - USER<br/>template_id - EMAIL_TEMPLATE<br/>delivery_status, is_read"]
+    end
+
+    USER --> USER_ROLE
+    USER --> ROLE_REQUEST
+    USER --> PAPER
+    
+    JOURNAL --> JOURNAL_DETAILS
+    JOURNAL --> EDITOR
+    JOURNAL --> VOLUME
+    JOURNAL --> NEWS
+    VOLUME --> ISSUE
+    
+    PAPER --> PAPER_CO_AUTHOR
+    PAPER --> PAPER_VERSION
+    PAPER --> PAPER_COMMENT
+    PAPER --> REVIEWER_INVITATION
+    PAPER --> ONLINE_REVIEW
+    
+    REVIEWER_INVITATION --> ONLINE_REVIEW
+    ONLINE_REVIEW --> REVIEW_SUBMISSION
+    
+    PAPER --> PAPER_PUBLISHED
+    PAPER --> COPYRIGHT_FORM
+    USER --> COPYRIGHT_FORM
+    
+    EMAIL_TEMPLATE --> PAPER_CORRESPONDENCE
+    PAPER --> PAPER_CORRESPONDENCE
+    USER --> PAPER_CORRESPONDENCE

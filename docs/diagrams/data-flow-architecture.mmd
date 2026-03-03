@@ -1,0 +1,115 @@
+flowchart TB
+    subgraph Frontend["Frontend - React Application"]
+        subgraph UI_Layer["UI Layer"]
+            PAGES["Pages<br/>Author, Editor, Reviewer, Admin"]
+            COMPONENTS["Components<br/>Forms, Modals, Lists"]
+        end
+        
+        subgraph State_Layer["State Layer"]
+            AUTH_CONTEXT["AuthContext<br/>JWT Token, User Data, Roles"]
+            LOCAL_STATE["Component State<br/>Form Data, UI State"]
+        end
+        
+        subgraph API_Client["API Client Layer"]
+            AXIOS_INSTANCE["Axios Instance<br/>Base URL, Interceptors"]
+            API_METHODS["API Service Methods<br/>GET, POST, PUT, DELETE"]
+            TOKEN_INJECT["Token Injection<br/>Authorization Header"]
+        end
+    end
+    
+    subgraph Network["Network Layer"]
+        HTTP["HTTPS Requests<br/>REST API Calls"]
+        CORS_CHECK["CORS Validation"]
+    end
+    
+    subgraph Backend["Backend - FastAPI Application"]
+        subgraph Middleware_Layer["Middleware Layer"]
+            CORS_MW["CORS Middleware<br/>Origin Validation"]
+            AUTH_MW["Auth Middleware<br/>JWT Verification"]
+            RATE_MW["Rate Limiter<br/>Request Throttling"]
+        end
+        
+        subgraph API_Routes["API Routes - /api/v1"]
+            AUTH_ROUTE["/auth<br/>login, register, refresh"]
+            JOURNALS_ROUTE["/journals<br/>list, details, archive"]
+            AUTHOR_ROUTE["/author<br/>submit, submissions, revise"]
+            EDITOR_ROUTE["/editor<br/>queue, assign, decide"]
+            REVIEWER_ROUTE["/reviewer<br/>assignments, submit"]
+            ADMIN_ROUTE["/admin<br/>users, analytics, settings"]
+            ARTICLES_ROUTE["/articles<br/>published, DOI"]
+        end
+        
+        subgraph Business_Logic["Business Logic"]
+            AUTH_SERVICE["Authentication<br/>JWT, Password Hash"]
+            PAPER_SERVICE["Paper Management<br/>Submit, Review, Publish"]
+            EMAIL_SERVICE["Email Service<br/>Notifications, Invites"]
+            FILE_SERVICE["File Handler<br/>Upload, Download"]
+        end
+        
+        subgraph Data_Layer["Data Access Layer"]
+            ORM["SQLAlchemy ORM<br/>Models, Queries"]
+            SCHEMAS["Pydantic Schemas<br/>Validation, Serialization"]
+        end
+    end
+    
+    subgraph Database["Database"]
+        MYSQL[("MySQL<br/>User, Paper, Journal<br/>Review, Published")]
+    end
+    
+    subgraph File_Storage["File Storage"]
+        UPLOADS[("uploads/<br/>papers/user_*/")]
+        REVIEWS_DIR[("uploads/<br/>reviews/reviewer_*/")]
+    end
+    
+    subgraph External_Services["External Services"]
+        RESEND[("Resend API<br/>Email Delivery")]
+        CROSSREF[("Crossref API<br/>DOI Registration")]
+        ROR[("ROR API<br/>Institutions")]
+    end
+
+    %% Data Flow - Authentication
+    PAGES -->|"1. Login Form"| API_METHODS
+    API_METHODS -->|"2. POST /auth/login"| HTTP
+    HTTP --> CORS_MW
+    CORS_MW --> AUTH_MW
+    AUTH_MW --> AUTH_ROUTE
+    AUTH_ROUTE -->|"3. Verify Credentials"| AUTH_SERVICE
+    AUTH_SERVICE --> ORM
+    ORM --> MYSQL
+    AUTH_SERVICE -->|"4. Generate JWT"| AUTH_ROUTE
+    AUTH_ROUTE -->|"5. Return Token + User"| HTTP
+    HTTP -->|"6. Store in Context"| AUTH_CONTEXT
+    
+    %% Data Flow - Paper Submission
+    COMPONENTS -->|"Submit Paper Form"| LOCAL_STATE
+    LOCAL_STATE -->|"FormData + Files"| API_METHODS
+    API_METHODS -->|"POST /author/submit"| TOKEN_INJECT
+    TOKEN_INJECT --> HTTP
+    AUTH_MW -->|"Validate JWT"| AUTHOR_ROUTE
+    AUTHOR_ROUTE --> PAPER_SERVICE
+    PAPER_SERVICE -->|"Save Metadata"| ORM
+    PAPER_SERVICE -->|"Save Files"| FILE_SERVICE
+    FILE_SERVICE --> UPLOADS
+    ORM --> MYSQL
+    PAPER_SERVICE -->|"Send Confirmation"| EMAIL_SERVICE
+    EMAIL_SERVICE --> RESEND
+    
+    %% Data Flow - Review Process
+    REVIEWER_ROUTE -->|"Get Assignments"| ORM
+    REVIEWER_ROUTE -->|"Submit Review"| PAPER_SERVICE
+    PAPER_SERVICE --> REVIEWS_DIR
+    
+    %% Data Flow - Publishing
+    EDITOR_ROUTE -->|"Publish Paper"| PAPER_SERVICE
+    PAPER_SERVICE -->|"Register DOI"| CROSSREF
+    
+    %% Response Flow
+    SCHEMAS -->|"Serialize Response"| API_Routes
+    API_Routes -->|"JSON Response"| HTTP
+    HTTP -->|"Update UI State"| STATE_LAYER
+    STATE_LAYER --> UI_Layer
+
+    style Frontend fill:#e1f5fe
+    style Backend fill:#fff3e0
+    style Database fill:#f3e5f5
+    style External_Services fill:#e8f5e9
