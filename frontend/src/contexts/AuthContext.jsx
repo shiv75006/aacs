@@ -40,19 +40,40 @@ export const AuthProvider = ({ children }) => {
         const token = authService.getToken();
         const storedUser = authService.getStoredUser();
 
+        // Only consider user authenticated if BOTH token AND user data exist
         if (token && storedUser) {
           setUser(storedUser);
           setIsAuthenticated(true);
           setActiveRole(storedUser.role?.toLowerCase() || null);
           
-          // Fetch roles after auth is initialized
-          await fetchUserRoles();
+          // Fetch roles after auth is initialized (non-blocking)
+          fetchUserRoles().catch(err => {
+            // If we get a 401, clear auth state
+            if (err?.response?.status === 401) {
+              authService.logout();
+              setUser(null);
+              setIsAuthenticated(false);
+              setActiveRole(null);
+              setRoles([]);
+            }
+            // Network errors are logged but don't clear auth state
+          });
         } else {
+          // Clear any stale/partial auth data if token is missing
+          if (storedUser && !token) {
+            authService.logout(); // Clean up stale user data
+          }
+          setUser(null);
           setIsAuthenticated(false);
+          setActiveRole(null);
+          setRoles([]);
         }
       } catch (err) {
         console.error('Error initializing auth:', err);
+        setUser(null);
         setIsAuthenticated(false);
+        setActiveRole(null);
+        setRoles([]);
       } finally {
         setLoading(false);
       }
