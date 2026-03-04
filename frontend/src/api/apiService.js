@@ -85,6 +85,8 @@ export const acsApi = {
     getVolumes: (journalId) => apiService.get(`/api/v1/journals/${journalId}/volumes`),
     getVolumeIssues: (journalId, volumeId) => apiService.get(`/api/v1/journals/${journalId}/volumes/${volumeId}/issues`),
     getAllIssues: (journalId) => apiService.get(`/api/v1/journals/${journalId}/issues`),
+    getRecommendations: (keywords, abstract = '') => 
+      apiService.post('/api/v1/journals/recommend', { keywords, abstract }),
   },
 
   // Articles/News

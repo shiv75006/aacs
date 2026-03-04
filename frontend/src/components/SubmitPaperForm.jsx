@@ -42,6 +42,11 @@ export const SubmitPaperForm = () => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [touched, setTouched] = useState({});
   
+  // Journal recommendations state
+  const [recommendedJournals, setRecommendedJournals] = useState([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [journalDropdownOpen, setJournalDropdownOpen] = useState(false);
+  
   const [formData, setFormData] = useState({
     // Step 1: Paper Metadata
     title: '',
@@ -252,6 +257,61 @@ export const SubmitPaperForm = () => {
     setKeywordChips(newChips);
     setFormData(prev => ({ ...prev, keywords: newChips.join(', ') }));
   };
+
+  // Fetch journal recommendations based on keywords and abstract
+  const fetchJournalRecommendations = async () => {
+    if (keywordChips.length < 5) {
+      showWarning('Please enter at least 5 keywords to get recommendations');
+      return;
+    }
+    
+    setLoadingRecommendations(true);
+    try {
+      const response = await acsApi.journals.getRecommendations(keywordChips, formData.abstract);
+      if (response.recommendations && response.recommendations.length > 0) {
+        setRecommendedJournals(response.recommendations);
+        success(`Found ${response.recommendations.length} recommended journal${response.recommendations.length > 1 ? 's' : ''} for your paper!`);
+      } else {
+        setRecommendedJournals([]);
+        showWarning('No journal recommendations found. Please try different keywords.');
+      }
+    } catch (err) {
+      console.error('Failed to fetch journal recommendations:', err);
+      showError('Failed to get journal recommendations. Please try again.');
+      setRecommendedJournals([]);
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  };
+
+  // Get sorted journals with recommended ones first
+  const getSortedJournals = () => {
+    if (!journals || journals.length === 0) return [];
+    
+    const recommendedIds = new Set(recommendedJournals.map(r => r.journal_id));
+    
+    // Partition journals into recommended and others
+    const recommended = journals.filter(j => recommendedIds.has(j.id));
+    const others = journals.filter(j => !recommendedIds.has(j.id));
+    
+    // Sort recommended by score (descending)
+    recommended.sort((a, b) => {
+      const scoreA = recommendedJournals.find(r => r.journal_id === a.id)?.score || 0;
+      const scoreB = recommendedJournals.find(r => r.journal_id === b.id)?.score || 0;
+      return scoreB - scoreA;
+    });
+    
+    // Sort others alphabetically
+    others.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    
+    return [...recommended, ...others];
+  };
+
+  // Get recommendation info for a journal
+  const getRecommendationInfo = (journalId) => {
+    return recommendedJournals.find(r => r.journal_id === journalId);
+  };
+
 
   // Co-author handling
   const addCoAuthor = () => {
@@ -596,26 +656,50 @@ export const SubmitPaperForm = () => {
             </div>
 
             <div className={`${styles.field} ${touched.keywords && fieldErrors.keywords ? styles.fieldError : ''}`}>
-              <label htmlFor="keywords">Keywords *</label>
-              <input
-                id="keywords"
-                type="text"
-                placeholder="Type keyword and press comma or Enter"
-                value={keywordInput}
-                onChange={handleKeywordInputChange}
-                onKeyDown={handleKeywordKeyDown}
-                onBlur={() => {
-                  setTouched(prev => ({ ...prev, keywords: true }));
-                  if (keywordChips.length === 0) {
-                    setFieldErrors(prev => ({ ...prev, keywords: 'At least one keyword is required' }));
-                  } else {
-                    setFieldErrors(prev => ({ ...prev, keywords: '' }));
-                  }
-                }}
-                className={`${styles.input} ${touched.keywords && fieldErrors.keywords ? styles.inputError : ''}`}
-              />
+              <label htmlFor="keywords">Keywords * <span className={styles.keywordHint}>(min. 5 for journal suggestions)</span></label>
+              <div className={styles.keywordInputRow}>
+                <input
+                  id="keywords"
+                  type="text"
+                  placeholder="Type keyword and press comma or Enter"
+                  value={keywordInput}
+                  onChange={handleKeywordInputChange}
+                  onKeyDown={handleKeywordKeyDown}
+                  onBlur={() => {
+                    setTouched(prev => ({ ...prev, keywords: true }));
+                    if (keywordChips.length === 0) {
+                      setFieldErrors(prev => ({ ...prev, keywords: 'At least one keyword is required' }));
+                    } else {
+                      setFieldErrors(prev => ({ ...prev, keywords: '' }));
+                    }
+                  }}
+                  className={`${styles.input} ${touched.keywords && fieldErrors.keywords ? styles.inputError : ''}`}
+                />
+                <button
+                  type="button"
+                  onClick={fetchJournalRecommendations}
+                  disabled={keywordChips.length < 5 || loadingRecommendations}
+                  className={`${styles.suggestBtn} ${keywordChips.length >= 5 ? styles.suggestBtnActive : ''}`}
+                  title={keywordChips.length < 5 ? `Add ${5 - keywordChips.length} more keyword${5 - keywordChips.length > 1 ? 's' : ''} to enable` : 'Get journal suggestions'}
+                >
+                  {loadingRecommendations ? (
+                    <>
+                      <span className={`material-symbols-rounded ${styles.spinIcon}`}>sync</span>
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-rounded">auto_awesome</span>
+                      Suggest Journals
+                    </>
+                  )}
+                </button>
+              </div>
               <div className={styles.fieldMeta}>
-                <small className={styles.helperText}>Separate keywords with commas or press Enter</small>
+                <small className={styles.helperText}>
+                  Separate keywords with commas or press Enter 
+                  <span className={styles.keywordCount}>({keywordChips.length}/5 minimum)</span>
+                </small>
                 {touched.keywords && fieldErrors.keywords && (
                   <span className={styles.errorText}>{fieldErrors.keywords}</span>
                 )}
@@ -657,19 +741,84 @@ export const SubmitPaperForm = () => {
               </div>
 
               <div className={`${styles.field} ${touched.journal_id && fieldErrors.journal_id ? styles.fieldError : ''}`}>
-                <label htmlFor="journal">Select Journal *</label>
-                <select
-                  id="journal"
-                  value={formData.journal_id}
-                  onChange={(e) => handleInputChange('journal_id', e.target.value)}
-                  onBlur={() => handleBlur('journal_id')}
-                  className={`${styles.select} ${touched.journal_id && fieldErrors.journal_id ? styles.inputError : ''}`}
-                >
-                  <option value="">-- Select Journal --</option>
-                  {journals.map(j => (
-                    <option key={j.id} value={j.id}>{j.name}</option>
-                  ))}
-                </select>
+                <label htmlFor="journal">
+                  Select Journal *
+                  {recommendedJournals.length > 0 && (
+                    <span className={styles.recommendedBadge}>
+                      <span className="material-symbols-rounded">stars</span>
+                      {recommendedJournals.length} Recommended
+                    </span>
+                  )}
+                </label>
+                <div className={styles.journalDropdownWrapper}>
+                  <button
+                    type="button"
+                    className={`${styles.journalDropdownTrigger} ${touched.journal_id && fieldErrors.journal_id ? styles.inputError : ''} ${journalDropdownOpen ? styles.dropdownOpen : ''}`}
+                    onClick={() => setJournalDropdownOpen(!journalDropdownOpen)}
+                    onBlur={(e) => {
+                      // Delay closing to allow click on options
+                      setTimeout(() => {
+                        if (!e.currentTarget.contains(document.activeElement)) {
+                          setJournalDropdownOpen(false);
+                        }
+                      }, 200);
+                      handleBlur('journal_id');
+                    }}
+                  >
+                    <span className={formData.journal_id ? styles.selectedValue : styles.placeholder}>
+                      {formData.journal_id 
+                        ? journals.find(j => String(j.id) === String(formData.journal_id))?.name || 'Select Journal'
+                        : '-- Select Journal --'}
+                    </span>
+                    <span className={`material-symbols-rounded ${styles.dropdownArrow}`}>
+                      {journalDropdownOpen ? 'expand_less' : 'expand_more'}
+                    </span>
+                  </button>
+                  
+                  {journalDropdownOpen && (
+                    <div className={styles.journalDropdownMenu}>
+                      <div 
+                        className={styles.journalDropdownOption}
+                        onClick={() => {
+                          handleInputChange('journal_id', '');
+                          setJournalDropdownOpen(false);
+                        }}
+                      >
+                        <span className={styles.journalOptionName}>-- Select Journal --</span>
+                      </div>
+                      {getSortedJournals().map(j => {
+                        const recommendation = getRecommendationInfo(j.id);
+                        const isRecommended = !!recommendation;
+                        
+                        return (
+                          <div
+                            key={j.id}
+                            className={`${styles.journalDropdownOption} ${isRecommended ? styles.recommendedOption : ''} ${String(formData.journal_id) === String(j.id) ? styles.selectedOption : ''}`}
+                            onClick={() => {
+                              handleInputChange('journal_id', j.id);
+                              setJournalDropdownOpen(false);
+                            }}
+                          >
+                            <div className={styles.journalOptionContent}>
+                              <div className={styles.journalOptionHeader}>
+                                <span className={styles.journalOptionName}>{j.name}</span>
+                                {isRecommended && (
+                                  <span className={styles.recommendedChip}>
+                                    <span className="material-symbols-rounded">star</span>
+                                    Recommended
+                                  </span>
+                                )}
+                              </div>
+                              {isRecommended && recommendation.match_reason && (
+                                <span className={styles.matchReason}>{recommendation.match_reason}</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
                 {touched.journal_id && fieldErrors.journal_id && (
                   <span className={styles.errorText}>{fieldErrors.journal_id}</span>
                 )}

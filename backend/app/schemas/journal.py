@@ -260,3 +260,33 @@ class PaperSubmitExtended(BaseModel):
                 "terms_accepted": True
             }
         }
+
+
+# Journal Recommendation Schemas
+class JournalRecommendationRequest(BaseModel):
+    """Request schema for journal recommendations"""
+    keywords: List[str] = Field(..., min_items=5, description="List of keywords (minimum 5)")
+    abstract: Optional[str] = Field(None, description="Paper abstract (optional but improves accuracy)")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "keywords": ["machine learning", "deep learning", "neural networks", "artificial intelligence", "data science"],
+                "abstract": "This paper presents a novel approach to machine learning..."
+            }
+        }
+
+
+class JournalRecommendationItem(BaseModel):
+    """Single journal recommendation"""
+    journal_id: int = Field(..., description="Journal ID")
+    journal_name: str = Field(..., description="Journal name")
+    score: float = Field(..., description="Recommendation score (0-1)")
+    is_recommended: bool = Field(..., description="Whether this journal is recommended")
+    match_reason: str = Field(..., description="Reason for recommendation")
+
+
+class JournalRecommendationResponse(BaseModel):
+    """Response schema for journal recommendations"""
+    recommendations: List[JournalRecommendationItem] = Field(..., description="List of recommended journals")
+    total: int = Field(..., description="Total number of recommendations")

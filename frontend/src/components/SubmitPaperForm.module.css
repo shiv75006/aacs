@@ -818,6 +818,234 @@
   font-weight: 500;
 }
 
+/* Keyword Input Row with Suggest Button */
+.keywordInputRow {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.keywordInputRow .input {
+  flex: 1;
+}
+
+.keywordHint {
+  font-weight: 400;
+  color: #64748b;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.keywordCount {
+  margin-left: 8px;
+  color: #0D4715;
+  font-weight: 600;
+}
+
+.suggestBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: #e2e8f0;
+  color: #64748b;
+  border: 2px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: not-allowed;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.suggestBtn .material-symbols-rounded {
+  font-size: 20px;
+}
+
+.suggestBtnActive {
+  background: linear-gradient(135deg, #0D4715 0%, #1a5c24 100%);
+  color: white;
+  border-color: #0D4715;
+  cursor: pointer;
+}
+
+.suggestBtnActive:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1a5c24 0%, #2d7a3a 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(13, 71, 21, 0.3);
+}
+
+.suggestBtn:disabled {
+  opacity: 0.8;
+}
+
+.spinIcon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Custom Journal Dropdown */
+.journalDropdownWrapper {
+  position: relative;
+}
+
+.journalDropdownTrigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.journalDropdownTrigger:hover {
+  border-color: #0D4715;
+}
+
+.journalDropdownTrigger.dropdownOpen {
+  border-color: #0D4715;
+  box-shadow: 0 0 0 4px rgba(13, 71, 21, 0.1);
+}
+
+.placeholder {
+  color: #94a3b8;
+}
+
+.selectedValue {
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.dropdownArrow {
+  color: #64748b;
+  font-size: 24px;
+  transition: transform 0.2s ease;
+}
+
+.journalDropdownMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  animation: dropdownSlide 0.2s ease;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.journalDropdownOption {
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.journalDropdownOption:last-child {
+  border-bottom: none;
+}
+
+.journalDropdownOption:hover {
+  background: #f8fafc;
+}
+
+.journalDropdownOption.selectedOption {
+  background: #f0fdf4;
+}
+
+.journalDropdownOption.recommendedOption {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border-left: 3px solid #0D4715;
+}
+
+.journalDropdownOption.recommendedOption:hover {
+  background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 100%);
+}
+
+.journalOptionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.journalOptionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.journalOptionName {
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.recommendedChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #0D4715 0%, #1a5c24 100%);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.recommendedChip .material-symbols-rounded {
+  font-size: 14px;
+}
+
+.matchReason {
+  font-size: 12px;
+  color: #0D4715;
+  font-weight: 500;
+  padding-left: 2px;
+}
+
+.recommendedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 10px;
+  background: #f0fdf4;
+  color: #0D4715;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.recommendedBadge .material-symbols-rounded {
+  font-size: 14px;
+}
+
 /* Field Row */
 .fieldRow {
   display: flex;

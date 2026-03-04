@@ -10,8 +10,10 @@ from app.core.security import get_current_user
 from app.utils.auth_helpers import check_role
 from app.schemas.journal import (
     JournalRequest, JournalResponse, JournalListResponse,
-    JournalDetailRequest, JournalDetailResponse
+    JournalDetailRequest, JournalDetailResponse,
+    JournalRecommendationRequest, JournalRecommendationResponse, JournalRecommendationItem
 )
+from app.services.journal_recommendation_service import JournalRecommendationService
 from typing import List, Optional
 from datetime import date
 
@@ -199,6 +201,58 @@ async def get_journal_details(journal_id: int, db: Session = Depends(get_db)):
         guidelines=journal_detail.guidelines,
         readings=journal_detail.readings,
         added_on=journal_detail.added_on.isoformat() if journal_detail.added_on else None
+    )
+
+
+@router.post(
+    "/recommend",
+    response_model=JournalRecommendationResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get journal recommendations",
+    description="Get journal recommendations based on paper keywords and abstract"
+)
+async def get_journal_recommendations(
+    data: JournalRecommendationRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Get journal recommendations for authors based on their paper's keywords and abstract.
+    
+    - **keywords**: List of keywords (minimum 5 required)
+    - **abstract**: Paper abstract (optional but improves accuracy)
+    
+    Returns up to 3 highly relevant journal recommendations with match reasons.
+    """
+    if len(data.keywords) < 5:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least 5 keywords are required for accurate recommendations"
+        )
+    
+    # Initialize recommendation service
+    recommendation_service = JournalRecommendationService(db)
+    
+    # Get recommendations
+    recommendations = recommendation_service.get_recommendations(
+        keywords=data.keywords,
+        abstract=data.abstract or ""
+    )
+    
+    # Convert to response format
+    recommendation_items = [
+        JournalRecommendationItem(
+            journal_id=rec["journal_id"],
+            journal_name=rec["journal_name"],
+            score=rec["score"],
+            is_recommended=rec["is_recommended"],
+            match_reason=rec["match_reason"]
+        )
+        for rec in recommendations
+    ]
+    
+    return JournalRecommendationResponse(
+        recommendations=recommendation_items,
+        total=len(recommendation_items)
     )
 
 
