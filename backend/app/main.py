@@ -93,6 +93,12 @@ def run_migrations():
                 conn.execute(text("ALTER TABLE paper ADD COLUMN accepted_on DATETIME NULL"))
                 print("Migration: Added 'accepted_on' column to paper table")
             
+            # Migration: Add fld_primary_category column to journal table
+            result = conn.execute(text("SHOW COLUMNS FROM journal LIKE 'fld_primary_category'"))
+            if not result.fetchone():
+                conn.execute(text("ALTER TABLE journal ADD COLUMN fld_primary_category VARCHAR(100) NULL AFTER fld_journal_name"))
+                print("Migration: Added 'fld_primary_category' column to journal table")
+            
             conn.commit()
             print("Database migrations completed successfully")
             
