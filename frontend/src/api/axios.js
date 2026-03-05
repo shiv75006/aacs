@@ -111,10 +111,7 @@ apiClient.interceptors.response.use(
         
         // Only redirect to login if NOT on a public route
         if (!isPublicRoute) {
-          toast.warning('Session expired. Please login again.');
-          setTimeout(() => {
-            window.location.href = '/login';
-          }, 1500);
+          window.location.href = '/login';
         }
         return Promise.reject(error);
       }
@@ -152,10 +149,7 @@ apiClient.interceptors.response.use(
         
         // Only redirect to login if NOT on a public route
         if (!isPublicRoute && !window.location.pathname.includes('/login')) {
-          toast.warning('Session expired. Please login again.');
-          setTimeout(() => {
-            window.location.href = '/login';
-          }, 1500);
+          window.location.href = '/login';
         }
         
         return Promise.reject(refreshError);

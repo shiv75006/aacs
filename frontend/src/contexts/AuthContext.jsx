@@ -42,22 +42,30 @@ export const AuthProvider = ({ children }) => {
 
         // Only consider user authenticated if BOTH token AND user data exist
         if (token && storedUser) {
-          setUser(storedUser);
-          setIsAuthenticated(true);
-          setActiveRole(storedUser.role?.toLowerCase() || null);
-          
-          // Fetch roles after auth is initialized (non-blocking)
-          fetchUserRoles().catch(err => {
-            // If we get a 401, clear auth state
+          // Validate token by making an API call before setting authenticated
+          try {
+            const rolesResponse = await fetchUserRoles();
+            // Token is valid - set authenticated state
+            setUser(storedUser);
+            setIsAuthenticated(true);
+            setActiveRole(storedUser.role?.toLowerCase() || null);
+          } catch (err) {
+            // If we get a 401, token is invalid - clear auth state
             if (err?.response?.status === 401) {
+              console.log('Token expired or invalid, clearing auth state');
               authService.logout();
               setUser(null);
               setIsAuthenticated(false);
               setActiveRole(null);
               setRoles([]);
+            } else {
+              // Network error - use stored auth but mark as potentially stale
+              console.warn('Could not validate token (network error), using stored auth');
+              setUser(storedUser);
+              setIsAuthenticated(true);
+              setActiveRole(storedUser.role?.toLowerCase() || null);
             }
-            // Network errors are logged but don't clear auth state
-          });
+          }
         } else {
           // Clear any stale/partial auth data if token is missing
           if (storedUser && !token) {
